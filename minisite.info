@@ -1,0 +1,5 @@
+name = Minisite
+description = Provides the ability to upload arbitrary 'minisites' to a Drupal website.
+package = Minisite
+core = 7.x
+dependencies[] = file

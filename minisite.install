@@ -1,0 +1,104 @@
+<?php
+
+/**
+ * @file
+ * Contains install and update functions for Minisite.
+ */
+
+/**
+ * Implements hook_requirements().
+ */
+function minisite_requirements($phase) {
+  $requirements = array();
+  if ($phase == 'runtime') {
+    $requirements['minisite_upload'] = array(
+      'title' => t('Minisite upload directory'),
+      'severity' => REQUIREMENT_OK,
+      'value' => t('Exists'),
+    );
+
+    $requirements['minisite_static'] = array(
+      'title' => t('Minisite static files directory'),
+      'severity' => REQUIREMENT_OK,
+      'value' => t('Exists'),
+    );
+
+    $path = 'public://minisite/upload';
+    if (!file_prepare_directory($path, FILE_CREATE_DIRECTORY)) {
+      $requirements['minisite_upload']['description'] = t('The Minisite upload directory, %path could not be created due to a misconfigured files directory. Please ensure that the files directory is correctly configured and that the webserver has permission to create directories.', array('%path' => file_uri_target($path)));
+      $requirements['minisite_upload']['severity'] = REQUIREMENT_ERROR;
+      $requirements['minisite_upload']['value'] = t('Unable to create');
+    }
+
+    $path = 'public://minisite/static';
+    if (!file_prepare_directory($path, FILE_CREATE_DIRECTORY)) {
+      $requirements['minisite_static']['description'] = t('The Minisite static files directory, %path could not be created due to a misconfigured files directory. Please ensure that the files directory is correctly configured and that the webserver has permission to create directories.', array('%path' => file_uri_target($path)));
+      $requirements['minisite_static']['severity'] = REQUIREMENT_ERROR;
+      $requirements['minisite_static']['value'] = t('Unable to create');
+    }
+  }
+
+  return $requirements;
+}
+
+/**
+ * Implements hook_field_schema().
+ */
+function minisite_field_schema($field) {
+  return array(
+    'columns' => array(
+      'fid' => array(
+        'description' => 'The {file_managed}.fid being referenced in minisite field.',
+        'type' => 'int',
+        'not null' => FALSE,
+        'unsigned' => TRUE,
+      ),
+      'basepath' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+      'title' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+      'description' => array(
+        'description' => 'A description of the file.',
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
+      'data' => array(
+        'type' => 'text',
+        'not null' => FALSE,
+        'size' => 'big',
+        'serialize' => TRUE,
+        // 'description' => 'Used for storing additional information.
+        // Can be harnessed by widgets',
+      ),
+    ),
+    'indexes' => array(
+      'fid' => array('fid'),
+    ),
+    'foreign keys' => array(
+      'fid' => array(
+        'table' => 'file_managed',
+        'columns' => array('fid' => 'fid'),
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_install().
+ */
+function minisite_install() {
+
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function minisite_uninstall() {
+
+}
