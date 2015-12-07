@@ -3,3 +3,5 @@ description = Provides the ability to upload arbitrary 'minisites' to a Drupal w
 package = Minisite
 core = 7.x
 dependencies[] = file
+
+files[] = includes/minisite.archive.inc

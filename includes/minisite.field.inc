@@ -97,11 +97,10 @@ function minisite_field_presave($entity_type, $entity, $field, $instance, $langc
 
   foreach ($items as &$item) {
     if (isset($item['fid'])) {
-      $asset = file_load($item['fid']);
-      $hash = drupal_hmac_base64($asset->filename, MINISITE_HASHSALT);
-      $file_path = drupal_realpath($asset->uri);
-      $zip = new ArchiverZip($file_path);
-      $zip->extract('public://' . MINISITE_ASSETPATH . '/' . $hash . '/');
+      $file = file_load($item['fid']);
+      $hash = drupal_hmac_base64($item['fid'] . $file->filename, MINISITE_HASHSALT);
+      $archive = MinisiteArchive::open($file);
+      $archive->extract('public://' . MINISITE_ASSETPATH . '/' . $hash . '/');
       $item['basepath'] = MINISITE_ASSETPATH . '/' . $hash;
     }
   }
@@ -171,6 +170,12 @@ function minisite_field_widget_form(&$form, &$form_state, $field, $instance, $la
   $elements = file_field_widget_form($form, $form_state, $field, $instance, $langcode, $items, $delta, $element);
   $settings = $instance['settings'];
 
+  foreach (element_children($elements) as $delta) {
+    // Minisite content extensions validation.
+    $minisite_extensions = $settings['minisite_extensions'];
+    $elements[$delta]['#upload_validators']['minisite_validate_extensions'] = array($minisite_extensions);
+  }
+
   $elements[0]['#description'] = theme('file_upload_help', array(
     'description' => field_filter_xss($instance['description']),
     'upload_validators' => $elements[0]['#upload_validators']
@@ -186,4 +191,52 @@ function minisite_field_formatter_info_alter(&$info) {
   $info['file_default']['field types'][] = 'file_minisite';
   $info['file_table']['field types'][] = 'file_minisite';
   $info['file_url_plain']['field types'][] = 'file_minisite';
+}
+
+/**
+ * @param \stdClass $file
+ * @param $extensions
+ * @return array
+ */
+function minisite_validate_extensions(stdClass $file, $extensions) {
+  $errors = array();
+
+  // Validate minisite assets.
+  $archive = MinisiteArchive::open($file);
+  if (!$archive) {
+    $errors[] = t('Unable to open minisite archive file.');
+    return $errors;
+  }
+
+  $tree = $archive->filesTree();
+  // Ignore __MACOSX folder.
+  unset($tree['__MACOSX']);
+
+  // Limit directory structure in minisite.
+  $root_files = array_keys($tree);
+  if (count($root_files) !== 1 || !is_array($tree[$root_files[0]])) {
+    $errors[] = t('Minisite must have a single top level directory.');
+    return $errors;
+  }
+
+  $top_folder = $root_files[0];
+  $top_level = $tree[$top_folder];
+  if (!array_key_exists('index.html', $top_level)) {
+    $errors[] = t('Minisite must contain a index.html file.');
+  }
+
+  $files = $archive->filesList();
+
+  // Check minisite asset files extensions.
+  $invalid_files = MinisiteArchive::fileExtensionCheck($files, $extensions);
+  if (!empty($invalid_files)) {
+    foreach ($invalid_files as $invalid_file) {
+      $errors[] = t('Minisite contains files with invalid extensions: %files. Only files with the following extensions are allowed: %allowed-extensions', array(
+        '%allowed-extensions' => $extensions,
+        '%files' => $invalid_file,
+      ));
+    }
+  }
+
+  return $errors;
 }
