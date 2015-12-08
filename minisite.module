@@ -8,7 +8,7 @@
 define('MINISITE_UPLOADPATH', 'minisite/upload');
 define('MINISITE_ASSETPATH', 'minisite/static');
 define('MINISITE_EXTENSIONS', 'html htm js css png jpg gif pdf doc docx ppt pptx xls xlsx tif xml txt');
-define('MINISITE_MAXFILESIZE', '20 MB');
+define('MINISITE_MAXFILESIZE', file_upload_max_size());
 define('MINISITE_HASHSALT', 'minisite');
 
 // Load all Field module hooks for Minisite.
