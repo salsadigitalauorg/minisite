@@ -18,7 +18,7 @@ function minisite_field_info() {
       ),
       'instance_settings' => array(
         'file_extensions' => 'zip',
-        'minisite_extensions' => MINISITE_EXTENSIONS,
+        'minisite_extensions' => MINISITE_EXTENSIONS_WHITELIST,
         'file_directory' => MINISITE_UPLOADPATH,
         'max_filesize' => MINISITE_MAXFILESIZE,
       ),
@@ -64,7 +64,7 @@ function minisite_field_instance_settings_form($field, $instance) {
     '#title' => t('Allowed file extensions in uploaded minisite files'),
     '#default_value' => $extensions,
     '#description' => t('Separate extensions with a space or comma and do not include the leading dot.'),
-    '#element_validate' => array('_file_generic_settings_extensions'),
+    '#element_validate' => array('_minisite_validate_file_settings_extensions'),
     // By making this field required, we prevent a potential security issue
     // that would allow files of any type to be uploaded.
     '#required' => TRUE,
@@ -239,4 +239,42 @@ function minisite_validate_extensions(stdClass $file, $extensions) {
   }
 
   return $errors;
+}
+
+/**
+ * Element validate callback for the allowed file extensions field.
+ *
+ * @see _file_generic_settings_extensions()
+ */
+function _minisite_validate_file_settings_extensions($element, &$form_state) {
+  if (!empty($element['#value'])) {
+    $extensions = preg_replace('/([, ]+\.?)/', ' ', trim(strtolower($element['#value'])));
+    $extensions = array_filter(explode(' ', $extensions));
+    $extensionsArray = array_unique($extensions);
+    $extensions = implode(' ', array_unique($extensionsArray));
+    if (!preg_match('/^([a-z0-9]+([.][a-z0-9])* ?)+$/', $extensions)) {
+      form_error($element, t('The list of allowed extensions is not valid, be sure to exclude leading dots and to separate extensions with a comma or space.'));
+    }
+    elseif (_minisite_validate_file_blacklist($extensionsArray) === FALSE) {
+      form_error($element, t('The list of allowed extensions is not valid. The following extensions are NOT allowed: %extensions-blacklist', array(
+        '%extensions-blacklist' => implode(' ', minisite_extensions_blacklist()),
+      )));
+    }
+    else {
+      form_set_value($element, $extensions, $form_state);
+    }
+  }
+}
+
+/**
+ * Validate minisite file extension in blacklist.
+ * @param array $extensions
+ */
+function _minisite_validate_file_blacklist(Array $extensions) {
+  $extensions_blacklist = minisite_extensions_blacklist();
+  foreach ($extensions_blacklist as $ext) {
+    if (in_array($ext, $extensions)) {
+      return FALSE;
+    }
+  }
 }

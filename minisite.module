@@ -7,7 +7,8 @@
 
 define('MINISITE_UPLOADPATH', 'minisite/upload');
 define('MINISITE_ASSETPATH', 'minisite/static');
-define('MINISITE_EXTENSIONS', 'html htm js css png jpg gif pdf doc docx ppt pptx xls xlsx tif xml txt');
+define('MINISITE_EXTENSIONS_WHITELIST', 'html htm js css png jpg gif pdf doc docx ppt pptx xls xlsx tif xml txt');
+define('MINISITE_EXTENSIONS_BLACKLIST', 'exe scr bmp');
 define('MINISITE_MAXFILESIZE', file_upload_max_size());
 define('MINISITE_HASHSALT', 'minisite');
 
@@ -28,13 +29,17 @@ function minisite_help($path, $arg) {
 }
 
 /**
- * Implements hook_permission().
+ * Return minisite file extensions blacklist.
+ * @return array
  */
-function minisite_permission() {
-  return array(
-    'administer minisite' => array(
-      'title' => t('Administer Minisite'),
-      'description' => t('Allows users to administer minisite settings.'),
-    ),
-  );
+function minisite_extensions_blacklist() {
+  $extensions_blacklist =  &drupal_static(__FUNCTION__);
+
+  if (!isset($extensions_blacklist)) {
+    $extensions_blacklist = preg_replace('/([, ]+\.?)/', ' ', trim(strtolower(MINISITE_EXTENSIONS_BLACKLIST)));
+    $extensions_blacklist = array_filter(explode(' ', $extensions_blacklist));
+    $extensions_blacklist = array_unique($extensions_blacklist);
+  }
+
+  return $extensions_blacklist;
 }
