@@ -9,6 +9,7 @@ define('MINISITE_UPLOADPATH', 'minisite/upload');
 define('MINISITE_ASSETPATH', 'minisite/static');
 define('MINISITE_EXTENSIONS_WHITELIST', 'html htm js css png jpg gif svg pdf doc docx ppt pptx xls xlsx tif xml txt woff woff2 ttf eot');
 define('MINISITE_EXTENSIONS_BLACKLIST', 'exe scr bmp');
+define('MINISITE_EXTENSIONS_NOREWRITE', 'pdf doc docx ppt pptx xls xlsx tif xml txt');
 define('MINISITE_MAXFILESIZE', file_upload_max_size());
 define('MINISITE_HASHSALT', 'minisite');
 
@@ -29,19 +30,139 @@ function minisite_help($path, $arg) {
 }
 
 /**
- * Return minisite file extensions blacklist.
- * @return array
+ * Exact minisite files.
+ * @param \stdClass $file
+ * @param $minisite_extract_path
  */
-function minisite_extensions_blacklist() {
-  $extensions_blacklist =  &drupal_static(__FUNCTION__);
+function minisite_site_extract(stdClass $file, $minisite_extract_path = MINISITE_ASSETPATH) {
+  $archive = MinisiteArchive::open($file);
+  $archive->extract('public://' . $minisite_extract_path);
+}
 
-  if (!isset($extensions_blacklist)) {
-    $extensions_blacklist = preg_replace('/([, ]+\.?)/', ' ', trim(strtolower(MINISITE_EXTENSIONS_BLACKLIST)));
-    $extensions_blacklist = array_filter(explode(' ', $extensions_blacklist));
-    $extensions_blacklist = array_unique($extensions_blacklist);
+/**
+ * Load minisite.
+ */
+function minisite_site_load() {
+  $view_mode = FALSE;
+
+  $path = current_path();
+  if (strpos($path, 'node/') === FALSE) {
+    $segments = explode('/', $path);
+    foreach ($segments as $k => $segment) {
+      $internal = drupal_get_normal_path($segment);
+      if (strpos($internal, 'node/') !== FALSE) {
+        $path = $internal;
+        $view_mode = 'full';
+        break;
+      }
+    }
   }
 
-  return $extensions_blacklist;
+  $entity = menu_get_object('node', 1, $path);
+  return array($entity, $view_mode);
+}
+
+/**
+ * Build minisite.
+ */
+function minisite_site_build($entity) {
+  list($resource, $minisite_realurl, $minisite_pathalias) = minisite_site_paths_info($entity);
+  $html = minisite_site_parse($entity);
+
+  return $html;
+}
+
+/**
+ * Return minisite paths information.
+ * @param $entity
+ * @return array
+ */
+function minisite_site_paths_info($entity) {
+  // Prepare minisite path and alias.
+  global $base_url;
+
+  // Load module inc file.
+  module_load_include('inc', 'minisite', 'includes/minisite.func');
+
+  $minisite_field_name = minisite_site_field_with_bundle($entity->type);
+  $wrapper = entity_metadata_wrapper('node', $entity);
+  $minisite_field_values = $wrapper->$minisite_field_name->value();
+  $minisite_basepath = $minisite_field_values['basepath'];
+  $minisite_nodepath = 'node/' . $entity->nid;
+  $minisite_pathalias = drupal_get_path_alias($minisite_nodepath);
+
+  $minisite_realurl = $base_url . '/' . variable_get('file_public_path', conf_path() . '/files/') . $minisite_basepath . '/';
+  $request_path = request_path();
+  $request_path = substr(urldecode($request_path), strlen($minisite_pathalias) + 1);
+  if (empty($request_path) || $request_path == '/') {
+    $request_path = 'index.html';
+  }
+
+  $resource = 'public://' . $minisite_basepath . '/' . $request_path;
+
+  return array(
+    $resource,
+    $minisite_realurl,
+    $minisite_pathalias,
+  );
+}
+
+/**
+ * Parse minisite.
+ * @param $resource
+ * @return string
+ */
+function minisite_site_parse($entity) {
+  list($resource, $minisite_realurl, $minisite_pathalias) = minisite_site_paths_info($entity);
+
+  // Bypass lib error.
+  libxml_use_internal_errors(TRUE);
+
+  $document = new DOMDocument;
+  $document->loadHTMLFile($resource);
+
+  // Return 404 if document is empty.
+  if (empty($document)) {
+    return drupal_not_found();
+  }
+
+  $head = $document->getElementsByTagName('head')->item(0);
+  // Return 404 is document head is empty.
+  if (empty($head)) {
+    return drupal_not_found();
+  }
+  if ($head->hasChildNodes()) {
+    // Update base href.
+    $base = $document->createElement('base');
+    $base->setAttribute('href', $minisite_realurl);
+    $head->insertBefore($base, $head->firstChild);
+  }
+  else {
+    $head->appendChild($base);
+  }
+
+  // Update relative URL.
+  foreach ($document->getElementsByTagName('a') as $item) {
+    $href = $item->getAttribute('href');
+    // Keep absolute URL.
+    if (parse_url($href, PHP_URL_SCHEME) != '') {
+      continue;
+    }
+    // If href starts with . or ..
+    if (substr($href, 0) == '.' || substr($href, 0, 2) == '..' || substr($href, 0) == '/') {
+      continue;
+    }
+    $regex = '/\.(' . preg_replace('/ +/', '|', preg_quote(MINISITE_EXTENSIONS_NOREWRITE)) . ')$/i';
+    if (preg_match($regex, $href)) {
+      continue;
+    }
+
+    $item->setAttribute('href', '/' . $minisite_pathalias . '/' . $href);
+  }
+
+  $html = $document->saveHTML();
+
+  return $html;
 }
 
 /**
@@ -49,8 +170,8 @@ function minisite_extensions_blacklist() {
  * @param \stdClass $file
  * @return array
  */
-function minisite_site_path(stdClass $file) {
-  if (!empty($file)) {
+function minisite_site_file_path_info(stdClass $file) {
+  if (empty($file)) {
     return FALSE;
   }
 
@@ -66,9 +187,8 @@ function minisite_site_path(stdClass $file) {
   $top_folder = $root_files[0];
 
   return array(
-    $archive,
     $minisite_path,
-    $minisite_path . '/' . $top_folder . '/',
+    $minisite_path . '/' . $top_folder,
   );
 }
 
@@ -79,4 +199,20 @@ function minisite_site_path(stdClass $file) {
  */
 function minisite_site_hash($data) {
   return drupal_hmac_base64($data, MINISITE_HASHSALT);
+}
+
+/**
+ * Return minisite file extensions blacklist.
+ * @return array
+ */
+function minisite_site_extensions_blacklist() {
+  $extensions_blacklist =  &drupal_static(__FUNCTION__);
+
+  if (!isset($extensions_blacklist)) {
+    $extensions_blacklist = preg_replace('/([, ]+\.?)/', ' ', trim(strtolower(MINISITE_EXTENSIONS_BLACKLIST)));
+    $extensions_blacklist = array_filter(explode(' ', $extensions_blacklist));
+    $extensions_blacklist = array_unique($extensions_blacklist);
+  }
+
+  return $extensions_blacklist;
 }

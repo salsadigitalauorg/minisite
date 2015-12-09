@@ -39,10 +39,49 @@ class MinisiteArchive {
   }
 
   /**
+   * Exact files to given path.
+   * @param $path
+   * @param array $files
+   * @return $this
+   */
+  public function extract($path, Array $files = array()) {
+    if ($files) {
+      $this->archiver->extract($path, $files);
+    } else {
+      $this->archiver->extract($path);
+    }
+
+    return $this;
+  }
+
+  /**
+   * Remove file from archive file.
+   * @param $file_path
+   * @return $this
+   */
+  public function fileRemove($file_path) {
+    $this->archiver->remove($file_path);
+
+    return $this;
+  }
+
+  /**
    * @return mixed
    */
   public function filesList() {
-    return $this->archiver->listContents();
+    $listing =  $this->archiver->listContents();
+    foreach ($listing as $k => $file) {
+      if (strpos($file, '.DS_Store') !== FALSE) {
+        unset($listing[$k]);
+      }
+      if (strpos($file, '_notes') !== FALSE) {
+        unset($listing[$k]);
+      }
+      if (strpos($file, '__MACOSX') !== FALSE) {
+        unset($listing[$k]);
+      }
+    }
+    return  $listing ;
   }
 
   /**
@@ -64,22 +103,6 @@ class MinisiteArchive {
     }
 
     return $tree;
-  }
-
-  /**
-   * Exact files to given path.
-   * @param $path
-   * @param array $files
-   * @return $this
-   */
-  public function extract($path, Array $files = array()) {
-    if ($files) {
-      $this->archiver->extract($path, $files);
-    } else {
-      $this->archiver->extract($path);
-    }
-
-    return $this;
   }
 
   /**

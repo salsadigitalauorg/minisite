@@ -13,17 +13,17 @@ function minisite_preprocess_html(&$variables) {
   module_load_include('inc', 'minisite', 'includes/minisite.func');
 
   // Get entity and view modes.
-  list($entity, $view_mode) = minisite_load_entity();
+  list($entity, $view_mode) = minisite_site_load();
 
   if (isset($variables['page']['content']['system_main']['nodes'])) {
     $view_mode = $variables['page']['content']['system_main']['nodes'][$entity->nid]['#view_mode'];
   }
 
   // Provides minisite theme template suggestions.
-  if (!empty($entity) && minisite_entity_check($entity) && $view_mode == 'full') {
+  if (!empty($entity) && minisite_site_verify($entity) && $view_mode == 'full') {
     $variables['theme_hook_suggestions'][] = 'html__minisite';
     $variables['theme_hook_suggestions'][] = 'html__minisite__' . $entity->type;
-    $variables['minisite'] = minisite_build_html($entity);
+    $variables['minisite'] = minisite_site_build($entity);
   }
 }
 

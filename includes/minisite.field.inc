@@ -64,7 +64,7 @@ function minisite_field_instance_settings_form($field, $instance) {
     '#title' => t('Allowed file extensions in uploaded minisite files'),
     '#default_value' => $extensions,
     '#description' => t('Separate extensions with a space or comma and do not include the leading dot.'),
-    '#element_validate' => array('_minisite_validate_file_settings_extensions'),
+    '#element_validate' => array('_minisite_validate_minisite_file_settings'),
     // By making this field required, we prevent a potential security issue
     // that would allow files of any type to be uploaded.
     '#required' => TRUE,
@@ -98,9 +98,8 @@ function minisite_field_presave($entity_type, $entity, $field, $instance, $langc
   foreach ($items as &$item) {
     if (isset($item['fid'])) {
       $file = file_load($item['fid']);
-      list($archive, $minisite_extract_path, $minisite_base_path) = minisite_site_path($file);
-
-      $archive->extract('public://' . $minisite_extract_path);
+      list($minisite_extract_path, $minisite_base_path) = minisite_site_file_path_info($file);
+      minisite_site_extract($file, $minisite_extract_path);
       $item['basepath'] = $minisite_base_path;
     }
   }
@@ -110,28 +109,126 @@ function minisite_field_presave($entity_type, $entity, $field, $instance, $langc
  * Implements hook_field_insert().
  */
 function minisite_field_insert($entity_type, $entity, $field, $instance, $langcode, &$items) {
-  file_field_insert($entity_type, $entity, $field, $instance, $langcode, $items);
+  list($id, $vid, $bundle) = entity_extract_ids($entity_type, $entity);
+
+  // Add a new usage of each uploaded file.
+  foreach ($items as $item) {
+    $file = (object) $item;
+    file_usage_add($file, 'minisite', $entity_type, $id);
+  }
 }
 
 /**
  * Implements hook_field_update().
  */
 function minisite_field_update($entity_type, $entity, $field, $instance, $langcode, &$items) {
-  file_field_update($entity_type, $entity, $field, $instance, $langcode, $items);
+  // Check whether the field is defined on the object.
+  if (!isset($entity->{$field['field_name']})) {
+    // We cannot check for removed files if the field is not defined.
+    return;
+  }
+
+  list($id, $vid, $bundle) = entity_extract_ids($entity_type, $entity);
+
+  // On new revisions, all files are considered to be a new usage and no
+  // deletion of previous file usages are necessary.
+  if (!empty($entity->revision)) {
+    foreach ($items as $item) {
+      $file = (object) $item;
+      file_usage_add($file, 'minisite', $entity_type, $id);
+    }
+    return;
+  }
+
+  // Build a display of the current FIDs.
+  $current_fids = array();
+  foreach ($items as $item) {
+    $current_fids[] = $item['fid'];
+  }
+
+  // Compare the original field values with the ones that are being saved. Use
+  // $entity->original to check this when possible, but if it isn't available,
+  // create a bare-bones entity and load its previous values instead.
+  if (isset($entity->original)) {
+    $original = $entity->original;
+  }
+  else {
+    $original = entity_create_stub_entity($entity_type, array(
+      $id,
+      $vid,
+      $bundle
+    ));
+    field_attach_load($entity_type, array($id => $original), FIELD_LOAD_CURRENT, array('field_id' => $field['id']));
+  }
+  $original_fids = array();
+  if (!empty($original->{$field['field_name']}[$langcode])) {
+    foreach ($original->{$field['field_name']}[$langcode] as $original_item) {
+      $original_fids[] = $original_item['fid'];
+      if (isset($original_item['fid']) && !in_array($original_item['fid'], $current_fids)) {
+        // Decrement the file usage count by 1 and delete the file if possible.
+        minisite_file_field_delete_file($original_item, $field, $entity_type, $id);
+      }
+    }
+  }
+
+  // Add new usage entries for newly added files.
+  foreach ($items as $item) {
+    if (!in_array($item['fid'], $original_fids)) {
+      $file = (object) $item;
+      file_usage_add($file, 'minisite', $entity_type, $id);
+    }
+  }
 }
 
 /**
  * Implements hook_field_delete().
  */
 function minisite_field_delete($entity_type, $entity, $field, $instance, $langcode, &$items) {
-  file_field_delete($entity_type, $entity, $field, $instance, $langcode, $items);
+  list($id, $vid, $bundle) = entity_extract_ids($entity_type, $entity);
+
+  // Delete all file usages within this entity.
+  foreach ($items as $delta => $item) {
+    minisite_file_field_delete_file($item, $field, $entity_type, $id, 0);
+  }
 }
 
 /**
  * Implements hook_field_delete_revision().
  */
 function minisite_field_delete_revision($entity_type, $entity, $field, $instance, $langcode, &$items) {
-  file_field_delete_revision($entity_type, $entity, $field, $instance, $langcode, $items);
+  list($id, $vid, $bundle) = entity_extract_ids($entity_type, $entity);
+  foreach ($items as $delta => $item) {
+    // Decrement the file usage count by 1 and delete the file if possible.
+    if (minisite_file_field_delete_file($item, $field, $entity_type, $id)) {
+      $items[$delta] = NULL;
+    }
+  }
+}
+
+/**
+ * Delete minisite file field data.
+ *
+ * @param $item
+ * @param $field
+ * @param $entity_type
+ * @param $id
+ * @param int $count
+ * @return bool|mixed|TRUE
+ */
+function minisite_file_field_delete_file($item, $field, $entity_type, $id, $count = 1) {
+  // To prevent the file field from deleting files it doesn't know about, check
+  // the file reference count. Temporary files can be deleted because they
+  // are not yet associated with any content at all.
+  $file = (object) $item;
+  $file_usage = file_usage_list($file);
+  if ($file->status == 0 || !empty($file_usage['minisite'])) {
+    file_usage_delete($file, 'minisite', $entity_type, $id, $count);
+    return file_delete($file);
+  }
+
+  // Even if the file is not deleted, return TRUE to indicate the file field
+  // record can be removed from the field database tables.
+  return TRUE;
 }
 
 /**
@@ -173,7 +270,7 @@ function minisite_field_widget_form(&$form, &$form_state, $field, $instance, $la
   foreach (element_children($elements) as $delta) {
     // Minisite content extensions validation.
     $minisite_extensions = $settings['minisite_extensions'];
-    $elements[$delta]['#upload_validators']['minisite_validate_extensions'] = array($minisite_extensions);
+    $elements[$delta]['#upload_validators']['_minisite_validate_minisite_asset'] = array($minisite_extensions);
   }
 
   $elements[0]['#description'] = theme('file_upload_help', array(
@@ -194,11 +291,13 @@ function minisite_field_formatter_info_alter(&$info) {
 }
 
 /**
+ * Validate minisite asset.
+ *
  * @param \stdClass $file
  * @param $extensions
  * @return array
  */
-function minisite_validate_extensions(stdClass $file, $extensions) {
+function _minisite_validate_minisite_asset(stdClass $file, $extensions) {
   $errors = array();
 
   // Validate minisite assets.
@@ -243,10 +342,8 @@ function minisite_validate_extensions(stdClass $file, $extensions) {
 
 /**
  * Element validate callback for the allowed file extensions field.
- *
- * @see _file_generic_settings_extensions()
  */
-function _minisite_validate_file_settings_extensions($element, &$form_state) {
+function _minisite_validate_minisite_file_settings($element, &$form_state) {
   if (!empty($element['#value'])) {
     $extensions = preg_replace('/([, ]+\.?)/', ' ', trim(strtolower($element['#value'])));
     $extensions = array_filter(explode(' ', $extensions));
@@ -255,9 +352,9 @@ function _minisite_validate_file_settings_extensions($element, &$form_state) {
     if (!preg_match('/^([a-z0-9]+([.][a-z0-9])* ?)+$/', $extensions)) {
       form_error($element, t('The list of allowed extensions is not valid, be sure to exclude leading dots and to separate extensions with a comma or space.'));
     }
-    elseif (_minisite_validate_file_blacklist($extensionsArray) === FALSE) {
+    elseif (_minisite_validate_minisite_file_blacklist($extensionsArray) === FALSE) {
       form_error($element, t('The list of allowed extensions is not valid. The following extensions are NOT allowed: %extensions-blacklist', array(
-        '%extensions-blacklist' => implode(' ', minisite_extensions_blacklist()),
+        '%extensions-blacklist' => implode(' ', minisite_site_extensions_blacklist()),
       )));
     }
     else {
@@ -270,8 +367,8 @@ function _minisite_validate_file_settings_extensions($element, &$form_state) {
  * Validate minisite file extension in blacklist.
  * @param array $extensions
  */
-function _minisite_validate_file_blacklist(Array $extensions) {
-  $extensions_blacklist = minisite_extensions_blacklist();
+function _minisite_validate_minisite_file_blacklist(Array $extensions) {
+  $extensions_blacklist = minisite_site_extensions_blacklist();
   foreach ($extensions_blacklist as $ext) {
     if (in_array($ext, $extensions)) {
       return FALSE;
