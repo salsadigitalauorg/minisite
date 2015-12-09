@@ -98,10 +98,16 @@ function minisite_field_presave($entity_type, $entity, $field, $instance, $langc
   foreach ($items as &$item) {
     if (isset($item['fid'])) {
       $file = file_load($item['fid']);
-      $hash = drupal_hmac_base64($item['fid'] . $file->filename, MINISITE_HASHSALT);
+      $minisite_hash = minisite_site_hash($file->filename);
       $archive = MinisiteArchive::open($file);
-      $archive->extract('public://' . MINISITE_ASSETPATH . '/' . $hash . '/');
-      $item['basepath'] = MINISITE_ASSETPATH . '/' . $hash;
+      $tree = $archive->filesTree();
+      // Ignore __MACOSX folder.
+      unset($tree['__MACOSX']);
+
+      $root_files = array_keys($tree);
+      $top_folder = $root_files[0];
+      $archive->extract('public://' . MINISITE_ASSETPATH . '/' . $minisite_hash);
+      $item['basepath'] = MINISITE_ASSETPATH . '/' . $minisite_hash . '/' . $top_folder . '/';
     }
   }
 }

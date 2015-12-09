@@ -43,3 +43,12 @@ function minisite_extensions_blacklist() {
 
   return $extensions_blacklist;
 }
+
+/**
+ * Generate minisite site hash.
+ * @param $data
+ * @return string
+ */
+function minisite_site_hash($data) {
+  return drupal_hmac_base64($data, MINISITE_HASHSALT);
+}
