@@ -7,7 +7,7 @@
 
 define('MINISITE_UPLOADPATH', 'minisite/upload');
 define('MINISITE_ASSETPATH', 'minisite/static');
-define('MINISITE_EXTENSIONS_WHITELIST', 'html htm js css png jpg gif pdf doc docx ppt pptx xls xlsx tif xml txt');
+define('MINISITE_EXTENSIONS_WHITELIST', 'html htm js css png jpg gif svg pdf doc docx ppt pptx xls xlsx tif xml txt woff woff2 ttf eot');
 define('MINISITE_EXTENSIONS_BLACKLIST', 'exe scr bmp');
 define('MINISITE_MAXFILESIZE', file_upload_max_size());
 define('MINISITE_HASHSALT', 'minisite');
