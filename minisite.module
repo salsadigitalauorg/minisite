@@ -45,6 +45,34 @@ function minisite_extensions_blacklist() {
 }
 
 /**
+ * Return minisite site path.
+ * @param \stdClass $file
+ * @return array
+ */
+function minisite_site_path(stdClass $file) {
+  if (!empty($file)) {
+    return FALSE;
+  }
+
+  $minisite_hash = minisite_site_hash($file->filename);
+  $minisite_path = MINISITE_ASSETPATH . '/' . $minisite_hash;
+
+  $archive = MinisiteArchive::open($file);
+  $tree = $archive->filesTree();
+  // Ignore __MACOSX folder.
+  unset($tree['__MACOSX']);
+
+  $root_files = array_keys($tree);
+  $top_folder = $root_files[0];
+
+  return array(
+    $archive,
+    $minisite_path,
+    $minisite_path . '/' . $top_folder . '/',
+  );
+}
+
+/**
  * Generate minisite site hash.
  * @param $data
  * @return string
