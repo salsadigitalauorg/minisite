@@ -227,12 +227,24 @@ function minisite_file_field_delete_file($item, $field, $entity_type, $id, $coun
   $file_usage = file_usage_list($file);
   if ($file->status == 0 || !empty($file_usage['minisite'])) {
     file_usage_delete($file, 'minisite', $entity_type, $id, $count);
+    minisite_file_field_delete_site($file);
     return file_delete($file);
   }
 
   // Even if the file is not deleted, return TRUE to indicate the file field
   // record can be removed from the field database tables.
   return TRUE;
+}
+
+/**
+ * Delete minisite assets.
+ * @param \stdClass $file
+ */
+function minisite_file_field_delete_site(stdClass $file) {
+  if (!empty($file)) {
+    $path = 'public://' . MINISITE_ASSETPATH . '/' . minisite_site_hash($file);
+    file_unmanaged_delete_recursive($path);
+  }
 }
 
 /**

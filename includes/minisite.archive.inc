@@ -72,12 +72,22 @@ class MinisiteArchive {
     $listing =  $this->archiver->listContents();
     foreach ($listing as $k => $file) {
       if (strpos($file, '.DS_Store') !== FALSE) {
-        unset($listing[$k]);
-      }
-      if (strpos($file, '_notes') !== FALSE) {
+        $this->fileRemove($file);
         unset($listing[$k]);
       }
       if (strpos($file, '__MACOSX') !== FALSE) {
+        unset($listing[$k]);
+        $this->fileRemove($file);
+      }
+      if (strpos($file, '_notes') !== FALSE) {
+        $this->fileRemove($file);
+        unset($listing[$k]);
+      }
+      if (strpos($file, '.dropbox') !== FALSE) {
+        $this->fileRemove($file);
+        unset($listing[$k]);
+      }
+      if (!$file) {
         unset($listing[$k]);
       }
     }
