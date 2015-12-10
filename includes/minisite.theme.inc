@@ -6,6 +6,17 @@
  */
 
 /**
+ * Implements hook_theme().
+ */
+function minisite_theme($existing, $type, $theme, $path) {
+  return array(
+    'minisite_widget' => array(
+      'render element' => 'element',
+    ),
+  );
+}
+
+/**
  * Implements hook_preprocess_html().
  */
 function minisite_preprocess_html(&$variables) {
@@ -21,9 +32,20 @@ function minisite_preprocess_html(&$variables) {
 
   // Provides minisite theme template suggestions.
   if (!empty($entity) && minisite_site_verify($entity) && $view_mode == 'full') {
-    $variables['theme_hook_suggestions'][] = 'html__minisite';
-    $variables['theme_hook_suggestions'][] = 'html__minisite__' . $entity->type;
-    $variables['minisite'] = minisite_site_build($entity);
+    if (!minisite_site_alias_verify($entity)) {
+      $minisite_field_name = minisite_site_field_with_bundle($entity->type);
+      $wrapper = entity_metadata_wrapper('node', $entity);
+      $minisite_field_values = $wrapper->$minisite_field_name->value();
+      $minisite_site_path = $minisite_field_values['site_path'];
+      global $base_url;
+      $minisite_site_url = $base_url . '/' . variable_get('file_public_path', conf_path() . '/files/') . $minisite_site_path . '/index.html';
+      drupal_goto($minisite_site_url);
+    }
+    else {
+      $variables['theme_hook_suggestions'][] = 'html__minisite';
+      $variables['theme_hook_suggestions'][] = 'html__minisite__' . $entity->type;
+      $variables['minisite'] = minisite_site_build($entity);
+    }
   }
 }
 

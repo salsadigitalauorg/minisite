@@ -98,9 +98,13 @@ function minisite_field_presave($entity_type, $entity, $field, $instance, $langc
   foreach ($items as &$item) {
     if (isset($item['fid'])) {
       $file = file_load($item['fid']);
-      list($minisite_extract_path, $minisite_base_path) = minisite_site_file_path_info($file);
+      list($minisite_extract_path, $minisite_base_path) = minisite_site_file_paths_info($file);
       minisite_site_extract($file, $minisite_extract_path);
-      $item['basepath'] = $minisite_base_path;
+      $item['site_path'] = $minisite_base_path;
+      $minisite_field_data = array(
+        'alias' => $item['alias'],
+      );
+      $item['data'] = serialize($minisite_field_data);
     }
   }
 }
@@ -271,6 +275,9 @@ function minisite_field_widget_form(&$form, &$form_state, $field, $instance, $la
     // Minisite content extensions validation.
     $minisite_extensions = $settings['minisite_extensions'];
     $elements[$delta]['#upload_validators']['_minisite_validate_minisite_asset'] = array($minisite_extensions);
+
+    // Add all extra functionality provided by the minisite widget.
+    $elements[$delta]['#process'][] = 'minisite_field_widget_process';
   }
 
   $elements[0]['#description'] = theme('file_upload_help', array(
@@ -279,6 +286,71 @@ function minisite_field_widget_form(&$form, &$form_state, $field, $instance, $la
   ));
 
   return $elements[0];
+}
+
+/**
+ * An element #process callback for the minisite field type.
+ * @param $element
+ * @param $form_state
+ * @param $form
+ */
+function minisite_field_widget_process($element, &$form_state, $form) {
+  $item = $element['#value'];
+  $item['fid'] = $element['fid']['#value'];
+
+  $instance = field_widget_instance($element, $form_state);
+
+  $settings = $instance['settings'];
+  $widget_settings = $instance['widget']['settings'];
+
+  $element['#theme'] = 'minisite_widget';
+  $element['#attached']['css'][] = drupal_get_path('module', 'minisite') . '/css/minisite.css';
+
+  // Specific settings in serialized data.
+  $data = isset($item['data']) ? unserialize($item['data']) : array();
+
+  // Allow minisite use page URL.
+  $element['alias'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Minisite alias'),
+    '#default_value' => isset($data['alias']) ? $data['alias'] : '',
+    '#description' => t('Allow Minisite use current page URL alias as minisite URL path.'),
+    '#weight' => -1,
+    '#access' => (bool) $item['fid'],
+  );
+
+  return $element;
+}
+
+/**
+ * Returns HTML for a minisite field widget.
+ *
+ * @param $variables
+ *   An associative array containing:
+ *   - element: A render element representing the minisite field widget.
+ *
+ * @ingroup themeable
+ */
+function theme_minisite_widget($variables) {
+  $element = $variables['element'];
+  $output = '';
+  $output .= '<div class="minisite-widget form-managed-file clearfix">';
+
+  if (isset($element['preview'])) {
+    $output .= '<div class="minisite-preview">';
+    $output .= drupal_render($element['preview']);
+    $output .= '</div>';
+  }
+
+  $output .= '<div class="minisite-widget-data">';
+  if ($element['fid']['#value'] != 0) {
+    $element['filename']['#markup'] .= ' <span class="file-size">(' . format_size($element['#file']->filesize) . ')</span> ';
+  }
+  $output .= drupal_render_children($element);
+  $output .= '</div>';
+  $output .= '</div>';
+
+  return $output;
 }
 
 /**

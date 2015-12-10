@@ -53,7 +53,7 @@ function minisite_field_schema($field) {
         'not null' => FALSE,
         'unsigned' => TRUE,
       ),
-      'basepath' => array(
+      'site_path' => array(
         'type' => 'varchar',
         'length' => 255,
         'not null' => FALSE,

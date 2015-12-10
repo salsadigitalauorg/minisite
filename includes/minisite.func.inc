@@ -23,6 +23,23 @@ function minisite_site_verify($entity) {
 }
 
 /**
+ * If current minisite is allowed to use page alias.
+ * @param $entity
+ */
+function minisite_site_alias_verify($entity) {
+  $minisite_field_name = minisite_site_field_with_bundle($entity->type);
+  $wrapper = entity_metadata_wrapper('node', $entity);
+  $minisite_field_values = $wrapper->$minisite_field_name->value();
+  $minisite_site_data = unserialize($minisite_field_values['data']);
+  if (isset($minisite_site_data['alias']) && $minisite_site_data['alias'] == 1) {
+    return TRUE;
+  }
+  else {
+    return FALSE;
+  }
+}
+
+/**
  * Check minisite bundle.
  * @param $bundle
  * @return bool
