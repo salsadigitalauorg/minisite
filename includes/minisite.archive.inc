@@ -47,7 +47,8 @@ class MinisiteArchive {
   public function extract($path, Array $files = array()) {
     if ($files) {
       $this->archiver->extract($path, $files);
-    } else {
+    }
+    else {
       $this->archiver->extract($path);
     }
 
@@ -69,21 +70,29 @@ class MinisiteArchive {
    * @return mixed
    */
   public function filesList() {
-    $listing =  $this->archiver->listContents();
+    $listing = $this->archiver->listContents();
     foreach ($listing as $k => $file) {
-      if (strpos($file, '.DS_Store') !== FALSE) {
+      if (strpos(strtolower($file), '.ds_store') !== FALSE) {
         $this->fileRemove($file);
         unset($listing[$k]);
       }
-      if (strpos($file, '__MACOSX') !== FALSE) {
+      if (strpos(strtolower($file), '__macosx') !== FALSE) {
         unset($listing[$k]);
         $this->fileRemove($file);
       }
-      if (strpos($file, '_notes') !== FALSE) {
+      if (strpos(strtolower($file), '_notes') !== FALSE) {
         $this->fileRemove($file);
         unset($listing[$k]);
       }
-      if (strpos($file, '.dropbox') !== FALSE) {
+      if (strpos(strtolower($file), '.dropbox') !== FALSE) {
+        $this->fileRemove($file);
+        unset($listing[$k]);
+      }
+      if (strpos(strtolower($file), 'thumbs.db') !== FALSE) {
+        $this->fileRemove($file);
+        unset($listing[$k]);
+      }
+      if (strpos(strtolower($file), 'desktop.ini') !== FALSE) {
         $this->fileRemove($file);
         unset($listing[$k]);
       }
@@ -91,7 +100,7 @@ class MinisiteArchive {
         unset($listing[$k]);
       }
     }
-    return  $listing ;
+    return $listing;
   }
 
   /**
@@ -129,7 +138,7 @@ class MinisiteArchive {
 
     foreach ($files as $file_name) {
       // Ignore folder in minisite.
-      if(substr($file_name, -1) == '/') {
+      if (substr($file_name, -1) == '/') {
         continue;
       }
       $regex = '/\.(' . preg_replace('/ +/', '|', preg_quote($extensions)) . ')$/i';
