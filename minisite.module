@@ -171,20 +171,23 @@ function minisite_site_paths_info($entity) {
  * @return array
  */
 function minisite_site_file_paths_info(stdClass $file) {
-  if (empty($file)) {
+  if (empty($file) || !isset($file->fid)) {
     return FALSE;
   }
 
-  $minisite_hash = minisite_site_hash($file);
-  $minisite_path = MINISITE_ASSETPATH . '/' . $minisite_hash;
-
   $archive = MinisiteArchive::open($file);
+  if (!$archive) {
+    return FALSE;
+  }
+
   $tree = $archive->filesTree();
   // Ignore __MACOSX folder.
   unset($tree['__MACOSX']);
 
   $root_files = array_keys($tree);
   $top_folder = $root_files[0];
+
+  $minisite_path = MINISITE_ASSETPATH . '/' . minisite_site_hash($file);
 
   return array(
     $minisite_path,
@@ -198,8 +201,13 @@ function minisite_site_file_paths_info(stdClass $file) {
  * @return string
  */
 function minisite_site_hash(stdClass $file) {
-  $fid = $file->fid;
-  return $fid;
+  if ($file && isset($file->fid)) {
+    $fid = $file->fid;
+    return $fid;
+  }
+  else {
+    return '';
+  }
 }
 
 /**
