@@ -33,9 +33,7 @@ function minisite_preprocess_html(&$variables) {
   // Provides minisite theme template suggestions.
   if (!empty($entity) && minisite_site_verify($entity) && $view_mode == 'full') {
     if (!minisite_site_alias_verify($entity)) {
-      $minisite_field_name = minisite_site_field_with_bundle($entity->type);
-      $wrapper = entity_metadata_wrapper('node', $entity);
-      $minisite_field_values = $wrapper->$minisite_field_name->value();
+      $minisite_field_values = minisite_site_field_values($entity);
       $minisite_site_path = $minisite_field_values['site_path'];
       global $base_url;
       $minisite_site_url = $base_url . '/' . variable_get('file_public_path', conf_path() . '/files/') . $minisite_site_path . '/index.html';

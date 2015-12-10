@@ -27,9 +27,12 @@ function minisite_site_verify($entity) {
  * @param $entity
  */
 function minisite_site_alias_verify($entity) {
-  $minisite_field_name = minisite_site_field_with_bundle($entity->type);
-  $wrapper = entity_metadata_wrapper('node', $entity);
-  $minisite_field_values = $wrapper->$minisite_field_name->value();
+  if (!$entity) {
+    return FALSE;
+  }
+
+  $minisite_field_values = minisite_site_field_values($entity);
+
   $minisite_site_data = unserialize($minisite_field_values['data']);
   if (isset($minisite_site_data['alias']) && $minisite_site_data['alias'] == 1) {
     return TRUE;
@@ -116,4 +119,26 @@ function minisite_site_field_with_bundle($bundle) {
   else {
     return FALSE;
   }
+}
+
+/**
+ * Return minisite site field values.
+ * @param $entity
+ * @return null
+ */
+function minisite_site_field_values($entity) {
+  $minisite_field_values = NULL;
+  // Get field name.
+  $minisite_field_name = minisite_site_field_with_bundle($entity->type);
+
+  if (module_exists('entity')) {
+    $wrapper = entity_metadata_wrapper('node', $entity);
+    $minisite_field_values = $wrapper->$minisite_field_name->value();
+  }
+  else {
+    $minisite_field = $entity->$minisite_field_name;
+    $minisite_field_values = $minisite_field[LANGUAGE_NONE][0];
+  }
+
+  return $minisite_field_values;
 }

@@ -142,9 +142,8 @@ function minisite_site_paths_info($entity) {
   // Load module inc file.
   module_load_include('inc', 'minisite', 'includes/minisite.func');
 
-  $minisite_field_name = minisite_site_field_with_bundle($entity->type);
-  $wrapper = entity_metadata_wrapper('node', $entity);
-  $minisite_field_values = $wrapper->$minisite_field_name->value();
+  $minisite_field_values = minisite_site_field_values($entity);
+
   $minisite_site_path = $minisite_field_values['site_path'];
   $minisite_node_path = 'node/' . $entity->nid;
   $minisite_node_alias = drupal_get_path_alias($minisite_node_path);
