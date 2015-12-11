@@ -211,13 +211,6 @@ function minisite_field_delete_revision($entity_type, $entity, $field, $instance
 
 /**
  * Delete minisite file field data.
- *
- * @param $item
- * @param $field
- * @param $entity_type
- * @param $id
- * @param int $count
- * @return bool|mixed|TRUE
  */
 function minisite_file_field_delete_file($item, $field, $entity_type, $id, $count = 1) {
   // To prevent the file field from deleting files it doesn't know about, check
@@ -238,6 +231,7 @@ function minisite_file_field_delete_file($item, $field, $entity_type, $id, $coun
 
 /**
  * Delete minisite assets.
+ *
  * @param \stdClass $file
  */
 function minisite_file_field_delete_site(stdClass $file) {
@@ -302,9 +296,6 @@ function minisite_field_widget_form(&$form, &$form_state, $field, $instance, $la
 
 /**
  * An element #process callback for the minisite field type.
- * @param $element
- * @param $form_state
- * @param $form
  */
 function minisite_field_widget_process($element, &$form_state, $form) {
   $item = $element['#value'];
@@ -378,8 +369,7 @@ function minisite_field_formatter_info_alter(&$info) {
  * Validate minisite asset.
  *
  * @param \stdClass $file
- * @param $extensions
- * @return array
+ *
  */
 function _minisite_validate_minisite_asset(stdClass $file, $extensions) {
   $errors = array();
@@ -449,9 +439,11 @@ function _minisite_validate_minisite_file_settings($element, &$form_state) {
 
 /**
  * Validate minisite file extension in blacklist.
+ *
  * @param array $extensions
+ *
  */
-function _minisite_validate_minisite_file_blacklist(Array $extensions) {
+function _minisite_validate_minisite_file_blacklist(array $extensions) {
   $extensions_blacklist = minisite_site_extensions_blacklist();
   foreach ($extensions_blacklist as $ext) {
     if (in_array($ext, $extensions)) {
