@@ -416,12 +416,12 @@ function _minisite_validate_minisite_file_settings($element, &$form_state) {
   if (!empty($element['#value'])) {
     $extensions = preg_replace('/([, ]+\.?)/', ' ', trim(strtolower($element['#value'])));
     $extensions = array_filter(explode(' ', $extensions));
-    $extensionsArray = array_unique($extensions);
-    $extensions = implode(' ', array_unique($extensionsArray));
+    $extensions_array = array_unique($extensions);
+    $extensions = implode(' ', array_unique($extensions_array));
     if (!preg_match('/^([a-z0-9]+([.][a-z0-9])* ?)+$/', $extensions)) {
       form_error($element, t('The list of allowed extensions is not valid, be sure to exclude leading dots and to separate extensions with a comma or space.'));
     }
-    elseif (_minisite_validate_minisite_file_blacklist($extensionsArray) === FALSE) {
+    elseif (_minisite_validate_minisite_file_blacklist($extensions_array) === FALSE) {
       form_error($element, t('The list of allowed extensions is not valid. The following extensions are NOT allowed: %extensions-blacklist', array(
         '%extensions-blacklist' => implode(' ', minisite_site_extensions_blacklist()),
       )));
