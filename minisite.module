@@ -77,7 +77,7 @@ function minisite_site_parse($entity) {
   // Bypass lib error.
   libxml_use_internal_errors(TRUE);
 
-  $document = new \DOMDocument;
+  $document = new \DOMDocument();
   $document->loadHTMLFile($minisite_site_request);
 
   // Return 404 if document is empty.

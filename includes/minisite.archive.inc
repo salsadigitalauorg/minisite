@@ -23,13 +23,13 @@ class MinisiteArchive {
         case 'application/zip':
           $archive->archiver = new \ArchiverZip($file_path);
           $archive->archiver->listContents();
-
           break;
+
         default:
           return FALSE;
       }
-
-    } catch (\Exception $e) {
+    }
+    catch (\Exception $e) {
       return FALSE;
     }
 
