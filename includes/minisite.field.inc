@@ -306,7 +306,6 @@ function minisite_field_widget_process($element, &$form_state, $form) {
   $widget_settings = $instance['widget']['settings'];
 
   $element['#theme'] = 'minisite_widget';
-  $element['#attached']['css'][] = drupal_get_path('module', 'minisite') . '/css/minisite.css';
 
   // Specific settings in serialized data.
   $data = isset($item['data']) ? unserialize($item['data']) : array();
@@ -331,13 +330,6 @@ function theme_minisite_widget($variables) {
   $element = $variables['element'];
   $output = '';
   $output .= '<div class="minisite-widget form-managed-file clearfix">';
-
-  if (isset($element['preview'])) {
-    $output .= '<div class="minisite-preview">';
-    $output .= drupal_render($element['preview']);
-    $output .= '</div>';
-  }
-
   $output .= '<div class="minisite-widget-data">';
   if ($element['fid']['#value'] != 0) {
     $element['filename']['#markup'] .= ' <span class="file-size">(' . format_size($element['#file']->filesize) . ')</span> ';
