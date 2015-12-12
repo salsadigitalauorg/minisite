@@ -44,6 +44,101 @@ function minisite_requirements($phase) {
 }
 
 /**
+ * Implements hook_schema().
+ */
+function minisite_schema() {
+  $schema['minisite_asset'] = array(
+    'description' => 'A list of asset information for minisite.',
+    'fields' => array(
+      'entity_type' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'bundle' => array(
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'entity_id' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'The entity id this data is attached to',
+      ),
+      'revision_id' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'description' => 'The entity revision id this data is attached to, or NULL if the entity type is not versioned',
+      ),
+      'minisite_field_name' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'minisite_fid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'The minisite fid this data is attached to',
+      ),
+      'language' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'The language for this data item.',
+      ),
+      'source' => array(
+        'description' => 'The minisite file source path.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'alias' => array(
+        'description' => 'The alias for this path; e.g. title-of-the-minisite.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'primary key' => array(
+      'entity_type',
+      'entity_id',
+      'minisite_field_name',
+      'minisite_fid',
+      'language',
+      'source'
+    ),
+    'indexes' => array(
+      'entity_type' => array('entity_type'),
+      'bundle' => array('bundle'),
+      'entity_id' => array('entity_id'),
+      'revision_id' => array('revision_id'),
+      'minisite_field_name' => array('minisite_field_name'),
+      'minisite_fid' => array('minisite_fid'),
+      'language' => array('language'),
+      'source' => array('source'),
+      'alias' => array('alias'),
+    ),
+    'foreign keys' => array(
+      'minisite_fid' => array(
+        'table' => 'file_managed',
+        'columns' => array('minisite_fid' => 'fid'),
+      ),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
  * Implements hook_field_schema().
  */
 function minisite_field_schema($field) {

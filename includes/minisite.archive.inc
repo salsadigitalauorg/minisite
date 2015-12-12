@@ -93,6 +93,7 @@ class MinisiteArchive {
         unset($listing[$k]);
       }
     }
+
     return $listing;
   }
 

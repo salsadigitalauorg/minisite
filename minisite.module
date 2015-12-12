@@ -29,11 +29,105 @@ function minisite_help($path, $arg) {
 }
 
 /**
- * Exact minisite files.
+ * Save and extract minisite.
  */
-function minisite_site_extract(stdClass $file, $minisite_extract_path = MINISITE_ASSETPATH) {
-  $archive = MinisiteArchive::open($file);
-  $archive->extract('public://' . $minisite_extract_path);
+function minisite_site_save($entity_type, $entity, $field, $instance, $langcode, &$items) {
+  foreach ($items as &$item) {
+    if (isset($item['fid'])) {
+      $file = file_load($item['fid']);
+      if (!empty($file)) {
+        // Load module inc file.
+        module_load_include('inc', 'minisite', 'includes/minisite.site');
+        list($minisite_extract_path, $minisite_base_path, $minisite_listing) = minisite_site_info($item['fid'], FALSE);
+
+        // Extract files.
+        minisite_site_extract($file, $minisite_extract_path);
+
+        // Save specific settings in data.
+        $item['site_path'] = $minisite_extract_path . '/' . $minisite_base_path;
+        $minisite_field_data = array(
+          'alias' => $item['alias'],
+        );
+        $item['data'] = serialize($minisite_field_data);
+
+        $minisite_info = array(
+          'minisite_extract_path' => $minisite_extract_path,
+          'minisite_base_path' => $minisite_base_path,
+          'minisite_listing' => $minisite_listing,
+        );
+
+        // Save assets information.
+        drupal_register_shutdown_function('minisite_site_save_asset', $entity_type, $entity, $field['field_name'], $langcode, $item, $minisite_info);
+      }
+    }
+  }
+}
+
+/**
+ * Save minisite asset into database.
+ */
+function minisite_site_save_asset($entity_type, $entity, $field_name, $langcode, $item, $minisite_info) {
+  $entity_uri = entity_uri($entity_type, $entity);
+  $entity_path = $entity_uri['path'];
+  $entity_path_alias = drupal_get_path_alias($entity_path, $langcode);
+  list($entity_id, $vid, $bundle) = entity_extract_ids($entity_type, $entity);
+  // Prepare keys.
+  $keys = array(
+    'entity_type' => $entity_type,
+    'bundle' => $bundle,
+    'entity_id' => $entity_id,
+    'revision_id' => $vid,
+    'minisite_field_name' => $field_name,
+    'minisite_fid' => $item['fid'],
+    'language' => $langcode,
+    'source' => $minisite_info['minisite_extract_path'] . '/' . $minisite_info['minisite_base_path'],
+  );
+  // Prepare fields.
+  $fields = array(
+    'alias' => $entity_path_alias,
+  );
+
+  // Save minisite landing page information.
+  db_merge('minisite_asset')
+    ->key($keys)
+    ->fields($fields)
+    ->execute();
+
+  // Save minisite assets information.
+  if (isset($item['alias']) && $item['alias'] == 1) {
+    foreach ($minisite_info['minisite_listing'] as $minisite_file) {
+      if (strpos(strtolower($minisite_file), '.html') !== FALSE || strpos(strtolower($minisite_file), '.htm') !== FALSE) {
+        $keys['source'] = $minisite_info['minisite_extract_path'] . '/' . $minisite_file;
+        $search = $minisite_info['minisite_base_path'];
+        $replace = $entity_path_alias;
+        $fields['alias'] = str_replace($search, $replace, $minisite_file);
+        db_merge('minisite_asset')
+          ->key($keys)
+          ->fields($fields)
+          ->execute();
+      }
+    }
+  }
+}
+
+/**
+ * Delete minisite.
+ */
+function minisite_site_delete($item, $field, $entity_type, $id) {
+  $file = (object) $item;
+  $file_usage = file_usage_list($file);
+  if ($file->status == 0 || !empty($file_usage['minisite'])) {
+    if (!empty($file)) {
+      // Delete database records.
+      db_delete('minisite_asset')
+        ->condition('minisite_fid', $file->fid)
+        ->execute();
+      // Load module inc file.
+      module_load_include('inc', 'minisite', 'includes/minisite.site');
+      $path = 'public://' . MINISITE_ASSETPATH . '/' . minisite_site_hash($file);
+      file_unmanaged_delete_recursive($path);
+    }
+  }
 }
 
 /**
@@ -156,47 +250,6 @@ function minisite_site_paths_info($entity) {
     $minisite_site_url,
     $minisite_node_alias,
   );
-}
-
-/**
- * Return minisite site path.
- */
-function minisite_site_file_paths_info(stdClass $file) {
-  if (empty($file) || !isset($file->fid)) {
-    return FALSE;
-  }
-
-  $archive = MinisiteArchive::open($file);
-  if (!$archive) {
-    return FALSE;
-  }
-
-  $tree = $archive->filesTree();
-  // Ignore __MACOSX folder.
-  unset($tree['__MACOSX']);
-
-  $root_files = array_keys($tree);
-  $top_folder = $root_files[0];
-
-  $minisite_path = MINISITE_ASSETPATH . '/' . minisite_site_hash($file);
-
-  return array(
-    $minisite_path,
-    $minisite_path . '/' . $top_folder,
-  );
-}
-
-/**
- * Generate minisite site hash.
- */
-function minisite_site_hash(stdClass $file) {
-  if ($file && isset($file->fid)) {
-    $fid = $file->fid;
-    return $fid;
-  }
-  else {
-    return '';
-  }
 }
 
 /**

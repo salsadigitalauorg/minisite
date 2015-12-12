@@ -95,18 +95,8 @@ function minisite_field_load($entity_type, $entities, $field, $instances, $langc
 function minisite_field_presave($entity_type, $entity, $field, $instance, $langcode, &$items) {
   file_field_presave($entity_type, $entity, $field, $instance, $langcode, $items);
 
-  foreach ($items as &$item) {
-    if (isset($item['fid'])) {
-      $file = file_load($item['fid']);
-      list($minisite_extract_path, $minisite_base_path) = minisite_site_file_paths_info($file);
-      minisite_site_extract($file, $minisite_extract_path);
-      $item['site_path'] = $minisite_base_path;
-      $minisite_field_data = array(
-        'alias' => $item['alias'],
-      );
-      $item['data'] = serialize($minisite_field_data);
-    }
-  }
+  // Save and extract minisite.
+  minisite_site_save($entity_type, $entity, $field, $instance, $langcode, $items);
 }
 
 /**
@@ -218,25 +208,18 @@ function minisite_file_field_delete_file($item, $field, $entity_type, $id, $coun
   // are not yet associated with any content at all.
   $file = (object) $item;
   $file_usage = file_usage_list($file);
+
+  // Delete minisite.
+  minisite_site_delete($item, $field, $entity_type, $id);
+
   if ($file->status == 0 || !empty($file_usage['minisite'])) {
     file_usage_delete($file, 'minisite', $entity_type, $id, $count);
-    minisite_file_field_delete_site($file);
     return file_delete($file);
   }
 
   // Even if the file is not deleted, return TRUE to indicate the file field
   // record can be removed from the field database tables.
   return TRUE;
-}
-
-/**
- * Delete minisite assets.
- */
-function minisite_file_field_delete_site(stdClass $file) {
-  if (!empty($file)) {
-    $path = 'public://' . MINISITE_ASSETPATH . '/' . minisite_site_hash($file);
-    file_unmanaged_delete_recursive($path);
-  }
 }
 
 /**
