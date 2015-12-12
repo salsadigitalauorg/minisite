@@ -77,7 +77,7 @@ function minisite_site_parse($entity) {
   // Bypass lib error.
   libxml_use_internal_errors(TRUE);
 
-  $document = new DOMDocument;
+  $document = new \DOMDocument;
   $document->loadHTMLFile($minisite_site_request);
 
   // Return 404 if document is empty.
@@ -203,7 +203,7 @@ function minisite_site_hash(stdClass $file) {
  * Return minisite file extensions blacklist.
  */
 function minisite_site_extensions_blacklist() {
-  $extensions_blacklist =  &drupal_static(__FUNCTION__);
+  $extensions_blacklist = &drupal_static(__FUNCTION__);
 
   if (!isset($extensions_blacklist)) {
     $extensions_blacklist = preg_replace('/([, ]+\.?)/', ' ', trim(strtolower(MINISITE_EXTENSIONS_BLACKLIST)));

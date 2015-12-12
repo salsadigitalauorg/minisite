@@ -160,7 +160,7 @@ function minisite_field_update($entity_type, $entity, $field, $instance, $langco
     $original = entity_create_stub_entity($entity_type, array(
       $id,
       $vid,
-      $bundle
+      $bundle,
     ));
     field_attach_load($entity_type, array($id => $original), FIELD_LOAD_CURRENT, array('field_id' => $field['id']));
   }
@@ -269,7 +269,8 @@ function minisite_field_widget_info() {
  * Implements hook_field_widget_form().
  */
 function minisite_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
-  // Add display_field setting to field because file_field_widget_form() assumes it is set.
+  // Add display_field setting to field
+  // because file_field_widget_form() assumes it is set.
   $field['settings']['display_field'] = 0;
 
   $elements = file_field_widget_form($form, $form_state, $field, $instance, $langcode, $items, $delta, $element);
@@ -286,7 +287,7 @@ function minisite_field_widget_form(&$form, &$form_state, $field, $instance, $la
 
   $elements[0]['#description'] = theme('file_upload_help', array(
     'description' => field_filter_xss($instance['description']),
-    'upload_validators' => $elements[0]['#upload_validators']
+    'upload_validators' => $elements[0]['#upload_validators'],
   ));
 
   return $elements[0];
@@ -325,12 +326,6 @@ function minisite_field_widget_process($element, &$form_state, $form) {
 
 /**
  * Returns HTML for a minisite field widget.
- *
- * @param $variables
- *   An associative array containing:
- *   - element: A render element representing the minisite field widget.
- *
- * @ingroup themeable
  */
 function theme_minisite_widget($variables) {
   $element = $variables['element'];

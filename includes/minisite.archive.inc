@@ -6,7 +6,7 @@
  */
 
 /**
- * Class MinisiteArchive
+ * Class MinisiteArchive.
  */
 class MinisiteArchive {
 
@@ -23,10 +23,12 @@ class MinisiteArchive {
         case 'application/zip':
           $archive->archiver = new \ArchiverZip($file_path);
           $archive->archiver->listContents();
+
           break;
         default:
           return FALSE;
       }
+
     } catch (\Exception $e) {
       return FALSE;
     }
@@ -117,11 +119,6 @@ class MinisiteArchive {
 
   /**
    * Checks that the filename ends with an allowed extension.
-   *
-   * @param $allowed_extensions
-   *  string with a space separated list of allowed extensions.
-   *
-   * @see file_validate_extensions()
    */
   public static function fileExtensionCheck($files, $extensions) {
     $invalid_files = array();
@@ -139,4 +136,5 @@ class MinisiteArchive {
 
     return $invalid_files;
   }
+
 }

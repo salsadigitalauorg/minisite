@@ -57,15 +57,13 @@ function minisite_site_bundle_verify($bundle) {
  * Return minisite information with bundled entities.
  */
 function minisite_site_bundles_info() {
-  $bundles =  &drupal_static(__FUNCTION__);
+  $bundles = &drupal_static(__FUNCTION__);
 
   if (!isset($bundles)) {
     $bundles = array();
     $minisite_fields = minisite_site_fields_info('minisite', 'node');
     foreach ($minisite_fields as $minisite_field) {
       foreach ($minisite_field['bundles']['node'] as $bundle) {
-        // $field_instance = field_info_instance('node', $minisite_field['field_name'], $bundle);
-        // $field_instance_settings = $field_instance['settings'];
         if (!empty($bundle)) {
           $bundles[$bundle] = $minisite_field['field_name'];
         }
