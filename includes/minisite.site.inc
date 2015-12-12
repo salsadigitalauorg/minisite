@@ -67,33 +67,3 @@ function minisite_site_hash(stdClass $file) {
     return '';
   }
 }
-
-/**
- * Save minisite assets to database.
- */
-function minisite_site_save_database($entity_type, $entity, $field, $instance, $langcode, $item, $minisite_listing = []) {
-  list($id, $vid, $bundle) = entity_extract_ids($entity_type, $entity);
-  db_merge('minisite_asset')
-    ->key(array(
-      'entity_type' => $entity_type,
-      'bundle' => $bundle,
-      'entity_id' => $id,
-      'revision_id' => $vid,
-      'minisite_field_name' => $field->field_name,
-      'minisite_fid' => $item['fid'],
-      'language' => $langcode,
-      'source' => $id,
-    ))
-    ->fields(array(
-      'entity_type' => $entity_type,
-      'bundle' => $bundle,
-      'entity_id' => $id,
-      'revision_id' => $vid,
-      'minisite_field_name' => $field->field_name,
-      'minisite_fid' => $item['fid'],
-      'language' => $langcode,
-      'source' => $id,
-      'alias' => '',
-    ))
-    ->execute();
-}

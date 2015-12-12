@@ -54,13 +54,13 @@ function minisite_schema() {
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,
-        'default' => ''
+        'default' => '',
       ),
       'bundle' => array(
         'type' => 'varchar',
         'length' => 128,
         'not null' => TRUE,
-        'default' => ''
+        'default' => '',
       ),
       'entity_id' => array(
         'type' => 'int',
@@ -78,7 +78,7 @@ function minisite_schema() {
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,
-        'default' => ''
+        'default' => '',
       ),
       'minisite_fid' => array(
         'type' => 'int',
@@ -114,7 +114,7 @@ function minisite_schema() {
       'minisite_field_name',
       'minisite_fid',
       'language',
-      'source'
+      'source',
     ),
     'indexes' => array(
       'entity_type' => array('entity_type'),
