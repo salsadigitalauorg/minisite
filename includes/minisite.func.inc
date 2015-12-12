@@ -6,54 +6,6 @@
  */
 
 /**
- * Check minisite entity status.
- */
-function minisite_site_verify($entity) {
-  if (empty($entity) && empty($entity->nid)) {
-    return FALSE;
-  }
-
-  if (!minisite_site_bundle_verify($entity->type)) {
-    return FALSE;
-  }
-
-  return TRUE;
-}
-
-/**
- * If current minisite is allowed to use page alias.
- */
-function minisite_site_alias_verify($entity) {
-  if (!$entity) {
-    return FALSE;
-  }
-
-  $minisite_field_values = minisite_site_field_values($entity);
-
-  $minisite_site_data = unserialize($minisite_field_values['data']);
-  if (isset($minisite_site_data['alias']) && $minisite_site_data['alias'] == 1) {
-    return TRUE;
-  }
-  else {
-    return FALSE;
-  }
-}
-
-/**
- * Check minisite bundle.
- */
-function minisite_site_bundle_verify($bundle) {
-  $bundles_tree = minisite_site_bundles_info();
-  $bundles = array_keys($bundles_tree);
-  if (in_array($bundle, $bundles)) {
-    return TRUE;
-  }
-  else {
-    return FALSE;
-  }
-}
-
-/**
  * Return minisite information with bundled entities.
  */
 function minisite_site_bundles_info() {

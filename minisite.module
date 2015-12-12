@@ -134,30 +134,42 @@ function minisite_site_delete($item, $field, $entity_type, $id) {
  * Load minisite.
  */
 function minisite_site_load() {
-  $view_mode = FALSE;
+  // Load module inc file.
+  module_load_include('inc', 'minisite', 'includes/minisite.site');
 
-  $path = current_path();
-  if (strpos($path, 'node/') === FALSE) {
-    $segments = explode('/', $path);
-    foreach ($segments as $segment) {
-      $internal = drupal_get_normal_path($segment);
-      if (strpos($internal, 'node/') !== FALSE) {
-        $path = $internal;
-        $view_mode = 'full';
-        break;
-      }
-    }
+  $minisite_info = minisite_site_lookup_path();
+
+  if (!$minisite_info) {
+    return FALSE;
   }
 
-  $entity = menu_get_object('node', 1, $path);
-  return array($entity, $view_mode);
+  $entity_object = entity_load($minisite_info['entity_type'], array($minisite_info['entity_id']));
+  $entity = $entity_object[array_keys($entity_object)[0]];
+
+  $minisite_field_name = $minisite_info['minisite_field_name'];
+  if (module_exists('entity')) {
+    $wrapper = entity_metadata_wrapper($minisite_info['entity_type'], $entity);
+    $minisite_field_values = $wrapper->$minisite_field_name->value();
+  }
+  else {
+    $minisite_field = $entity->$minisite_field_name;
+    $minisite_field_values = $minisite_field[LANGUAGE_NONE][0];
+  }
+
+  $minisite_site_data = unserialize($minisite_field_values['data']);
+  if (isset($minisite_site_data['alias']) && $minisite_site_data['alias'] == 1) {
+    return $minisite_info;
+  }
+  else {
+    drupal_goto($minisite_info['source']);
+  }
 }
 
 /**
  * Build minisite.
  */
-function minisite_site_build($entity) {
-  $html = minisite_site_parse($entity);
+function minisite_site_build($minisite_info) {
+  $html = minisite_site_parse($minisite_info);
 
   return $html;
 }
@@ -165,8 +177,8 @@ function minisite_site_build($entity) {
 /**
  * Parse minisite.
  */
-function minisite_site_parse($entity) {
-  list($minisite_site_request, $minisite_site_url, $minisite_node_alias) = minisite_site_paths_info($entity);
+function minisite_site_parse($minisite_info) {
+  list($minisite_site_request, $minisite_site_url, $minisite_node_alias) = minisite_site_paths_info($minisite_info);
 
   // Bypass lib error.
   libxml_use_internal_errors(TRUE);
@@ -223,13 +235,15 @@ function minisite_site_parse($entity) {
 /**
  * Return minisite paths information.
  */
-function minisite_site_paths_info($entity) {
+function minisite_site_paths_info($minisite_info) {
   // Prepare minisite path and alias.
   global $base_url;
 
   // Load module inc file.
   module_load_include('inc', 'minisite', 'includes/minisite.func');
 
+  $entity_object = entity_load($minisite_info['entity_type'], array($minisite_info['entity_id']));
+  $entity = $entity_object[array_keys($entity_object)[0]];
   $minisite_field_values = minisite_site_field_values($entity);
 
   $minisite_site_path = $minisite_field_values['site_path'];
