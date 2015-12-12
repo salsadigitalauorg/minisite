@@ -231,8 +231,6 @@ function minisite_file_field_delete_file($item, $field, $entity_type, $id, $coun
 
 /**
  * Delete minisite assets.
- *
- * @param \stdClass $file
  */
 function minisite_file_field_delete_site(stdClass $file) {
   if (!empty($file)) {
@@ -367,9 +365,6 @@ function minisite_field_formatter_info_alter(&$info) {
 
 /**
  * Validate minisite asset.
- *
- * @param \stdClass $file
- *
  */
 function _minisite_validate_minisite_asset(stdClass $file, $extensions) {
   $errors = array();
@@ -439,9 +434,6 @@ function _minisite_validate_minisite_file_settings($element, &$form_state) {
 
 /**
  * Validate minisite file extension in blacklist.
- *
- * @param array $extensions
- *
  */
 function _minisite_validate_minisite_file_blacklist(array $extensions) {
   $extensions_blacklist = minisite_site_extensions_blacklist();

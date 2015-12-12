@@ -9,15 +9,11 @@
  * Class MinisiteArchive
  */
 class MinisiteArchive {
-  /**
-   * @var
-   */
+
   protected $archiver;
 
   /**
    * Open archive file.
-   * @param \stdClass $file
-   * @return bool|static
    */
   public static function open(\stdClass $file) {
     $archive = new static();
@@ -40,9 +36,6 @@ class MinisiteArchive {
 
   /**
    * Exact files to given path.
-   * @param $path
-   * @param array $files
-   * @return $this
    */
   public function extract($path, Array $files = array()) {
     if ($files) {
@@ -57,8 +50,6 @@ class MinisiteArchive {
 
   /**
    * Remove file from archive file.
-   * @param $file_path
-   * @return $this
    */
   public function fileRemove($file_path) {
     $this->archiver->remove($file_path);
@@ -67,7 +58,7 @@ class MinisiteArchive {
   }
 
   /**
-   * @return mixed
+   * Return files listing.
    */
   public function filesList() {
     $listing = $this->archiver->listContents();
@@ -104,7 +95,7 @@ class MinisiteArchive {
   }
 
   /**
-   * @return array
+   * Return files tree listing.
    */
   public function filesTree() {
     $listing = $this->filesList();
@@ -126,10 +117,9 @@ class MinisiteArchive {
 
   /**
    * Checks that the filename ends with an allowed extension.
-   * @param $files
+   *
    * @param $allowed_extensions
    *  string with a space separated list of allowed extensions.
-   * @return array
    *
    * @see file_validate_extensions()
    */

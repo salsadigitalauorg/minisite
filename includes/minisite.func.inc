@@ -7,8 +7,6 @@
 
 /**
  * Check minisite entity status.
- * @param $entity
- * @return bool
  */
 function minisite_site_verify($entity) {
   if (empty($entity) && empty($entity->nid)) {
@@ -24,7 +22,6 @@ function minisite_site_verify($entity) {
 
 /**
  * If current minisite is allowed to use page alias.
- * @param $entity
  */
 function minisite_site_alias_verify($entity) {
   if (!$entity) {
@@ -44,8 +41,6 @@ function minisite_site_alias_verify($entity) {
 
 /**
  * Check minisite bundle.
- * @param $bundle
- * @return bool
  */
 function minisite_site_bundle_verify($bundle) {
   $bundles_tree = minisite_site_bundles_info();
@@ -83,9 +78,6 @@ function minisite_site_bundles_info() {
 
 /**
  * Finds all fields of a particular field type.
- * @param $field_type
- * @param $entity_type
- * @return array
  */
 function minisite_site_fields_info($field_type, $entity_type = NULL) {
   $fields = array();
@@ -107,8 +99,6 @@ function minisite_site_fields_info($field_type, $entity_type = NULL) {
 
 /**
  * Return minisite field name by given bundle name.
- * @param $bundle
- * @return bool
  */
 function minisite_site_field_with_bundle($bundle) {
   $bundles_tree = minisite_site_bundles_info();
@@ -123,8 +113,6 @@ function minisite_site_field_with_bundle($bundle) {
 
 /**
  * Return minisite site field values.
- * @param $entity
- * @return null
  */
 function minisite_site_field_values($entity) {
   $minisite_field_values = NULL;

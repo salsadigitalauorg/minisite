@@ -30,8 +30,6 @@ function minisite_help($path, $arg) {
 
 /**
  * Exact minisite files.
- * @param \stdClass $file
- * @param $minisite_extract_path
  */
 function minisite_site_extract(stdClass $file, $minisite_extract_path = MINISITE_ASSETPATH) {
   $archive = MinisiteArchive::open($file);
@@ -47,7 +45,7 @@ function minisite_site_load() {
   $path = current_path();
   if (strpos($path, 'node/') === FALSE) {
     $segments = explode('/', $path);
-    foreach ($segments as $k => $segment) {
+    foreach ($segments as $segment) {
       $internal = drupal_get_normal_path($segment);
       if (strpos($internal, 'node/') !== FALSE) {
         $path = $internal;
@@ -72,8 +70,6 @@ function minisite_site_build($entity) {
 
 /**
  * Parse minisite.
- * @param $resource
- * @return string
  */
 function minisite_site_parse($entity) {
   list($minisite_site_request, $minisite_site_url, $minisite_node_alias) = minisite_site_paths_info($entity);
@@ -132,8 +128,6 @@ function minisite_site_parse($entity) {
 
 /**
  * Return minisite paths information.
- * @param $entity
- * @return array
  */
 function minisite_site_paths_info($entity) {
   // Prepare minisite path and alias.
@@ -166,8 +160,6 @@ function minisite_site_paths_info($entity) {
 
 /**
  * Return minisite site path.
- * @param \stdClass $file
- * @return array
  */
 function minisite_site_file_paths_info(stdClass $file) {
   if (empty($file) || !isset($file->fid)) {
@@ -196,8 +188,6 @@ function minisite_site_file_paths_info(stdClass $file) {
 
 /**
  * Generate minisite site hash.
- * @param $data
- * @return string
  */
 function minisite_site_hash(stdClass $file) {
   if ($file && isset($file->fid)) {
@@ -211,7 +201,6 @@ function minisite_site_hash(stdClass $file) {
 
 /**
  * Return minisite file extensions blacklist.
- * @return array
  */
 function minisite_site_extensions_blacklist() {
   $extensions_blacklist =  &drupal_static(__FUNCTION__);
