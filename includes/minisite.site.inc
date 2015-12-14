@@ -139,9 +139,6 @@ function minisite_site_parse($minisite_info) {
  * Return minisite paths information.
  */
 function minisite_site_paths_info($minisite_info) {
-  // Prepare minisite path and alias.
-  global $base_url;
-
   // Load module inc file.
   module_load_include('inc', 'minisite', 'includes/minisite.func');
 
