@@ -81,7 +81,8 @@ function minisite_site_hash(stdClass $file) {
  * Parse minisite.
  */
 function minisite_site_parse($minisite_info) {
-  list($minisite_site_request, $minisite_site_url, $minisite_node_alias) = minisite_site_paths_info($minisite_info);
+  $minisite_site_paths_info = minisite_site_paths_info($minisite_info);
+  list($minisite_site_request, $minisite_site_url, $minisite_node_alias) = $minisite_site_paths_info;
 
   // Bypass lib error.
   libxml_use_internal_errors(TRUE);
@@ -91,13 +92,15 @@ function minisite_site_parse($minisite_info) {
 
   // Return 404 if document is empty.
   if (empty($document)) {
-    return drupal_not_found();
+    drupal_not_found();
+    exit();
   }
 
   $head = $document->getElementsByTagName('head')->item(0);
   // Return 404 is document head is empty.
   if (empty($head)) {
-    return drupal_not_found();
+    drupal_not_found();
+    exit();
   }
   else {
     // Update base href.
@@ -139,27 +142,32 @@ function minisite_site_parse($minisite_info) {
  * Return minisite paths information.
  */
 function minisite_site_paths_info($minisite_info) {
+  $minisite_site_request = NULL;
+  $minisite_site_url = NULL;
+  $minisite_node_alias = NULL;
+
   // Load module inc file.
   module_load_include('inc', 'minisite', 'includes/minisite.func');
 
-  $entity_object = entity_load($minisite_info['entity_type'], array($minisite_info['entity_id']));
-  $entity_ids = array_keys($entity_object);
-  $entity_id = $entity_ids[0];
-  $entity = $entity_object[$entity_id];
-  $minisite_field_values = minisite_asset_field_values($minisite_info['entity_type'], $entity, $minisite_info['minisite_field_name']);
+  // Get entity object.
+  $entity = _minisite_site_load_entity($minisite_info['entity_type'], array($minisite_info['entity_id']));
 
-  $minisite_site_path = $minisite_field_values['site_path'];
-  $minisite_node_path = 'node/' . $entity->nid;
-  $minisite_node_alias = drupal_get_path_alias($minisite_node_path);
+  if ($entity) {
+    $minisite_field_values = minisite_asset_field_values($minisite_info['entity_type'], $entity, $minisite_info['minisite_field_name']);
 
-  $minisite_site_url = _minisite_site_file_public_path_base_url() . $minisite_site_path . '/';
-  $request_path = request_path();
-  $request_path = substr(urldecode($request_path), strlen($minisite_node_alias) + 1);
-  if (empty($request_path) || $request_path == '/') {
-    $request_path = 'index.html';
+    $minisite_site_path = $minisite_field_values['site_path'];
+    $minisite_node_path = 'node/' . $entity->nid;
+    $minisite_node_alias = drupal_get_path_alias($minisite_node_path);
+
+    $minisite_site_url = _minisite_site_file_public_path_base_url() . $minisite_site_path . '/';
+    $request_path = request_path();
+    $request_path = substr(urldecode($request_path), strlen($minisite_node_alias) + 1);
+    if (empty($request_path) || $request_path == '/') {
+      $request_path = 'index.html';
+    }
+
+    $minisite_site_request = 'public://' . $minisite_site_path . '/' . $request_path;
   }
-
-  $minisite_site_request = 'public://' . $minisite_site_path . '/' . $request_path;
 
   return array(
     $minisite_site_request,
@@ -222,4 +230,22 @@ function _minisite_site_file_public_path_base_url() {
   }
 
   return $minisite_site_base_url_real;
+}
+
+/**
+ * Return entity object.
+ */
+function _minisite_site_load_entity($entity_type, $entity_ids = array()) {
+  if (empty($entity_type) || empty($entity_ids)) {
+    return array();
+  }
+
+  $entity_object = entity_load($entity_type, $entity_ids);
+  if (empty($entity_object)) {
+    return array();
+  }
+
+  $entity_ids = array_keys($entity_object);
+  $entity_id = $entity_ids[0];
+  return $entity_object[$entity_id];
 }

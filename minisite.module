@@ -157,9 +157,24 @@ function minisite_site_delete($item, $field, $entity_type, $id) {
  * Build minisite.
  */
 function minisite_site_build($minisite_info) {
-  // Load module inc file.
-  module_load_include('inc', 'minisite', 'includes/minisite.site');
-  $html = minisite_site_parse($minisite_info);
+  $minisite_html = &drupal_static(__FUNCTION__);
 
-  return $html;
+  if (!isset($minisite_html)) {
+    $minisite_html = array();
+  }
+
+  if (!isset($minisite_html[$minisite_info['entity_id']])) {
+    // Load module inc file.
+    module_load_include('inc', 'minisite', 'includes/minisite.site');
+    $html = minisite_site_parse($minisite_info);
+    if (empty($html)) {
+      drupal_not_found();
+      exit();
+    }
+    else {
+      $minisite_html[$minisite_info['entity_id']] = minisite_site_parse($minisite_info);
+    }
+  }
+
+  return $minisite_html[$minisite_info['entity_id']];
 }
