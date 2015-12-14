@@ -50,6 +50,11 @@ function minisite_schema() {
   $schema['minisite_asset'] = array(
     'description' => 'A list of asset information for minisite.',
     'fields' => array(
+      'mid' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'The primary identifier for a minisite asset',
+      ),
       'entity_type' => array(
         'type' => 'varchar',
         'length' => 32,
@@ -115,6 +120,7 @@ function minisite_schema() {
       ),
     ),
     'primary key' => array(
+      'mid',
       'entity_type',
       'entity_id',
       'minisite_field_name',
@@ -123,6 +129,7 @@ function minisite_schema() {
       'source',
     ),
     'indexes' => array(
+      'mid' => array('mid'),
       'entity_type' => array('entity_type'),
       'bundle' => array('bundle'),
       'entity_id' => array('entity_id'),
