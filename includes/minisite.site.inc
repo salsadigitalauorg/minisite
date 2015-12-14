@@ -6,48 +6,6 @@
  */
 
 /**
- * Fetch minisite information.
- */
-function minisite_site_info($fid, $tree = TRUE) {
-  if (empty($fid)) {
-    return FALSE;
-  }
-
-  $file = file_load($fid);
-  if (!$file) {
-    return FALSE;
-  }
-
-  // Check if minisite is archive.
-  $archive = MinisiteArchive::open($file);
-  if (!$archive) {
-    return FALSE;
-  }
-
-  $minisite_tree = $archive->filesTree();
-  // Ignore __MACOSX folder.
-  unset($minisite_tree['__MACOSX']);
-
-  $root_files = array_keys($minisite_tree);
-  $top_folder = $root_files[0];
-
-  $minisite_path = MINISITE_ASSETPATH . '/' . minisite_site_hash($file);
-
-  if ($tree === TRUE) {
-    $minisite_listing = $minisite_tree;
-  }
-  else {
-    $minisite_listing = $archive->filesList();
-  }
-
-  return array(
-    $minisite_path,
-    $top_folder,
-    $minisite_listing,
-  );
-}
-
-/**
  * Exact minisite files.
  */
 function minisite_site_extract(stdClass $file, $minisite_extract_path = MINISITE_ASSETPATH) {
@@ -197,7 +155,7 @@ function minisite_site_paths_info($minisite_info) {
   $minisite_node_path = 'node/' . $entity->nid;
   $minisite_node_alias = drupal_get_path_alias($minisite_node_path);
 
-  $minisite_site_url = $base_url . '/' . variable_get('file_public_path', conf_path() . '/files/') . $minisite_site_path . '/';
+  $minisite_site_url = _minisite_site_file_public_path_base_url() . $minisite_site_path . '/';
   $request_path = request_path();
   $request_path = substr(urldecode($request_path), strlen($minisite_node_alias) + 1);
   if (empty($request_path) || $request_path == '/') {
@@ -211,4 +169,60 @@ function minisite_site_paths_info($minisite_info) {
     $minisite_site_url,
     $minisite_node_alias,
   );
+}
+
+/**
+ * Fetch minisite information.
+ */
+function minisite_site_asset_info($fid, $tree = TRUE) {
+  if (empty($fid)) {
+    return FALSE;
+  }
+
+  $file = file_load($fid);
+  if (!$file) {
+    return FALSE;
+  }
+
+  // Check if minisite is archive.
+  $archive = MinisiteArchive::open($file);
+  if (!$archive) {
+    return FALSE;
+  }
+
+  $minisite_tree = $archive->filesTree();
+  // Ignore __MACOSX folder.
+  unset($minisite_tree['__MACOSX']);
+
+  $root_files = array_keys($minisite_tree);
+  $top_folder = $root_files[0];
+
+  $minisite_path = MINISITE_ASSETPATH . '/' . minisite_site_hash($file);
+
+  if ($tree === TRUE) {
+    $minisite_listing = $minisite_tree;
+  }
+  else {
+    $minisite_listing = $archive->filesList();
+  }
+
+  return array(
+    $minisite_path,
+    $top_folder,
+    $minisite_listing,
+  );
+}
+
+/**
+ * Return real minisite file public path base url.
+ */
+function _minisite_site_file_public_path_base_url() {
+  $minisite_site_base_url_real = &drupal_static(__FUNCTION__);
+
+  if (!isset($minisite_site_base_url_real)) {
+    global $base_url;
+    $minisite_site_base_url_real = $base_url . '/' . variable_get('file_public_path', conf_path() . '/files/');
+  }
+
+  return $minisite_site_base_url_real;
 }

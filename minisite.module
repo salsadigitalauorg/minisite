@@ -37,7 +37,7 @@ function minisite_site_load() {
 
   $minisite_info = minisite_site_lookup_path();
 
-  if (!$minisite_info) {
+  if (empty($minisite_info)) {
     return FALSE;
   }
 
@@ -45,8 +45,7 @@ function minisite_site_load() {
     return $minisite_info;
   }
   else {
-    global $base_url;
-    $minisite_site_url = $base_url . '/' . variable_get('file_public_path', conf_path() . '/files/') . $minisite_info['source'] . '/index.html';
+    $minisite_site_url = _minisite_site_file_public_path_base_url() . $minisite_info['source'] . '/index.html';
     drupal_goto($minisite_site_url);
   }
 }
@@ -61,7 +60,7 @@ function minisite_site_save($entity_type, $entity, $field, $instance, $langcode,
       if (!empty($file)) {
         // Load module inc file.
         module_load_include('inc', 'minisite', 'includes/minisite.site');
-        list($minisite_extract_path, $minisite_base_path, $minisite_listing) = minisite_site_info($item['fid'], FALSE);
+        list($minisite_extract_path, $minisite_base_path, $minisite_listing) = minisite_site_asset_info($item['fid'], FALSE);
 
         // Extract files.
         minisite_site_extract($file, $minisite_extract_path);
