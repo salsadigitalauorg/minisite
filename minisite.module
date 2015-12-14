@@ -41,23 +41,7 @@ function minisite_site_load() {
     return FALSE;
   }
 
-  $entity_object = entity_load($minisite_info['entity_type'], array($minisite_info['entity_id']));
-  $entity_ids = array_keys($entity_object);
-  $entity_id = $entity_ids[0];
-  $entity = $entity_object[$entity_id];
-
-  $minisite_field_name = $minisite_info['minisite_field_name'];
-  if (module_exists('entity')) {
-    $wrapper = entity_metadata_wrapper($minisite_info['entity_type'], $entity);
-    $minisite_field_values = $wrapper->$minisite_field_name->value();
-  }
-  else {
-    $minisite_field = $entity->$minisite_field_name;
-    $minisite_field_values = $minisite_field[LANGUAGE_NONE][0];
-  }
-
-  $minisite_site_data = unserialize($minisite_field_values['data']);
-  if (isset($minisite_site_data['alias']) && $minisite_site_data['alias'] == 1) {
+  if (isset($minisite_info['alias_status']) && $minisite_info['alias_status'] == 1) {
     return $minisite_info;
   }
   else {
@@ -124,6 +108,7 @@ function minisite_site_save_asset($entity_type, $entity, $field_name, $langcode,
   // Prepare fields.
   $fields = array(
     'alias' => $entity_path_alias,
+    'alias_status' => $item['alias'],
   );
 
   // Save minisite landing page information.

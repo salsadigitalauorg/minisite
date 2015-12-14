@@ -107,6 +107,12 @@ function minisite_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
+      'alias_status' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
     ),
     'primary key' => array(
       'entity_type',
@@ -126,6 +132,7 @@ function minisite_schema() {
       'language' => array('language'),
       'source' => array('source'),
       'alias' => array('alias'),
+      'alias_status' => array('alias_status'),
     ),
     'foreign keys' => array(
       'minisite_fid' => array(

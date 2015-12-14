@@ -74,13 +74,13 @@ function minisite_site_lookup_path($path = NULL, $path_language = NULL) {
   // Find minisite information.
   if ($path_language == LANGUAGE_NONE) {
     unset($args[':language']);
-    $result = db_query("SELECT entity_type, bundle, entity_id, minisite_field_name, minisite_fid, language ,source FROM {minisite_asset} WHERE alias = :source AND language = :language_none", $args)->fetchAssoc();
+    $result = db_query("SELECT entity_type, bundle, entity_id, minisite_field_name, minisite_fid, language ,source, alias_status FROM {minisite_asset} WHERE alias = :source AND language = :language_none", $args)->fetchAssoc();
   }
   elseif ($path_language > LANGUAGE_NONE) {
-    $result = db_query("SELECT entity_type, bundle, entity_id, minisite_field_name, minisite_fid, language, source FROM {minisite_asset} WHERE alias = :source AND language IN (:language, :language_none) ORDER BY language DESC", $args)->fetchAssoc();
+    $result = db_query("SELECT entity_type, bundle, entity_id, minisite_field_name, minisite_fid, language, source, alias_status FROM {minisite_asset} WHERE alias = :source AND language IN (:language, :language_none) ORDER BY language DESC", $args)->fetchAssoc();
   }
   else {
-    $result = db_query("SELECT entity_type, bundle, entity_id, minisite_field_name, minisite_fid, language, source FROM {minisite_asset} WHERE alias = :source AND language IN (:language, :language_none) ORDER BY language ASC", $args)->fetchAssoc();
+    $result = db_query("SELECT entity_type, bundle, entity_id, minisite_field_name, minisite_fid, language, source, alias_status FROM {minisite_asset} WHERE alias = :source AND language IN (:language, :language_none) ORDER BY language ASC", $args)->fetchAssoc();
   }
 
   if (!empty($result)) {
