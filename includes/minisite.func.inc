@@ -6,34 +6,45 @@
  */
 
 /**
- * Return minisite information with bundled entities.
+ * Return minisite asset field values.
  */
-function minisite_site_bundles_info() {
-  $bundles = &drupal_static(__FUNCTION__);
-
-  if (!isset($bundles)) {
-    $bundles = array();
-    $minisite_fields = minisite_asset_fields_info('minisite', 'node');
-    foreach ($minisite_fields as $minisite_field) {
-      foreach ($minisite_field['bundles']['node'] as $bundle) {
-        if (!empty($bundle)) {
-          $bundles[$bundle] = $minisite_field['field_name'];
-        }
-      }
-    }
+function minisite_asset_field_values($entity_type, $entity, $minisite_asset_field_name = NULL) {
+  // Try to get minisite field name if NULL is given.
+  if (empty($minisite_asset_field_name)) {
+    $minisite_asset_field_name = minisite_asset_field_name($entity_type, $entity);
   }
 
-  return $bundles;
+  if (module_exists('entity')) {
+    $wrapper = entity_metadata_wrapper($entity_type, $entity);
+    $minisite_asset_field_values = $wrapper->$minisite_asset_field_name->value();
+  }
+  else {
+    $minisite_field = $entity->$minisite_asset_field_name;
+    $minisite_asset_field_values = $minisite_field[LANGUAGE_NONE][0];
+  }
+
+  return $minisite_asset_field_values;
+}
+
+/**
+ * Return minisite asset field name.
+ */
+function minisite_asset_field_name($entity_type, $entity) {
+  // Get field name.
+  $minisite_asset_field_name = minisite_asset_field_info($entity_type, $entity);
+
+  return $minisite_asset_field_name;
 }
 
 /**
  * Return minisite field name by given bundle name.
  */
-function minisite_site_field_with_bundle($bundle) {
-  $bundles_tree = minisite_site_bundles_info();
-  $bundles = array_keys($bundles_tree);
-  if (in_array($bundle, $bundles)) {
-    return $bundles_tree[$bundle];
+function minisite_asset_field_info($entity_type, $entity) {
+  $minisite_bundles_tree = minisite_asset_field_bundles_info($entity_type);
+  $minisite_bundles = array_keys($minisite_bundles_tree[$entity_type]);
+  list($entity_id, $vid, $bundle) = entity_extract_ids($entity_type, $entity);
+  if (in_array($bundle, $minisite_bundles)) {
+    return $minisite_bundles_tree[$bundle];
   }
   else {
     return FALSE;
@@ -41,55 +52,27 @@ function minisite_site_field_with_bundle($bundle) {
 }
 
 /**
- * Return minisite site field values.
+ * Return minisite information with bundled entities.
  */
-function minisite_site_field_values($entity) {
-  $minisite_field_values = NULL;
-  // Get field name.
-  $minisite_field_name = minisite_site_field_with_bundle($entity->type);
+function minisite_asset_field_bundles_info($entity_type = 'node') {
+  $minisite_bundles = &drupal_static(__FUNCTION__);
 
-  if (module_exists('entity')) {
-    $wrapper = entity_metadata_wrapper('node', $entity);
-    $minisite_field_values = $wrapper->$minisite_field_name->value();
-  }
-  else {
-    $minisite_field = $entity->$minisite_field_name;
-    $minisite_field_values = $minisite_field[LANGUAGE_NONE][0];
+  if (!isset($minisite_bundles)) {
+    $minisite_bundles = array();
   }
 
-  return $minisite_field_values;
-}
-
-/**
- * Return minisite asset field values.
- */
-function minisite_asset_field_values($entity_type = 'node', $entity, $minisite_field_name = NULL) {
-  // Try to get minisite field name if NULL is given.
-  if (empty($minisite_field_name)) {
-    $minisite_field_name = minisite_asset_field_name($entity_type, $entity);
+  if (!isset($minisite_bundles[$entity_type])) {
+    $minisite_fields = minisite_asset_fields_info('minisite', $entity_type);
+    foreach ($minisite_fields as $minisite_field) {
+      foreach ($minisite_field['bundles'][$entity_type] as $bundle) {
+        if (!empty($bundle)) {
+          $minisite_bundles[$entity_type][$bundle] = $minisite_field['field_name'];
+        }
+      }
+    }
   }
 
-  if (module_exists('entity')) {
-    $wrapper = entity_metadata_wrapper($entity_type, $entity);
-    $minisite_field_values = $wrapper->$minisite_field_name->value();
-  }
-  else {
-    $minisite_field = $entity->$minisite_field_name;
-    $minisite_field_values = $minisite_field[LANGUAGE_NONE][0];
-  }
-
-  return $minisite_field_values;
-}
-
-/**
- * Return minisite asset field name.
- */
-function minisite_asset_field_name($entity_type = 'node', $entity) {
-  $minisite_field_name = NULL;
-
-
-
-  return $minisite_field_name;
+  return $minisite_bundles;
 }
 
 /**

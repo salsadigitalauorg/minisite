@@ -191,7 +191,7 @@ function minisite_site_paths_info($minisite_info) {
   $entity_ids = array_keys($entity_object);
   $entity_id = $entity_ids[0];
   $entity = $entity_object[$entity_id];
-  $minisite_field_values = minisite_site_field_values($entity);
+  $minisite_field_values = minisite_asset_field_values($minisite_info['entity_type'], $entity, $minisite_info['minisite_field_name']);
 
   $minisite_site_path = $minisite_field_values['site_path'];
   $minisite_node_path = 'node/' . $entity->nid;
