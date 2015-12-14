@@ -32,12 +32,15 @@ function minisite_help($path, $arg) {
  * Load minisite.
  */
 function minisite_site_load() {
-  // Load module inc file.
-  module_load_include('inc', 'minisite', 'includes/minisite.site');
+  $minisite_info = &drupal_static(__FUNCTION__);
 
-  $minisite_info = minisite_site_lookup_path();
+  if (!isset($minisite_info)) {
+    // Load module inc file.
+    module_load_include('inc', 'minisite', 'includes/minisite.site');
+    $minisite_info = minisite_site_lookup_path();
+  }
 
-  if (empty($minisite_info)) {
+  if (!isset($minisite_info['mid'])) {
     return FALSE;
   }
 
