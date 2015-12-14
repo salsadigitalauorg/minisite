@@ -50,3 +50,34 @@ function minisite_theme_registry_alter(&$theme_registry) {
     }
   }
 }
+
+/**
+ * Alter page delivery callback.
+ */
+function minisite_page_delivery_callback_alter(&$callback) {
+  // Get entity and view modes.
+  $minisite_info = minisite_site_load();
+
+  if (!empty($minisite_info) && $callback == 'drupal_deliver_html_page') {
+    $callback = 'minisite_deliver';
+  }
+}
+
+/**
+ * Deliver minisite.
+ */
+function minisite_deliver($page_callback_result) {
+  if (isset($page_callback_result) && is_null(drupal_get_http_header('Content-Type'))) {
+    drupal_add_http_header('Content-Type', 'text/html; charset=utf-8');
+  }
+
+  // Send appropriate HTTP-Header for browsers and search engines.
+  global $language;
+  drupal_add_http_header('Content-Language', $language->language);
+
+  $page = element_info('page');
+  print drupal_render_page($page);
+
+  // Perform end-of-request tasks.
+  drupal_page_footer();
+}
