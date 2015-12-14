@@ -29,6 +29,45 @@ function minisite_help($path, $arg) {
 }
 
 /**
+ * Load minisite.
+ */
+function minisite_site_load() {
+  // Load module inc file.
+  module_load_include('inc', 'minisite', 'includes/minisite.site');
+
+  $minisite_info = minisite_site_lookup_path();
+
+  if (!$minisite_info) {
+    return FALSE;
+  }
+
+  $entity_object = entity_load($minisite_info['entity_type'], array($minisite_info['entity_id']));
+  $entity_ids = array_keys($entity_object);
+  $entity_id = $entity_ids[0];
+  $entity = $entity_object[$entity_id];
+
+  $minisite_field_name = $minisite_info['minisite_field_name'];
+  if (module_exists('entity')) {
+    $wrapper = entity_metadata_wrapper($minisite_info['entity_type'], $entity);
+    $minisite_field_values = $wrapper->$minisite_field_name->value();
+  }
+  else {
+    $minisite_field = $entity->$minisite_field_name;
+    $minisite_field_values = $minisite_field[LANGUAGE_NONE][0];
+  }
+
+  $minisite_site_data = unserialize($minisite_field_values['data']);
+  if (isset($minisite_site_data['alias']) && $minisite_site_data['alias'] == 1) {
+    return $minisite_info;
+  }
+  else {
+    global $base_url;
+    $minisite_site_url = $base_url . '/' . variable_get('file_public_path', conf_path() . '/files/') . $minisite_info['source'] . '/index.html';
+    drupal_goto($minisite_site_url);
+  }
+}
+
+/**
  * Save and extract minisite.
  */
 function minisite_site_save($entity_type, $entity, $field, $instance, $langcode, &$items) {
@@ -127,45 +166,6 @@ function minisite_site_delete($item, $field, $entity_type, $id) {
       $path = 'public://' . MINISITE_ASSETPATH . '/' . minisite_site_hash($file);
       file_unmanaged_delete_recursive($path);
     }
-  }
-}
-
-/**
- * Load minisite.
- */
-function minisite_site_load() {
-  // Load module inc file.
-  module_load_include('inc', 'minisite', 'includes/minisite.site');
-
-  $minisite_info = minisite_site_lookup_path();
-
-  if (!$minisite_info) {
-    return FALSE;
-  }
-
-  $entity_object = entity_load($minisite_info['entity_type'], array($minisite_info['entity_id']));
-  $entity_ids = array_keys($entity_object);
-  $entity_id = $entity_ids[0];
-  $entity = $entity_object[$entity_id];
-
-  $minisite_field_name = $minisite_info['minisite_field_name'];
-  if (module_exists('entity')) {
-    $wrapper = entity_metadata_wrapper($minisite_info['entity_type'], $entity);
-    $minisite_field_values = $wrapper->$minisite_field_name->value();
-  }
-  else {
-    $minisite_field = $entity->$minisite_field_name;
-    $minisite_field_values = $minisite_field[LANGUAGE_NONE][0];
-  }
-
-  $minisite_site_data = unserialize($minisite_field_values['data']);
-  if (isset($minisite_site_data['alias']) && $minisite_site_data['alias'] == 1) {
-    return $minisite_info;
-  }
-  else {
-    global $base_url;
-    $minisite_site_url = $base_url . '/' . variable_get('file_public_path', conf_path() . '/files/') . $minisite_info['source'] . '/index.html';
-    drupal_goto($minisite_site_url);
   }
 }
 
