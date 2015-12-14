@@ -81,8 +81,7 @@ function minisite_site_hash(stdClass $file) {
  * Parse minisite.
  */
 function minisite_site_parse($minisite_info) {
-  $minisite_site_paths_info = minisite_site_paths_info($minisite_info);
-  list($minisite_site_request, $minisite_site_url, $minisite_node_alias) = $minisite_site_paths_info;
+  list($minisite_site_request, $minisite_site_url, $minisite_entity_alias) = minisite_site_paths_info($minisite_info);
 
   // Bypass lib error.
   libxml_use_internal_errors(TRUE);
@@ -125,12 +124,13 @@ function minisite_site_parse($minisite_info) {
     if (substr($href, 0) == '.' || substr($href, 0, 2) == '..' || substr($href, 0) == '/') {
       continue;
     }
+    // If href is marked not rewrite, then ignore it.
     $regex = '/\.(' . preg_replace('/ +/', '|', preg_quote(MINISITE_EXTENSIONS_NOREWRITE)) . ')$/i';
     if (preg_match($regex, $href)) {
       continue;
     }
 
-    $item->setAttribute('href', '/' . $minisite_node_alias . '/' . $href);
+    $item->setAttribute('href', '/' . $minisite_entity_alias . '/' . $href);
   }
 
   $html = $document->saveHTML();
@@ -142,9 +142,9 @@ function minisite_site_parse($minisite_info) {
  * Return minisite paths information.
  */
 function minisite_site_paths_info($minisite_info) {
-  $minisite_site_request = NULL;
-  $minisite_site_url = NULL;
-  $minisite_node_alias = NULL;
+  $minisite_site_request = '';
+  $minisite_site_url = '';
+  $minisite_entity_alias = '';
 
   // Load module inc file.
   module_load_include('inc', 'minisite', 'includes/minisite.func');
@@ -153,26 +153,19 @@ function minisite_site_paths_info($minisite_info) {
   $entity = _minisite_site_load_entity($minisite_info['entity_type'], array($minisite_info['entity_id']));
 
   if ($entity) {
+    $minisite_site_request = 'public://' . $minisite_info['source'];
+    // Get minisite base href url.
     $minisite_field_values = minisite_asset_field_values($minisite_info['entity_type'], $entity, $minisite_info['minisite_field_name']);
-
     $minisite_site_path = $minisite_field_values['site_path'];
-    $minisite_node_path = 'node/' . $entity->nid;
-    $minisite_node_alias = drupal_get_path_alias($minisite_node_path);
-
     $minisite_site_url = _minisite_site_file_public_path_base_url() . $minisite_site_path . '/';
-    $request_path = request_path();
-    $request_path = substr(urldecode($request_path), strlen($minisite_node_alias) + 1);
-    if (empty($request_path) || $request_path == '/') {
-      $request_path = 'index.html';
-    }
-
-    $minisite_site_request = 'public://' . $minisite_site_path . '/' . $request_path;
+    // Get entity alias path.
+    $minisite_entity_alias = _minisite_site_load_alias($minisite_info['entity_type'], $entity);
   }
 
   return array(
     $minisite_site_request,
     $minisite_site_url,
-    $minisite_node_alias,
+    $minisite_entity_alias,
   );
 }
 
@@ -248,4 +241,13 @@ function _minisite_site_load_entity($entity_type, $entity_ids = array()) {
   $entity_ids = array_keys($entity_object);
   $entity_id = $entity_ids[0];
   return $entity_object[$entity_id];
+}
+
+/**
+ * Return minisite entity alias path.
+ */
+function _minisite_site_load_alias($entity_type, $entity) {
+  $entity_uri = entity_uri($entity_type, $entity);
+  $entity_path = $entity_uri['path'];
+  return drupal_get_path_alias($entity_path);
 }
