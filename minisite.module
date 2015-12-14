@@ -161,7 +161,9 @@ function minisite_site_load() {
     return $minisite_info;
   }
   else {
-    drupal_goto($minisite_info['source']);
+    global $base_url;
+    $minisite_site_url = $base_url . '/' . variable_get('file_public_path', conf_path() . '/files/') . $minisite_info['source'] . '/index.html';
+    drupal_goto($minisite_site_url);
   }
 }
 
