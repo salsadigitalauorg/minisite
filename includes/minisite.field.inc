@@ -406,6 +406,9 @@ function _minisite_validate_minisite_file_settings($element, &$form_state) {
  * Validate minisite file extension in blacklist.
  */
 function _minisite_validate_minisite_file_blacklist(array $extensions) {
+  // Load module inc file.
+  module_load_include('inc', 'minisite', 'includes/minisite.site');
+
   $extensions_blacklist = minisite_site_extensions_blacklist();
   foreach ($extensions_blacklist as $ext) {
     if (in_array($ext, $extensions)) {
