@@ -144,7 +144,9 @@ function minisite_site_load() {
   }
 
   $entity_object = entity_load($minisite_info['entity_type'], array($minisite_info['entity_id']));
-  $entity = $entity_object[array_keys($entity_object)[0]];
+  $entity_ids = array_keys($entity_object);
+  $entity_id = $entity_ids[0];
+  $entity = $entity_object[$entity_id];
 
   $minisite_field_name = $minisite_info['minisite_field_name'];
   if (module_exists('entity')) {
