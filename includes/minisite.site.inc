@@ -188,7 +188,9 @@ function minisite_site_paths_info($minisite_info) {
   module_load_include('inc', 'minisite', 'includes/minisite.func');
 
   $entity_object = entity_load($minisite_info['entity_type'], array($minisite_info['entity_id']));
-  $entity = $entity_object[array_keys($entity_object)[0]];
+  $entity_ids = array_keys($entity_object);
+  $entity_id = $entity_ids[0];
+  $entity = $entity_object[$entity_id];
   $minisite_field_values = minisite_site_field_values($entity);
 
   $minisite_site_path = $minisite_field_values['site_path'];
