@@ -17,22 +17,6 @@ function minisite_theme($existing, $type, $theme, $path) {
 }
 
 /**
- * Implements hook_preprocess_html().
- */
-function minisite_preprocess_html(&$variables) {
-  // Get entity and view modes.
-  $minisite_info = minisite_site_load();
-
-  // Provides minisite theme template suggestions.
-  if (!empty($minisite_info)) {
-    $variables['theme_hook_suggestions'][] = 'html__minisite';
-    $variables['theme_hook_suggestions'][] = 'html__minisite__' . $minisite_info['entity_type'];
-    $variables['theme_hook_suggestions'][] = 'html__minisite__' . $minisite_info['entity_type'] . '__' . $minisite_info['bundle'];
-    $variables['minisite'] = minisite_site_build($minisite_info);
-  }
-}
-
-/**
  * Implements hook_theme_registry_alter().
  */
 function minisite_theme_registry_alter(&$theme_registry) {
@@ -75,8 +59,9 @@ function minisite_deliver($page_callback_result) {
   global $language;
   drupal_add_http_header('Content-Language', $language->language);
 
-  $page = element_info('page');
-  print drupal_render_page($page);
+  $minisite_info = minisite_site_load();
+  $content = minisite_site_build($minisite_info);
+  print $content;
 
   // Perform end-of-request tasks.
   drupal_page_footer();
