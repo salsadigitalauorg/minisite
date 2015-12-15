@@ -83,6 +83,11 @@ function minisite_site_hash(stdClass $file) {
 function minisite_site_parse($minisite_info) {
   list($minisite_site_request, $minisite_site_url, $minisite_entity_alias) = minisite_site_paths_info($minisite_info);
 
+  // Make sure a HTML file is called.
+  if (substr($minisite_site_request, -5, 1) <> '.') {
+    $minisite_site_request = $minisite_site_request . '/index.html';
+  }
+
   // Bypass lib error.
   libxml_use_internal_errors(TRUE);
 
@@ -90,16 +95,14 @@ function minisite_site_parse($minisite_info) {
   $document->loadHTMLFile($minisite_site_request);
 
   // Return 404 if document is empty.
-  if (empty($document)) {
-    drupal_not_found();
-    exit();
+  if (empty($document) || empty($document->textContent)) {
+    return FALSE;
   }
 
   $head = $document->getElementsByTagName('head')->item(0);
   // Return 404 is document head is empty.
   if (empty($head)) {
-    drupal_not_found();
-    exit();
+    return FALSE;
   }
   else {
     // Update base href.
@@ -250,4 +253,15 @@ function _minisite_site_load_alias($entity_type, $entity) {
   $entity_uri = entity_uri($entity_type, $entity);
   $entity_path = $entity_uri['path'];
   return drupal_get_path_alias($entity_path);
+}
+
+/**
+ * Return a fast 404 page.
+ */
+function _minisite_fast_404() {
+  drupal_add_http_header('Status', '404 Not Found');
+  $fast_404_html = variable_get('404_fast_html', '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML+RDFa 1.0//EN" "http://www.w3.org/MarkUp/DTD/xhtml-rdfa-1.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><title>404 Not Found</title></head><body><h1>Not Found</h1><p>The requested URL "@path" was not found on this server.</p></body></html>');
+  // Replace @path in the variable with the page path.
+  print strtr($fast_404_html, array('@path' => check_plain(request_uri())));
+  exit;
 }

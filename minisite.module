@@ -171,11 +171,11 @@ function minisite_site_build($minisite_info) {
     module_load_include('inc', 'minisite', 'includes/minisite.site');
     $html = minisite_site_parse($minisite_info);
     if (empty($html)) {
-      drupal_not_found();
-      exit();
+      $minisite_html[$minisite_info['mid']] = '';
+      _minisite_fast_404();
     }
     else {
-      $minisite_html[$minisite_info['mid']] = minisite_site_parse($minisite_info);
+      $minisite_html[$minisite_info['mid']] = $html;
     }
   }
 
