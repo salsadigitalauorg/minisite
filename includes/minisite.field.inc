@@ -64,7 +64,7 @@ function minisite_field_instance_settings_form($field, $instance) {
     '#title' => t('Allowed file extensions in uploaded minisite files'),
     '#default_value' => $extensions,
     '#description' => t('Separate extensions with a space or comma and do not include the leading dot.'),
-    '#element_validate' => array('_minisite_validate_minisite_file_settings'),
+    '#element_validate' => array('_minisite_field_validate_minisite_file_settings'),
     // By making this field required, we prevent a potential security issue
     // that would allow files of any type to be uploaded.
     '#required' => TRUE,
@@ -262,7 +262,7 @@ function minisite_field_widget_form(&$form, &$form_state, $field, $instance, $la
   foreach (element_children($elements) as $delta) {
     // Minisite content extensions validation.
     $minisite_extensions = $settings['minisite_extensions'];
-    $elements[$delta]['#upload_validators']['_minisite_validate_minisite_asset'] = array($minisite_extensions);
+    $elements[$delta]['#upload_validators']['_minisite_field_validate_minisite_asset'] = array($minisite_extensions);
 
     // Add all extra functionality provided by the minisite widget.
     $elements[$delta]['#process'][] = 'minisite_field_widget_process';
@@ -336,7 +336,7 @@ function minisite_field_formatter_info_alter(&$info) {
 /**
  * Validate minisite asset.
  */
-function _minisite_validate_minisite_asset(stdClass $file, $extensions) {
+function _minisite_field_validate_minisite_asset(stdClass $file, $extensions) {
   $errors = array();
 
   // Validate minisite assets.
@@ -382,7 +382,7 @@ function _minisite_validate_minisite_asset(stdClass $file, $extensions) {
 /**
  * Element validate callback for the allowed file extensions field.
  */
-function _minisite_validate_minisite_file_settings($element, &$form_state) {
+function _minisite_field_validate_minisite_file_settings($element, &$form_state) {
   if (!empty($element['#value'])) {
     $extensions = preg_replace('/([, ]+\.?)/', ' ', trim(strtolower($element['#value'])));
     $extensions = array_filter(explode(' ', $extensions));
@@ -391,7 +391,7 @@ function _minisite_validate_minisite_file_settings($element, &$form_state) {
     if (!preg_match('/^([a-z0-9]+([.][a-z0-9])* ?)+$/', $extensions)) {
       form_error($element, t('The list of allowed extensions is not valid, be sure to exclude leading dots and to separate extensions with a comma or space.'));
     }
-    elseif (_minisite_validate_minisite_file_blacklist($extensions_array) === FALSE) {
+    elseif (_minisite_field_validate_minisite_file_blacklist($extensions_array) === FALSE) {
       form_error($element, t('The list of allowed extensions is not valid. The following extensions are NOT allowed: %extensions-blacklist', array(
         '%extensions-blacklist' => implode(' ', minisite_site_extensions_blacklist()),
       )));
@@ -405,7 +405,7 @@ function _minisite_validate_minisite_file_settings($element, &$form_state) {
 /**
  * Validate minisite file extension in blacklist.
  */
-function _minisite_validate_minisite_file_blacklist(array $extensions) {
+function _minisite_field_validate_minisite_file_blacklist(array $extensions) {
   // Load module inc file.
   module_load_include('inc', 'minisite', 'includes/minisite.site');
 
