@@ -16,37 +16,56 @@ function minisite_site_extract(stdClass $file, $minisite_extract_path = MINISITE
 /**
  * Given an alias, return its minisite information if one exists.
  */
-function minisite_site_lookup_path($path = NULL, $path_language = NULL) {
+function minisite_site_lookup_path($path = '', $path_language = NULL) {
   global $language_url;
+  // Use the advanced drupal_static() pattern;
+  static $drupal_static_fast;
+  if (!isset($drupal_static_fast)) {
+    $drupal_static_fast['cache'] = &drupal_static(__FUNCTION__);
+  }
+  $cache = &$drupal_static_fast['cache'];
+
+  if (!isset($cache)) {
+    $cache = array(
+      'map' => array(),
+    );
+  }
+
   $path = $path ? $path : current_path();
   // If current path has a alias.
   $path = drupal_get_path_alias($path);
   $path_language = $path_language ? $path_language : $language_url->language;
 
-  // Prepare query args.
-  $args = array(
-    ':source' => $path,
-    ':language' => $path_language,
-    ':language_none' => LANGUAGE_NONE,
-  );
-  // Find minisite information.
-  if ($path_language == LANGUAGE_NONE) {
-    unset($args[':language']);
-    $result = db_query("SELECT mid, entity_type, bundle, entity_id, minisite_field_name, minisite_fid, language ,source, alias_status FROM {minisite_asset} WHERE alias = :source AND language = :language_none", $args)->fetchAssoc();
-  }
-  elseif ($path_language > LANGUAGE_NONE) {
-    $result = db_query("SELECT mid, entity_type, bundle, entity_id, minisite_field_name, minisite_fid, language, source, alias_status FROM {minisite_asset} WHERE alias = :source AND language IN (:language, :language_none) ORDER BY language DESC", $args)->fetchAssoc();
-  }
-  else {
-    $result = db_query("SELECT mid, entity_type, bundle, entity_id, minisite_field_name, minisite_fid, language, source, alias_status FROM {minisite_asset} WHERE alias = :source AND language IN (:language, :language_none) ORDER BY language ASC", $args)->fetchAssoc();
+  if ($path != '') {
+    // If the alias has already been loaded, return it.
+    if (isset($cache['map'][$path_language][$path])) {
+      return $cache['map'][$path_language][$path];
+    } else {
+      $cache['map'][$path_language] = array();
+      // Prepare query args.
+      $args = array(
+        ':source' => $path,
+        ':language' => $path_language,
+        ':language_none' => LANGUAGE_NONE,
+      );
+      // Find minisite information.
+      if ($path_language == LANGUAGE_NONE) {
+        unset($args[':language']);
+        $result = db_query("SELECT mid, entity_type, bundle, entity_id, minisite_field_name, minisite_fid, language ,source, alias_status FROM {minisite_asset} WHERE alias = :source AND language = :language_none", $args)->fetchAssoc();
+      }
+      elseif ($path_language > LANGUAGE_NONE) {
+        $result = db_query("SELECT mid, entity_type, bundle, entity_id, minisite_field_name, minisite_fid, language, source, alias_status FROM {minisite_asset} WHERE alias = :source AND language IN (:language, :language_none) ORDER BY language DESC", $args)->fetchAssoc();
+      }
+      else {
+        $result = db_query("SELECT mid, entity_type, bundle, entity_id, minisite_field_name, minisite_fid, language, source, alias_status FROM {minisite_asset} WHERE alias = :source AND language IN (:language, :language_none) ORDER BY language ASC", $args)->fetchAssoc();
+      }
+
+      $cache['map'][$path_language][$path] = $result;
+      return $result;
+    }
   }
 
-  if (!empty($result)) {
-    return $result;
-  }
-  else {
-    return FALSE;
-  }
+  return FALSE;
 }
 
 /**
