@@ -10,7 +10,7 @@ define('MINISITE_ASSETPATH', 'minisite/static');
 define('MINISITE_EXTENSIONS_WHITELIST', 'html htm js css png jpg gif svg pdf doc docx ppt pptx xls xlsx tif xml txt woff woff2 ttf eot');
 define('MINISITE_EXTENSIONS_BLACKLIST', 'exe scr bmp');
 define('MINISITE_EXTENSIONS_NOREWRITE', 'pdf doc docx ppt pptx xls xlsx tif xml txt');
-define('MINISITE_MAXFILESIZE', file_upload_max_size());
+define('MINISITE_MAXFILESIZE', format_size(file_upload_max_size()));
 
 // Load all Field module hooks for Minisite.
 require_once dirname(__FILE__) . '/includes/minisite.field.inc';
@@ -24,6 +24,7 @@ function minisite_help($path, $arg) {
   switch ($path) {
     case 'admin/help#minisite':
       $output = '<p>' . t("Provides the ability to upload arbitrary 'minisites' to a Drupal website.") . '</p>';
+
       return $output;
   }
 }

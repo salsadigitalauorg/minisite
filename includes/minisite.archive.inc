@@ -28,8 +28,7 @@ class MinisiteArchive {
         default:
           return FALSE;
       }
-    }
-    catch (\Exception $e) {
+    } catch (\Exception $e) {
       return FALSE;
     }
 

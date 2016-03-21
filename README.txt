@@ -1,5 +1,5 @@
 
-The Minisite module
+The "Minisite" module
 
 About
 ======
