@@ -18,7 +18,7 @@ function minisite_site_extract(stdClass $file, $minisite_extract_path = MINISITE
  */
 function minisite_site_lookup_path($path = '', $path_language = NULL) {
   global $language_url;
-  // Use the advanced drupal_static() pattern;
+  // Use the advanced drupal_static() pattern.
   static $drupal_static_fast;
   if (!isset($drupal_static_fast)) {
     $drupal_static_fast['cache'] = &drupal_static(__FUNCTION__);
@@ -40,7 +40,8 @@ function minisite_site_lookup_path($path = '', $path_language = NULL) {
     // If the alias has already been loaded, return it.
     if (isset($cache['map'][$path_language][$path])) {
       return $cache['map'][$path_language][$path];
-    } else {
+    }
+    else {
       $cache['map'][$path_language] = array();
       // Prepare query args.
       $args = array(
@@ -61,6 +62,7 @@ function minisite_site_lookup_path($path = '', $path_language = NULL) {
       }
 
       $cache['map'][$path_language][$path] = $result;
+
       return $result;
     }
   }
@@ -89,6 +91,7 @@ function minisite_site_extensions_blacklist() {
 function minisite_site_hash(stdClass $file) {
   if ($file && isset($file->fid)) {
     $fid = $file->fid;
+
     return $fid;
   }
   else {
@@ -262,6 +265,7 @@ function _minisite_site_load_entity($entity_type, $entity_ids = array()) {
 
   $entity_ids = array_keys($entity_object);
   $entity_id = $entity_ids[0];
+
   return $entity_object[$entity_id];
 }
 
@@ -271,6 +275,7 @@ function _minisite_site_load_entity($entity_type, $entity_ids = array()) {
 function _minisite_site_load_alias($entity_type, $entity) {
   $entity_uri = entity_uri($entity_type, $entity);
   $entity_path = $entity_uri['path'];
+
   return drupal_get_path_alias($entity_path);
 }
 

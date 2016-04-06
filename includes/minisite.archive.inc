@@ -28,7 +28,8 @@ class MinisiteArchive {
         default:
           return FALSE;
       }
-    } catch (\Exception $e) {
+    }
+    catch (\Exception $e) {
       return FALSE;
     }
 
@@ -38,7 +39,7 @@ class MinisiteArchive {
   /**
    * Exact files to given path.
    */
-  public function extract($path, Array $files = array()) {
+  public function extract($path, array $files = array()) {
     if ($files) {
       $this->archiver->extract($path, $files);
     }

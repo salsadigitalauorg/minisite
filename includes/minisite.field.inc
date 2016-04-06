@@ -103,7 +103,7 @@ function minisite_field_presave($entity_type, $entity, $field, $instance, $langc
  * Implements hook_field_insert().
  */
 function minisite_field_insert($entity_type, $entity, $field, $instance, $langcode, &$items) {
-  list($id, $vid, $bundle) = entity_extract_ids($entity_type, $entity);
+  list($id, ,) = entity_extract_ids($entity_type, $entity);
 
   // Add a new usage of each uploaded file.
   foreach ($items as $item) {
@@ -131,6 +131,7 @@ function minisite_field_update($entity_type, $entity, $field, $instance, $langco
       $file = (object) $item;
       file_usage_add($file, 'minisite', $entity_type, $id);
     }
+
     return;
   }
 
@@ -178,10 +179,10 @@ function minisite_field_update($entity_type, $entity, $field, $instance, $langco
  * Implements hook_field_delete().
  */
 function minisite_field_delete($entity_type, $entity, $field, $instance, $langcode, &$items) {
-  list($id, $vid, $bundle) = entity_extract_ids($entity_type, $entity);
+  list($id, ,) = entity_extract_ids($entity_type, $entity);
 
   // Delete all file usages within this entity.
-  foreach ($items as $delta => $item) {
+  foreach ($items as $item) {
     minisite_file_field_delete_file($item, $field, $entity_type, $id, 0);
   }
 }
@@ -190,7 +191,7 @@ function minisite_field_delete($entity_type, $entity, $field, $instance, $langco
  * Implements hook_field_delete_revision().
  */
 function minisite_field_delete_revision($entity_type, $entity, $field, $instance, $langcode, &$items) {
-  list($id, $vid, $bundle) = entity_extract_ids($entity_type, $entity);
+  list($id, ,) = entity_extract_ids($entity_type, $entity);
   foreach ($items as $delta => $item) {
     // Decrement the file usage count by 1 and delete the file if possible.
     if (minisite_file_field_delete_file($item, $field, $entity_type, $id)) {
@@ -214,6 +215,7 @@ function minisite_file_field_delete_file($item, $field, $entity_type, $id, $coun
 
   if ($file->status == 0 || !empty($file_usage['minisite'])) {
     file_usage_delete($file, 'minisite', $entity_type, $id, $count);
+
     return file_delete($file);
   }
 
@@ -283,11 +285,6 @@ function minisite_field_widget_process($element, &$form_state, $form) {
   $item = $element['#value'];
   $item['fid'] = $element['fid']['#value'];
 
-  $instance = field_widget_instance($element, $form_state);
-
-  $settings = $instance['settings'];
-  $widget_settings = $instance['widget']['settings'];
-
   $element['#theme'] = 'minisite_widget';
 
   // Specific settings in serialized data.
@@ -343,6 +340,7 @@ function _minisite_field_validate_minisite_asset(stdClass $file, $extensions) {
   $archive = MinisiteArchive::open($file);
   if (!$archive) {
     $errors[] = t('Unable to open minisite archive file.');
+
     return $errors;
   }
 
@@ -354,6 +352,7 @@ function _minisite_field_validate_minisite_asset(stdClass $file, $extensions) {
   $root_files = array_keys($tree);
   if (count($root_files) !== 1 || !is_array($tree[$root_files[0]])) {
     $errors[] = t('Minisite must have a single top level directory.');
+
     return $errors;
   }
 

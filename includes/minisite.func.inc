@@ -42,7 +42,7 @@ function minisite_asset_field_name($entity_type, $entity) {
 function minisite_asset_field_info($entity_type, $entity) {
   $minisite_bundles_tree = minisite_asset_field_bundles_info($entity_type);
   $minisite_bundles = array_keys($minisite_bundles_tree[$entity_type]);
-  list($entity_id, $vid, $bundle) = entity_extract_ids($entity_type, $entity);
+  list(, , $bundle) = entity_extract_ids($entity_type, $entity);
   if (in_array($bundle, $minisite_bundles)) {
     return $minisite_bundles_tree[$bundle];
   }
