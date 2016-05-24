@@ -168,7 +168,7 @@ function minisite_site_parse($minisite_info) {
     $href = $item->getAttribute('href');
     // Relative path.
     if (substr($href, 0, 2) == '..') {
-      $item->setAttribute('href', $minisite_site_url . substr($href, 2));
+      $item->setAttribute('href', $minisite_site_url . substr($href, 3));
       continue;
     }
   }
@@ -178,7 +178,7 @@ function minisite_site_parse($minisite_info) {
     $src = $item->getAttribute('src');
     // Relative path.
     if (substr($href, 0, 2) == '..') {
-      $item->setAttribute('src', $minisite_site_url . substr($src, 2));
+      $item->setAttribute('src', $minisite_site_url . substr($src, 3));
       continue;
     }
   }
@@ -188,7 +188,7 @@ function minisite_site_parse($minisite_info) {
     $src = $item->getAttribute('src');
     // Relative path.
     if (substr($href, 0, 2) == '..') {
-      $item->setAttribute('src', $minisite_site_url . substr($src, 2));
+      $item->setAttribute('src', $minisite_site_url . substr($src, 3));
       continue;
     }
   }
