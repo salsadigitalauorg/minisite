@@ -138,15 +138,20 @@ function minisite_site_parse($minisite_info) {
     }
   }
 
-  // Update relative URL.
+  // Update link tag.
   foreach ($document->getElementsByTagName('a') as $item) {
     $href = $item->getAttribute('href');
     // Keep absolute URL.
     if (parse_url($href, PHP_URL_SCHEME) != '') {
       continue;
     }
+    // If href starts with . or root link.
+    if (substr($href, 0) == '.' || substr($href, 0) == '/') {
+      continue;
+    }
     // If href starts with . or ..
-    if (substr($href, 0) == '.' || substr($href, 0, 2) == '..' || substr($href, 0) == '/') {
+    if (substr($href, 0, 2) == '..') {
+      $item->setAttribute('href', $minisite_site_url . substr($href, 2));
       continue;
     }
     // If href is marked not rewrite, then ignore it.
@@ -156,6 +161,36 @@ function minisite_site_parse($minisite_info) {
     }
 
     $item->setAttribute('href', '/' . $minisite_entity_alias . '/' . $href);
+  }
+
+  // Replace link.
+  foreach ($document->getElementsByTagName('link') as $item) {
+    $href = $item->getAttribute('href');
+    // Relative path.
+    if (substr($href, 0, 2) == '..') {
+      $item->setAttribute('href', $minisite_site_url . substr($href, 2));
+      continue;
+    }
+  }
+
+  // Replace script.
+  foreach ($document->getElementsByTagName('script') as $item) {
+    $src = $item->getAttribute('src');
+    // Relative path.
+    if (substr($href, 0, 2) == '..') {
+      $item->setAttribute('src', $minisite_site_url . substr($src, 2));
+      continue;
+    }
+  }
+
+  // Replace image tag.
+  foreach ($document->getElementsByTagName('img') as $item) {
+    $src = $item->getAttribute('src');
+    // Relative path.
+    if (substr($href, 0, 2) == '..') {
+      $item->setAttribute('src', $minisite_site_url . substr($src, 2));
+      continue;
+    }
   }
 
   $html = $document->saveHTML();
