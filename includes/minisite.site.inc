@@ -149,9 +149,9 @@ function minisite_site_parse($minisite_info) {
     if (substr($href, 0) == '.' || substr($href, 0) == '/') {
       continue;
     }
-    // If href starts with . or ..
+    // If href starts with relative path.
     if (substr($href, 0, 2) == '..') {
-      $item->setAttribute('href', $minisite_site_url . substr($href, 2));
+      $item->setAttribute('href', $minisite_site_url . substr($href, 3));
       continue;
     }
     // If href is marked not rewrite, then ignore it.
