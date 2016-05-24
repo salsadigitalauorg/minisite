@@ -293,7 +293,7 @@ function minisite_field_widget_process($element, &$form_state, $form) {
   // Allow minisite use page URL.
   $element['alias_status'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Minisite alias'),
+    '#title' => t('Minisite alias (experimental)'),
     '#default_value' => isset($data['minisite_alias_status']) ? $data['minisite_alias_status'] : '',
     '#description' => t('Allow Minisite use current page URL alias as minisite URL path.'),
     '#weight' => -1,
