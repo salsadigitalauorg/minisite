@@ -138,6 +138,9 @@ function minisite_site_parse($minisite_info) {
     }
   }
 
+  // Generate minisite full alias.
+  $minisite_full_alias = url($minisite_entity_alias, array('absolute' => TRUE));
+
   // Update link tag.
   foreach ($document->getElementsByTagName('a') as $item) {
     $href = $item->getAttribute('href');
@@ -151,7 +154,7 @@ function minisite_site_parse($minisite_info) {
     }
     // If href starts with relative path.
     if (substr($href, 0, 2) == '..') {
-      $item->setAttribute('href', $minisite_site_url . substr($href, 3));
+      $item->setAttribute('href', $minisite_full_alias . '/' . substr($href, 3));
       continue;
     }
     // If href is marked not rewrite, then ignore it.
@@ -160,13 +163,14 @@ function minisite_site_parse($minisite_info) {
       continue;
     }
 
+    // Default URL rewrite behaviours.
     $regex = "/" . preg_quote($minisite_entity_alias, '/') . "\/(.*)\/" . basename(current_path()) . "/";
     $relative = '';
     preg_match($regex, current_path(), $matches);
     if (!empty($matches[1])) {
       $relative = $matches[1] . '/';
     }
-    $item->setAttribute('href', '/' . $minisite_entity_alias . '/' . $relative . $href);
+    $item->setAttribute('href', $minisite_full_alias . '/' . $relative . $href);
   }
 
   // Replace link.
