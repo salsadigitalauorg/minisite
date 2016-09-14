@@ -289,7 +289,7 @@ function _minisite_site_file_public_path_base_url() {
 
   if (!isset($minisite_site_base_url_real)) {
     global $base_url;
-    $minisite_site_base_url_real = $base_url . '/' . variable_get('file_public_path', conf_path() . '/files/');
+    $minisite_site_base_url_real = $base_url . '/' . variable_get('file_public_path', conf_path() . '/files') . '/';
   }
 
   return $minisite_site_base_url_real;
