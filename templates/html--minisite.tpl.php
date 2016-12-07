@@ -14,4 +14,6 @@
  */
 ?>
 
-<?php print $minisite; ?>
+<?php if (!empty($minisite)): ?>
+  <?php print $minisite; ?>
+<?php endif; ?>
