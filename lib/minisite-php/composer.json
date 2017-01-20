@@ -1,0 +1,37 @@
+{
+  "name": "xing/minisite",
+  "type": "library",
+  "description": "Minisite library for Drupal",
+  "keywords": [
+    "minisite",
+    "mini site",
+    "drupal"
+  ],
+  "homepage": "https://github.com/jozhao/minisite",
+  "license": "Apache-2.0",
+  "authors": [
+    {
+      "name": "Joseph Zhao",
+      "email": "joseph.zhao@xing.net.au"
+    },
+    {
+      "name": "Jason Guo",
+      "email": "jason.guo@xing.net.au"
+    }
+  ],
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "autoload": {
+    "files": [
+      "src/functions_include.php"
+    ],
+    "psr-4": {
+      "Minisite\\": "src/"
+    }
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-master": "1.x-dev"
+    }
+  }
+}

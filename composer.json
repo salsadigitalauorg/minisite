@@ -1,0 +1,29 @@
+{
+  "name": "drupal/minisite",
+  "description": "Provides the ability to upload arbitrary 'minisites' to a Drupal website.",
+  "keywords": [
+    "minisite",
+    "mini site",
+    "drupal"
+  ],
+  "type": "drupal-module",
+  "license": "Apache-2.0",
+  "homepage": "https://www.drupal.org/project/minisite",
+  "authors": [
+    {
+      "name": "Joseph Zhao",
+      "email": "joseph.zhao@xing.net.au"
+    },
+    {
+      "name": "Jason Guo",
+      "email": "jason.guo@xing.net.au"
+    }
+  ],
+  "support": {
+    "issues": "https://drupal.org/project/issues/minisite",
+    "irc": "irc://irc.freenode.org/drupal-contribute",
+    "source": "https://cgit.drupalcode.org/minisite"
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}

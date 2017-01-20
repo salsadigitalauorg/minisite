@@ -21,7 +21,7 @@ class MinisiteArchive {
     try {
       switch ($file->filemime) {
         case 'application/zip':
-          $archive->archiver = new \ArchiverZip($file_path);
+          $archive->archiver = new Drupal\Core\Archiver\Zip($file_path);
           $archive->archiver->listContents();
           break;
 

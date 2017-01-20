@@ -12,6 +12,7 @@
  *
  * * @ingroup themeable
  */
+
 ?>
 
 <?php if (!empty($minisite)): ?>
