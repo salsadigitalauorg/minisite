@@ -83,7 +83,7 @@ function template_preprocess_minisite_link(&$variables) {
   // to ensure different file URLs are generated for different sites in a
   // multisite setup, including HTTP and HTTPS versions of the same site.
   // Fix in https://www.drupal.org/node/2646744.
-  $url = file_create_url($file_entity->getFileUri());
+  $url = isset($file->asset_path) ? file_create_url($file->asset_path) : file_create_url($file_entity->getFileUri());
   $variables['#cache']['contexts'][] = 'url.site';
 
   $mime_type = $file->getMimeType();

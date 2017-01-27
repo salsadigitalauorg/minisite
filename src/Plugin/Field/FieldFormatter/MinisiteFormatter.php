@@ -71,24 +71,20 @@ class MinisiteFormatter extends GenericFileFormatter {
   public function viewElements(FieldItemListInterface $items, $langcode) {
     $elements = array();
 
-    foreach ($this->getEntitiesToView($items, $langcode) as $delta => $file) {
-      $item = $file->_referringItem;
+    // Loop through items
+    foreach ($items as $delta => $file) {
+      // Set asset path.
+      $file->entity->asset_path = $file->asset_path;
+      // Send elements to theme.
       $elements[$delta] = array(
         '#theme' => 'minisite_link',
-        '#file' => $file,
-        '#description' => $item->description,
+        '#file' => $file->entity,
+        '#description' => $file->description,
         '#cache' => array(
-          'tags' => $file->getCacheTags(),
+          'tags' => $file->entity->getCacheTags(),
         ),
       );
-      // Pass field item attributes to the theme function.
-      if (isset($item->_attributes)) {
-        $elements[$delta] += array('#attributes' => array());
-        $elements[$delta]['#attributes'] += $item->_attributes;
-        // Unset field item attributes since they have been included in the
-        // formatter output and should not be rendered in the field template.
-        unset($item->_attributes);
-      }
+
     }
 
     return $elements;

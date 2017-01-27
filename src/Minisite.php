@@ -16,13 +16,16 @@ use Drupal\minisite\Minisite\MinisiteAbstract;
  * @package Drupal\minisite
  */
 class Minisite extends MinisiteAbstract {
+  /**
+   * Presave minisite assets.
+   *
+   * @param \Drupal\file\Entity\File $file
+   * @param \Drupal\Core\Entity\EntityInterface $entity
+   * @return bool|string
+   */
   static public function preSave(File $file, EntityInterface $entity) {
-    dpm($file->getFileUri());
-    dpm($file->get('uuid')->value);
-
     $minisite_asset_path = self::extractAsset($file);
-    dpm($minisite_asset_path);
 
-    return $minisite_asset_path;
+    return !empty($minisite_asset_path) ? $minisite_asset_path : FALSE;
   }
 }

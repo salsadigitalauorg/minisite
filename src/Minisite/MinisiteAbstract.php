@@ -57,7 +57,7 @@ class MinisiteAbstract {
       return FALSE;
     }
 
-    return $minisite_asset_extract_path . '/' . self::getTreeTop($file);
+    return $minisite_asset_extract_path . '/' . self::getTreeTop($file) . '/index.html';
   }
 
   /**
