@@ -2,6 +2,7 @@
 
 namespace Drupal\minisite\Plugin\Field\FieldFormatter;
 
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\file\Plugin\Field\FieldFormatter\GenericFileFormatter;
 use Drupal\Core\Field\FieldItemListInterface;
 
@@ -17,6 +18,26 @@ use Drupal\Core\Field\FieldItemListInterface;
  * )
  */
 class MinisiteFormatter extends GenericFileFormatter {
+  /**
+   * {@inheritdoc}
+   */
+  public function settingsForm(array $form, FormStateInterface $form_state) {
+    $link_types = array(
+      'content' => t('Content'),
+      'file' => t('File'),
+    );
+
+    $form['minisite_link'] = array(
+      '#title' => t('Link Minisite to'),
+      '#type' => 'select',
+      '#default_value' => $this->getSetting('minisite_link'),
+      '#empty_option' => t('Nothing'),
+      '#options' => $link_types,
+    );
+
+    return $form;
+  }
+
   /**
    * {@inheritdoc}
    */
