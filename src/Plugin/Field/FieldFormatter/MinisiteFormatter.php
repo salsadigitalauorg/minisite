@@ -21,6 +21,15 @@ class MinisiteFormatter extends GenericFileFormatter {
   /**
    * {@inheritdoc}
    */
+  public static function defaultSettings() {
+    return array(
+        'minisite_link' => 'content',
+      ) + parent::defaultSettings();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function settingsForm(array $form, FormStateInterface $form_state) {
     $link_types = array(
       'content' => t('Content'),
@@ -31,11 +40,29 @@ class MinisiteFormatter extends GenericFileFormatter {
       '#title' => t('Link Minisite to'),
       '#type' => 'select',
       '#default_value' => $this->getSetting('minisite_link'),
-      '#empty_option' => t('Nothing'),
       '#options' => $link_types,
     );
 
     return $form;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function settingsSummary() {
+    $summary = [];
+
+    $link_types = array(
+      'content' => t('Linked to content'),
+      'file' => t('Linked to file'),
+    );
+    // Display this setting only if minisite is linked.
+    $minisite_link_setting = $this->getSetting('minisite_link');
+    if (isset($link_types[$minisite_link_setting])) {
+      $summary[] = $link_types[$minisite_link_setting];
+    }
+
+    return $summary;
   }
 
   /**
