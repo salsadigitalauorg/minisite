@@ -72,7 +72,7 @@ function minisite_site_save($entity_type, $entity, $field, $instance, $langcode,
         // Save specific settings in data.
         $item['site_path'] = $minisite_extract_path . '/' . $minisite_base_path;
         $minisite_field_data = array(
-          'minisite_alias_status' => $item['alias_status'],
+          'minisite_alias_status' => isset($item['alias_status']) ? $item['alias_status'] : 0,
           'minisite_extract_path' => $minisite_extract_path,
           'minisite_base_path' => $minisite_base_path,
         );
@@ -113,7 +113,7 @@ function minisite_site_save_asset($entity_type, $entity, $field_name, $langcode,
   // Prepare fields.
   $fields = array(
     'alias' => $entity_path_alias,
-    'alias_status' => $item['alias_status'],
+    'alias_status' => isset($item['alias_status']) ? $item['alias_status'] : 0,
   );
 
   // Save minisite landing page information.
