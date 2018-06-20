@@ -12,12 +12,25 @@ function minisite_requirements($phase) {
   $requirements = array();
   $t = get_t();
 
+  $requirements['zip'] = [
+    'title' => $t('Minisite'),
+    'value' => $t('PHP Zip support required.'),
+  ];
+
+  // Ensure that the PHP Zip library is loaded.
+  if (!extension_loaded('zip')) {
+    $requirements['zip'] = [
+      'description' => $t('The Minisite module requires the PHP module \'Zip\', but it is missing or not enabled on your server. This module allows PHP to work with ZIP compressed archives.<br>For more information visit: <a href="http://php.net/manual/en/book.zip.php">http://php.net/manual/en/book.zip.php</a>'),
+      'severity' => REQUIREMENT_ERROR,
+    ];
+  }
+
   if ($phase == 'runtime') {
-    $requirements['minisite_upload'] = array(
+    $requirements['minisite_upload'] = [
       'title' => $t('Minisite upload directory'),
       'severity' => REQUIREMENT_OK,
       'value' => $t('Exists'),
-    );
+    ];
 
     $requirements['minisite_static'] = array(
       'title' => $t('Minisite static files directory'),
