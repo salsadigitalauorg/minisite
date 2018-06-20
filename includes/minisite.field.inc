@@ -288,17 +288,17 @@ function minisite_field_widget_process($element, &$form_state, $form) {
   $element['#theme'] = 'minisite_widget';
 
   // Specific settings in serialized data.
-  $data = isset($item['data']) ? unserialize($item['data']) : array();
+  $data = isset($item['data']) ? unserialize($item['data']) : [];
 
   // Allow minisite use page URL.
-  $element['alias_status'] = array(
+  $element['alias_status'] = [
     '#type' => 'checkbox',
     '#title' => t('Minisite URL alias (experimental)'),
-    '#default_value' => isset($data['minisite_alias_status']) ? $data['minisite_alias_status'] : '',
+    '#default_value' => empty($data['minisite_alias_status']) ? 0 : 1,
     '#description' => t('Optionally use current page URL (defined in URL path settings) as minisite base URL.'),
     '#weight' => -1,
     '#access' => (bool) $item['fid'],
-  );
+  ];
 
   return $element;
 }
