@@ -30,22 +30,29 @@ function minisite_help($path, $arg) {
 }
 
 /**
- * Load minisite.
+ * Minisite site information lookup.
  */
-function minisite_site_load() {
+function minisite_site_lookup() {
   $minisite_info = &drupal_static(__FUNCTION__);
 
   if (!isset($minisite_info)) {
     // Load module inc file.
     module_load_include('inc', 'minisite', 'includes/minisite.site');
-    $minisite_info = minisite_site_lookup_path();
+    return minisite_site_lookup_path();
   }
+}
 
-  if (!isset($minisite_info['mid'])) {
+/**
+ * Load minisite.
+ */
+function minisite_site_load() {
+  $minisite_info = minisite_site_lookup();
+
+  if (empty($minisite_info) || empty($minisite_info['mid']) || empty($minisite_info['source'])) {
     return FALSE;
   }
 
-  if (isset($minisite_info['alias_status']) && $minisite_info['alias_status'] == 1) {
+  if (!empty($minisite_info['alias_status']) && $minisite_info['alias_status'] == 1) {
     return $minisite_info;
   }
   else {
