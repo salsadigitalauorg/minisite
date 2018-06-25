@@ -26,9 +26,9 @@ function minisite_site_lookup_path($path = '', $path_language = NULL) {
   $cache = &$drupal_static_fast['cache'];
 
   if (!isset($cache)) {
-    $cache = array(
-      'map' => array(),
-    );
+    $cache = [
+      'map' => [],
+    ];
   }
 
   $path = $path ? $path : current_path();
@@ -42,13 +42,13 @@ function minisite_site_lookup_path($path = '', $path_language = NULL) {
       return $cache['map'][$path_language][$path];
     }
     else {
-      $cache['map'][$path_language] = array();
+      $cache['map'][$path_language] = [];
       // Prepare query args.
-      $args = array(
+      $args = [
         ':source' => $path,
         ':language' => $path_language,
         ':language_none' => LANGUAGE_NONE,
-      );
+      ];
       // Find minisite information.
       if ($path_language == LANGUAGE_NONE) {
         unset($args[':language']);
@@ -139,7 +139,7 @@ function minisite_site_parse($minisite_info) {
   }
 
   // Generate minisite full alias.
-  $minisite_full_alias = url($minisite_entity_alias, array('absolute' => TRUE));
+  $minisite_full_alias = url($minisite_entity_alias, ['absolute' => TRUE]);
 
   // Update link tag.
   foreach ($document->getElementsByTagName('a') as $item) {
@@ -220,7 +220,7 @@ function minisite_site_paths_info($minisite_info) {
   module_load_include('inc', 'minisite', 'includes/minisite.func');
 
   // Get entity object.
-  $entity = _minisite_site_load_entity($minisite_info['entity_type'], array($minisite_info['entity_id']));
+  $entity = _minisite_site_load_entity($minisite_info['entity_type'], [$minisite_info['entity_id']]);
 
   if ($entity) {
     $minisite_site_request = 'public://' . $minisite_info['source'];
@@ -232,11 +232,11 @@ function minisite_site_paths_info($minisite_info) {
     $minisite_entity_alias = _minisite_site_load_alias($minisite_info['entity_type'], $entity);
   }
 
-  return array(
+  return [
     $minisite_site_request,
     $minisite_site_url,
     $minisite_entity_alias,
-  );
+  ];
 }
 
 /**
@@ -274,11 +274,11 @@ function minisite_site_asset_info($fid, $tree = TRUE) {
     $minisite_listing = $archive->filesList();
   }
 
-  return array(
+  return [
     $minisite_path,
     $top_folder,
     $minisite_listing,
-  );
+  ];
 }
 
 /**
@@ -298,14 +298,14 @@ function _minisite_site_file_public_path_base_url() {
 /**
  * Return entity object.
  */
-function _minisite_site_load_entity($entity_type, $entity_ids = array()) {
+function _minisite_site_load_entity($entity_type, $entity_ids = []) {
   if (empty($entity_type) || empty($entity_ids)) {
-    return array();
+    return [];
   }
 
   $entity_object = entity_load($entity_type, $entity_ids);
   if (empty($entity_object)) {
-    return array();
+    return [];
   }
 
   $entity_ids = array_keys($entity_object);
@@ -331,6 +331,6 @@ function _minisite_fast_404() {
   drupal_add_http_header('Status', '404 Not Found');
   $fast_404_html = variable_get('404_fast_html', '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML+RDFa 1.0//EN" "http://www.w3.org/MarkUp/DTD/xhtml-rdfa-1.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><title>404 Not Found</title></head><body><h1>Not Found</h1><p>The requested URL "@path" was not found on this server.</p></body></html>');
   // Replace @path in the variable with the page path.
-  print strtr($fast_404_html, array('@path' => check_plain(request_uri())));
+  print strtr($fast_404_html, ['@path' => check_plain(request_uri())]);
   exit;
 }
