@@ -9,7 +9,7 @@
  * Implements hook_requirements().
  */
 function minisite_requirements($phase) {
-  $requirements = array();
+  $requirements = [];
   $t = get_t();
 
   $requirements['zip'] = [
@@ -32,22 +32,22 @@ function minisite_requirements($phase) {
       'value' => $t('Exists'),
     ];
 
-    $requirements['minisite_static'] = array(
+    $requirements['minisite_static'] = [
       'title' => $t('Minisite static files directory'),
       'severity' => REQUIREMENT_OK,
       'value' => $t('Exists'),
-    );
+    ];
 
     $path = 'public://minisite/upload';
     if (!file_prepare_directory($path, FILE_CREATE_DIRECTORY)) {
-      $requirements['minisite_upload']['description'] = $t('The Minisite upload directory, %path could not be created due to a misconfigured files directory. Please ensure that the files directory is correctly configured and that the webserver has permission to create directories.', array('%path' => file_uri_target($path)));
+      $requirements['minisite_upload']['description'] = $t('The Minisite upload directory, %path could not be created due to a misconfigured files directory. Please ensure that the files directory is correctly configured and that the webserver has permission to create directories.', ['%path' => file_uri_target($path)]);
       $requirements['minisite_upload']['severity'] = REQUIREMENT_ERROR;
       $requirements['minisite_upload']['value'] = $t('Unable to create');
     }
 
     $path = 'public://minisite/static';
     if (!file_prepare_directory($path, FILE_CREATE_DIRECTORY)) {
-      $requirements['minisite_static']['description'] = $t('The Minisite static files directory, %path could not be created due to a misconfigured files directory. Please ensure that the files directory is correctly configured and that the webserver has permission to create directories.', array('%path' => file_uri_target($path)));
+      $requirements['minisite_static']['description'] = $t('The Minisite static files directory, %path could not be created due to a misconfigured files directory. Please ensure that the files directory is correctly configured and that the webserver has permission to create directories.', ['%path' => file_uri_target($path)]);
       $requirements['minisite_static']['severity'] = REQUIREMENT_ERROR;
       $requirements['minisite_static']['value'] = $t('Unable to create');
     }
@@ -60,79 +60,79 @@ function minisite_requirements($phase) {
  * Implements hook_schema().
  */
 function minisite_schema() {
-  $schema['minisite_asset'] = array(
+  $schema['minisite_asset'] = [
     'description' => 'A list of asset information for minisite.',
-    'fields' => array(
-      'mid' => array(
+    'fields' => [
+      'mid' => [
         'type' => 'serial',
         'not null' => TRUE,
         'description' => 'The primary identifier for a minisite asset',
-      ),
-      'entity_type' => array(
+      ],
+      'entity_type' => [
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,
         'default' => '',
-      ),
-      'bundle' => array(
+      ],
+      'bundle' => [
         'type' => 'varchar',
         'length' => 128,
         'not null' => TRUE,
         'default' => '',
-      ),
-      'entity_id' => array(
+      ],
+      'entity_id' => [
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
         'description' => 'The entity id this data is attached to',
-      ),
-      'revision_id' => array(
+      ],
+      'revision_id' => [
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => FALSE,
         'description' => 'The entity revision id this data is attached to, or NULL if the entity type is not versioned',
-      ),
-      'minisite_field_name' => array(
+      ],
+      'minisite_field_name' => [
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,
         'default' => '',
-      ),
-      'minisite_fid' => array(
+      ],
+      'minisite_fid' => [
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
         'description' => 'The minisite fid this data is attached to',
-      ),
-      'language' => array(
+      ],
+      'language' => [
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,
         'default' => '',
         'description' => 'The language for this data item.',
-      ),
-      'source' => array(
+      ],
+      'source' => [
         'description' => 'The minisite file source path.',
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
         'default' => '',
-      ),
-      'alias' => array(
+      ],
+      'alias' => [
         'description' => 'The alias for this path; e.g. title-of-the-minisite.',
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
         'default' => '',
-      ),
-      'alias_status' => array(
+      ],
+      'alias_status' => [
         'type' => 'int',
         'size' => 'tiny',
         'not null' => TRUE,
         'default' => 0,
-      ),
-    ),
-    'primary key' => array(
+      ],
+    ],
+    'primary key' => [
       'mid',
       'entity_type',
       'entity_id',
@@ -140,27 +140,27 @@ function minisite_schema() {
       'minisite_fid',
       'language',
       'source',
-    ),
-    'indexes' => array(
-      'mid' => array('mid'),
-      'entity_type' => array('entity_type'),
-      'bundle' => array('bundle'),
-      'entity_id' => array('entity_id'),
-      'revision_id' => array('revision_id'),
-      'minisite_field_name' => array('minisite_field_name'),
-      'minisite_fid' => array('minisite_fid'),
-      'language' => array('language'),
-      'source' => array('source'),
-      'alias' => array('alias'),
-      'alias_status' => array('alias_status'),
-    ),
-    'foreign keys' => array(
-      'minisite_fid' => array(
+    ],
+    'indexes' => [
+      'mid' => ['mid'],
+      'entity_type' => ['entity_type'],
+      'bundle' => ['bundle'],
+      'entity_id' => ['entity_id'],
+      'revision_id' => ['revision_id'],
+      'minisite_field_name' => ['minisite_field_name'],
+      'minisite_fid' => ['minisite_fid'],
+      'language' => ['language'],
+      'source' => ['source'],
+      'alias' => ['alias'],
+      'alias_status' => ['alias_status'],
+    ],
+    'foreign keys' => [
+      'minisite_fid' => [
         'table' => 'file_managed',
-        'columns' => array('minisite_fid' => 'fid'),
-      ),
-    ),
-  );
+        'columns' => ['minisite_fid' => 'fid'],
+      ],
+    ],
+  ];
 
   return $schema;
 }
@@ -169,35 +169,35 @@ function minisite_schema() {
  * Implements hook_field_schema().
  */
 function minisite_field_schema($field) {
-  return array(
-    'columns' => array(
-      'fid' => array(
+  return [
+    'columns' => [
+      'fid' => [
         'description' => 'The {file_managed}.fid being referenced in minisite field.',
         'type' => 'int',
         'not null' => FALSE,
         'unsigned' => TRUE,
-      ),
-      'site_path' => array(
+      ],
+      'site_path' => [
         'type' => 'varchar',
         'length' => 255,
         'not null' => FALSE,
-      ),
-      'data' => array(
+      ],
+      'data' => [
         'type' => 'text',
         'not null' => FALSE,
         'size' => 'big',
         'serialize' => TRUE,
         'description' => 'Used for storing additional information.',
-      ),
-    ),
-    'indexes' => array(
-      'fid' => array('fid'),
-    ),
-    'foreign keys' => array(
-      'fid' => array(
+      ],
+    ],
+    'indexes' => [
+      'fid' => ['fid'],
+    ],
+    'foreign keys' => [
+      'fid' => [
         'table' => 'file_managed',
-        'columns' => array('fid' => 'fid'),
-      ),
-    ),
-  );
+        'columns' => ['fid' => 'fid'],
+      ],
+    ],
+  ];
 }
