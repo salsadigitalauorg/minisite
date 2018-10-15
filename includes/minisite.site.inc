@@ -223,11 +223,12 @@ function minisite_site_paths_info($minisite_info) {
   $entity = _minisite_site_load_entity($minisite_info['entity_type'], [$minisite_info['entity_id']]);
 
   if ($entity) {
-    $minisite_site_request = 'public://' . $minisite_info['source'];
+    $minisite_base_url = _minisite_site_file_public_path_base_url();
+    $minisite_site_request = $minisite_base_url . $minisite_info['source'];
     // Get minisite base href url.
     $minisite_field_values = minisite_asset_field_values($minisite_info['entity_type'], $entity, $minisite_info['minisite_field_name']);
     $minisite_site_path = $minisite_field_values['site_path'];
-    $minisite_site_url = _minisite_site_file_public_path_base_url() . $minisite_site_path . '/';
+    $minisite_site_url = $minisite_base_url . $minisite_site_path . '/';
     // Get entity alias path.
     $minisite_entity_alias = _minisite_site_load_alias($minisite_info['entity_type'], $entity);
   }
