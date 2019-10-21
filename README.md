@@ -2,6 +2,8 @@ The "Minisite" module
 =====================
 Provides the ability to upload arbitrary 'minisites' to a Drupal website.
 
+[![CircleCI](https://circleci.com/gh/salsadigitalauorg/minisite.svg?style=svg&circle-token=fd691d0f6736c1fb3e232c4d5f7d3fcd3fd12524)](https://circleci.com/gh/salsadigitalauorg/minisite)
+
 Instructions
 ------------
 This module provides the ability to upload static 'minisites' to a Drupal website 
