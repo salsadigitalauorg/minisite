@@ -4,4 +4,4 @@ description: Provides the ability to upload arbitrary 'minisites' to a Drupal we
 package: Field types
 core: 8.x
 dependencies:
-  - file
+  - drupal:file
