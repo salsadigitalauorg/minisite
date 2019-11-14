@@ -6,9 +6,8 @@ set -e
 
 MODULE=$(basename -s .info.yml -- ./*.info.yml)
 
-# @todo: Enable code linting.
-#echo "==> Lint code"
-#build/vendor/bin/phpcs -s --standard=Drupal,DrupalPractice "build/web/modules/${MODULE}" || true
+echo "==> Lint code"
+build/vendor/bin/phpcs -s --standard=Drupal,DrupalPractice "build/web/modules/${MODULE}" || true
 
 echo "==> Run tests"
 mkdir -p /tmp/test_results/simpletest
