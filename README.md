@@ -9,13 +9,14 @@ The module has actively been refactored, so try to avoid using it in production
 until refactoring is finished.
 
 ## Roadmap
-~~1. Add CI config (code linting, testing, deployment to D.O.)~~
-~~2. Make module installable in CI~~
-~~3. Add fixture creating test helpers to work with dynamic fixture archives 
-     during tests~~
-~~4. Add valid end-to-end UI test to nake sure that straightforward 
-     configuration works.~~
-  5. Add other tests:
+
+1. ~~Add CI config (code linting, testing, deployment to D.O.)~~
+2. ~~Make module installable in CI~~
+3. ~~Add fixture creating test helpers to work with dynamic fixture archives 
+   during tests~~
+4. ~~Add valid end-to-end UI test to nake sure that straightforward 
+   configuration works.~~
+5. Add other tests:
     - Use node alias as minisite path prefix (not clear how to serve from root 
       of the site).
     - Show file description (or whatever other field we can use) to replace the 
@@ -24,14 +25,14 @@ until refactoring is finished.
     - Validation: invalid archive size
     - Validation: invalid archive contents - not allowed files
     - Validation: invalid archive contents - invalid structure (no top-level) 
-  6. Fix coding standards.
-  7. Remove obsolete and stale code.
-  8. Assess and simplify config schema, field names etc.
-  9. Refactor procedural code in to classes.
-  10. Enable deployment to D.O.
-  11. Check that D.O. testbot passes all tests.
-  12. Submit for formal review by providing a patch on D.O.
-  13. Merge patch and make a stable release.
+6. Fix coding standards.
+7. Remove obsolete and stale code.
+8. Assess and simplify config schema, field names etc.
+9. Refactor procedural code in to classes.
+10. Enable deployment to D.O.
+11. Check that D.O. testbot passes all tests.
+12. Submit for formal review by providing a patch on D.O.
+13. Merge patch and make a stable release.
 
 Instructions
 ------------
