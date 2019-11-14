@@ -1,0 +1,72 @@
+# Schema for the configuration files of the Minisite module.
+
+field.storage_settings.minisite:
+  type: base_entity_reference_field_settings
+  label: 'File settings'
+  mapping:
+    display_field:
+      type: boolean
+      label: 'Enable Display field'
+    display_default:
+      type: boolean
+      label: 'Files displayed by default'
+    uri_scheme:
+      type: string
+      label: 'Upload destination'
+
+field.value.minisite:
+  type: mapping
+  label: 'Default value'
+
+base_minisite_field_field_settings:
+  type: mapping
+  mapping:
+    handler:
+      type: string
+      label: 'Reference method'
+    handler_settings:
+      type: entity_reference_selection.[%parent.handler]
+      label: 'File selection handler settings'
+    file_directory:
+      type: string
+      label: 'File directory'
+    file_extensions:
+      type: string
+      label: 'Allowed file extensions'
+    max_filesize:
+      type: string
+      label: 'Maximum upload size'
+    minisite_extensions:
+      type: string
+      label: 'CHANGEMEAllowed file extensions'
+    minisite_extensions_disallowed:
+      type: string
+      label: 'CHANGEMEAllowed file extensions'
+
+field.field_settings.minisite:
+  type: base_minisite_field_field_settings
+  label: 'Minisite settings'
+  mapping:
+    description_field:
+      type: boolean
+      label: 'Enable Description field'
+
+
+field.formatter.settings.minisite_link:
+  type: mapping
+  label: 'Generic file format settings'
+  mapping:
+    use_description_as_link_text:
+      type: boolean
+      label: 'Replace the file name by its description when available'
+    minisite_link:
+      type: string
+      label: 'CHANGE Replace the file name by its description when available'
+
+field.widget.settings.minisite_default:
+  type: mapping
+  label: 'File format settings'
+  mapping:
+    progress_indicator:
+      type: string
+      label: 'Progress indicator'
