@@ -38,10 +38,10 @@ base_minisite_field_field_settings:
       label: 'Maximum upload size'
     minisite_extensions:
       type: string
-      label: 'CHANGEMEAllowed file extensions'
+      label: 'Allowed extensions of minisite files'
     minisite_extensions_disallowed:
       type: string
-      label: 'CHANGEMEAllowed file extensions'
+      label: 'Disallowed extensions of minisite files'
 
 field.field_settings.minisite:
   type: base_minisite_field_field_settings
@@ -50,7 +50,6 @@ field.field_settings.minisite:
     description_field:
       type: boolean
       label: 'Enable Description field'
-
 
 field.formatter.settings.minisite_link:
   type: mapping
@@ -61,7 +60,7 @@ field.formatter.settings.minisite_link:
       label: 'Replace the file name by its description when available'
     minisite_link:
       type: string
-      label: 'CHANGE Replace the file name by its description when available'
+      label: 'Use to select if minisite should be linked to content or file'
 
 field.widget.settings.minisite_default:
   type: mapping
