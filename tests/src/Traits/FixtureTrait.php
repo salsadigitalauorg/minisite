@@ -14,7 +14,7 @@ trait FixtureTrait {
 
   protected function fixtureSetUp() {
     $fs = new Filesystem();
-    $this->fixtureDir = sys_get_temp_dir() . \DIRECTORY_SEPARATOR . rand(100000, 1000000);
+    $this->fixtureDir = sys_get_temp_dir() . \DIRECTORY_SEPARATOR . uniqid();
     $fs->mkdir($this->fixtureDir);
   }
 
@@ -26,26 +26,64 @@ trait FixtureTrait {
     $this->fixtureDir = NULL;
   }
 
-  public function createFixtureArchive($files, $filename = NULL) {
+  public function fixtureCreateFiles($files) {
+    $paths = [];
 
-  }
-
-  public function createFixtureFiles($files, $filename = NULL) {
     $dirs = [];
     foreach ($files as $name => $value) {
       // Directories are entries with int key.
       if (is_int($name)) {
-        $dirs[] = $this->fixtureDir . \DIRECTORY_SEPARATOR . $value;
+        $path = $this->fixtureDir . \DIRECTORY_SEPARATOR . $value;
+        $dirs[] = $path;
+        $paths[$path] = $value;
+        unset($files[$name]);
       }
-      unset($files[$name]);
     }
 
     $fs = new Filesystem();
     $fs->mkdir($dirs);
 
     foreach ($files as $name => $content) {
-      $fs->dumpFile($this->fixtureDir . \DIRECTORY_SEPARATOR . $name, $content);
+      $path = $this->fixtureDir . \DIRECTORY_SEPARATOR . $name;
+      $fs->dumpFile($path, $content);
+      $paths[$path] = $name;
     }
+
+    return $paths;
+  }
+
+  public function fixtureCreateArchive($files, $type = 'zip', $filename = NULL) {
+    $filename = empty($filename) ? uniqid() : $filename;
+    $filename = basename($filename, '.' . $type) . '.' . $type;
+    $file_path = $this->fixtureDir . \DIRECTORY_SEPARATOR . uniqid() . \DIRECTORY_SEPARATOR . $filename;
+
+    $fs = new Filesystem();
+    $fs->mkdir(dirname($file_path));
+
+    switch ($type) {
+      case 'zip':
+        $archive = new \ZipArchive();
+        if ($archive->open($file_path, \ZipArchive::CREATE) !== TRUE) {
+          throw new \RuntimeException(sprintf('Cannot open file "%s"', $file_path));
+        }
+        break;
+
+      default:
+        throw new \RuntimeException(sprintf('Unsupported archive type "%s" provided.', $type));
+    }
+
+    $files = $this->fixtureCreateFiles($files);
+    foreach ($files as $absolute_path => $path) {
+      if (is_dir($absolute_path)) {
+        $archive->addEmptyDir($path);
+      }
+      else {
+        $archive->addFile($absolute_path, $path);
+      }
+    }
+    $archive->close();
+
+    return $file_path;
   }
 
 }

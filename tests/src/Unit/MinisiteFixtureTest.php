@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\minisite\Unit;
 
+use Drupal\Core\Archiver\Zip;
 use Drupal\testmode\Testmode;
 use Drupal\Tests\minisite\Traits\FixtureTrait;
 use Drupal\Tests\UnitTestCase;
@@ -56,14 +57,66 @@ class MinisiteFixtureTest extends UnitTestCase {
   }
 
   /**
-   * @dataProvider providerFiles
+   * Test fixtureCreateFiles() method.
    */
-  public function t1estFiles() {
+  public function testFixtureCreateFiles() {
+    $files = [
+      'dir1',
+      'file1' => 'content1',
+      'dir2/file21' => 'content21',
+      'dir2/file22' => 'content22',
+      'dir3/dir31/dir/311',
+    ];
 
+    $expected_files = [
+      $this->fixtureDir . \DIRECTORY_SEPARATOR . 'dir1' => 'dir1',
+      $this->fixtureDir . \DIRECTORY_SEPARATOR . 'file1' => 'file1',
+      $this->fixtureDir . \DIRECTORY_SEPARATOR . 'dir2/file21' => 'dir2/file21',
+      $this->fixtureDir . \DIRECTORY_SEPARATOR . 'dir2/file22' => 'dir2/file22',
+      $this->fixtureDir . \DIRECTORY_SEPARATOR . 'dir3/dir31/dir/311' => 'dir3/dir31/dir/311',
+    ];
+
+    $actual_files = $this->fixtureCreateFiles($files);
+    $this->assertEquals($expected_files, $actual_files);
+
+    $this->assertDirectoryExists($this->fixtureDir . \DIRECTORY_SEPARATOR . 'dir1');
+    $this->assertFileExists($this->fixtureDir . \DIRECTORY_SEPARATOR . 'file1');
+    $this->assertStringEqualsFile($this->fixtureDir . \DIRECTORY_SEPARATOR . 'file1', 'content1');
+    $this->assertStringEqualsFile($this->fixtureDir . \DIRECTORY_SEPARATOR . 'dir2/file21', 'content21');
+    $this->assertStringEqualsFile($this->fixtureDir . \DIRECTORY_SEPARATOR . 'dir2/file22', 'content22');
+    $this->assertDirectoryExists($this->fixtureDir . \DIRECTORY_SEPARATOR . 'dir3/dir31/dir/311');
   }
 
-  public function providerFiles() {
+  /**
+   * Test fixtureCreateArchive() method.
+   */
+  public function testFixtureCreateArchive() {
+    $files = [
+      'dir1',
+      'file1' => 'content1',
+      'dir2/file21' => 'content21',
+      'dir2/file22' => 'content22',
+      'dir3/dir31/dir/311',
+    ];
 
+    $expected_files = [
+      'dir1/',
+      'file1',
+      'dir2/file21',
+      'dir2/file22',
+      'dir3/dir31/dir/311/',
+    ];
+
+    $archive_filename = $this->fixtureCreateArchive($files, 'zip');
+    $this->assertFileExists($archive_filename);
+
+    $archive = new Zip($archive_filename);
+    $actual_files = $archive->listContents();
+
+    sort($expected_files);
+    sort($actual_files);
+
+    $this->assertEquals($expected_files, $actual_files);
   }
 
 }
