@@ -2,7 +2,6 @@
 
 namespace Drupal\Tests\minisite\Functional;
 
-use Drupal\comment\Tests\CommentTestTrait;
 use Drupal\Tests\field_ui\Traits\FieldUiTestTrait;
 
 /**
@@ -12,7 +11,6 @@ use Drupal\Tests\field_ui\Traits\FieldUiTestTrait;
  */
 class MinisiteUiTest extends MinisiteTestBase {
 
-  use CommentTestTrait;
   use FieldUiTestTrait;
 
   /**
@@ -30,28 +28,56 @@ class MinisiteUiTest extends MinisiteTestBase {
   }
 
   /**
-   * Tests upload and remove buttons for a single-valued Minisite field.
+   * Tests file upload and browsing minisite pages.
    */
-  public function testSingleValuedWidget() {
+  public function testUploadAndBrowsing() {
     $type_name = $this->contentType;
 
-    $field_name = 'ms_' . strtolower($this->randomMachineName());
-    $field_label = $this->randomMachineName();
+    $field_name = 'ms_fn_' . strtolower($this->randomMachineName(4));
+    $field_label = 'ms_fl_' . strtolower($this->randomMachineName(4));
 
     // Create field through UI.
-    $storage_edit = [
-      'settings[uri_scheme]' => 'public',
-    ];
+    // Note that config schema is also validated when field is created.
+    $storage_edit = ['settings[uri_scheme]' => 'public'];
     $this->fieldUIAddNewField("admin/structure/types/manage/$type_name", $field_name, $field_label, 'minisite', $storage_edit);
 
-    // @todo:
-    // + Create content type
-    // + Add field
-    // + Adjust field config - using defaults
-    // Create fixture archive
-    // Create node and upload fixture archive
-    // Assert node visibility
-    // Navigate to the path of the site and assert pages
+    // Create valid fixture archive.
+    // All files must reside in the top-level directory and archive must contain
+    // index.html file.
+    $archive_file_absolute = $this->fixtureCreateArchive([
+      'parent/index.html' => $this->fixtureHtmlPage('Index page', $this->fixtureLink('Go to Page 1', 'page1.html')),
+      'parent/page1.html' => $this->fixtureHtmlPage('Page 1', $this->fixtureLink('Go to Page 2', 'page2.html')),
+      'parent/page2.html' => $this->fixtureHtmlPage('Page 2'),
+    ]);
+    $archive_file = basename($archive_file_absolute);
+
+    // Manually clear cache on the tester side.
+    \Drupal::entityManager()->clearCachedFieldDefinitions();
+
+    // Create node and upload fixture file.
+    $edit = [
+      'title[0][value]' => $this->randomMachineName(),
+      'files[field_' . $field_name . '_' . 0 . ']' => $archive_file_absolute,
+    ];
+    $this->drupalPostForm("node/add/$type_name", $edit, t('Save'));
+    $node = $this->drupalGetNodeByTitle($edit['title[0][value]']);
+
+    // Visit note and start browsing minisite.
+    $this->drupalGet('node/' . $node->id());
+    $this->assertResponse(200);
+    $this->assertLink($archive_file);
+    $this->clickLink($archive_file);
+
+    // Brose minisite pages starting from index page.
+    $this->assertText('Index page');
+    $this->assertLink('Go to Page 1');
+    $this->clickLink('Go to Page 1');
+
+    $this->assertText('Page 1');
+    $this->assertLink('Go to Page 2');
+    $this->clickLink('Go to Page 2');
+
+    $this->assertText('Page 2');
   }
 
 }

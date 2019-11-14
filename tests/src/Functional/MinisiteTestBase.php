@@ -3,19 +3,15 @@
 namespace Drupal\Tests\minisite\Functional;
 
 use Drupal\Component\Utility\Html;
-use Drupal\file\Entity\File;
 use Drupal\Tests\BrowserTestBase;
-use Drupal\Tests\TestFileCreationTrait;
+use Drupal\Tests\minisite\Traits\FixtureTrait;
 
 /**
  * Provides methods specifically for testing Minisite module's field handling.
  */
 abstract class MinisiteTestBase extends BrowserTestBase {
 
-  use MinisiteCreationTrait;
-  use TestFileCreationTrait {
-    getTestFiles as drupalGetTestFiles;
-  }
+  use FixtureTrait;
 
   /**
    * {@inheritdoc}
@@ -29,6 +25,11 @@ abstract class MinisiteTestBase extends BrowserTestBase {
    */
   protected $adminUser;
 
+  /**
+   * Content type used to create the field on.
+   *
+   * @var string
+   */
   protected $contentType = 'article';
 
   /**
@@ -36,26 +37,21 @@ abstract class MinisiteTestBase extends BrowserTestBase {
    */
   protected function setUp() {
     parent::setUp();
+
+    $this->fixtureSetUp();
+
     $this->adminUser = $this->drupalCreateUser(['access content', 'access administration pages', 'administer site configuration', 'administer users', 'administer permissions', 'administer content types', 'administer node fields', 'administer node display', 'administer nodes', 'bypass node access']);
     $this->drupalLogin($this->adminUser);
     $this->drupalCreateContentType(['type' => $this->contentType, 'name' => 'Article']);
   }
 
   /**
-   * Retrieves a sample file of the specified type.
-   *
-   * @return \Drupal\file\FileInterface
-   *   The new unsaved file entity.
+   * {@inheritdoc}
    */
-  public function getTestFile($type_name, $size = NULL) {
-    // Get a file to upload.
-    $file = current($this->drupalGetTestFiles($type_name, $size));
+  protected function tearDown() {
+    parent::tearDown();
 
-    // Add a filesize property to files as would be read by
-    // \Drupal\file\Entity\File::load().
-    $file->filesize = filesize($file->uri);
-
-    return File::create((array) $file);
+    $this->fixtureTearDown();
   }
 
   /**
@@ -88,11 +84,6 @@ abstract class MinisiteTestBase extends BrowserTestBase {
     $url = $GLOBALS['base_url'] . $base_directory . '/' . $filename;
 
     $this->fail($url);
-  }
-
-
-  protected function createFixtureArchive($filename, $structure) {
-
   }
 
 }
