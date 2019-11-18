@@ -81,6 +81,13 @@ trait FixtureTrait {
     return $paths;
   }
 
+  public function fixtureCreateFile($filename, $content = '') {
+    $created_files = $this->fixtureCreateFiles([$filename => $content]);
+    $created_file = key($created_files);
+
+    return $created_file;
+  }
+
   /**
    * Create archive from an array of specified files.
    *

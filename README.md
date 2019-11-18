@@ -14,17 +14,16 @@ until refactoring is finished.
 2. ~~Make module installable in CI~~
 3. ~~Add fixture creating test helpers to work with dynamic fixture archives 
    during tests~~
-4. ~~Add valid end-to-end UI test to nake sure that straightforward 
+4. ~~Add valid end-to-end UI test to make sure that straightforward 
    configuration works.~~
 5. Add other tests:
+    - ~~Validation: invalid archive format~~
+    - Validation: invalid archive contents - invalid structure (no top-level)
+    - Validation: invalid archive contents - not allowed files     
     - Use node alias as minisite path prefix (not clear how to serve from root 
       of the site).
     - Show file description (or whatever other field we can use) to replace the 
       file name with this label value on node view.
-    - Validation: invalid archive format
-    - Validation: invalid archive size
-    - Validation: invalid archive contents - not allowed files
-    - Validation: invalid archive contents - invalid structure (no top-level) 
 6. Fix coding standards.
 7. Remove obsolete and stale code.
 8. Assess and simplify config schema, field names etc.
