@@ -33,7 +33,7 @@ class MinisiteValidationTest extends MinisiteTestBase {
   /**
    * Tests the required property on minisite field.
    */
-  public function testRequired() {
+  public function testValidateRequired() {
     $node_storage = $this->container->get('entity.manager')->getStorage('node');
     $field_name = strtolower($this->randomMachineName());
     $storage = $this->createMinisiteField($field_name, 'node', $this->contentType, [], ['required' => '1']);
@@ -74,6 +74,19 @@ class MinisiteValidationTest extends MinisiteTestBase {
     $node_file = File::load($node->{$field_name}->target_id);
     $this->assertFileExists($node_file, 'File exists after uploading to the required multiple value field.');
     $this->assertFileEntryExists($node_file, 'File entry exists after uploading to the required multiple value field.');
+  }
+
+  /**
+   * Tests the archive format on minisite field.
+   */
+  public function testValidateArchiveFormat() {
+    $field_name = strtolower($this->randomMachineName());
+
+    // Try uploading a file with correct extension, but invalid format.
+    $test_file = $this->getTestArchiveInvalidFormat();
+    $this->uploadNodeFile($test_file, $field_name, $this->contentType);
+    $this->assertRaw(t('The specified file %filename could not be uploaded.', ['%filename' => $test_file->getFilename()]));
+    $this->assertRaw(t('Provided file has incorrect format.'));
   }
 
 }

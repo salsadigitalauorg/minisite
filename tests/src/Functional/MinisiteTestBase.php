@@ -210,22 +210,15 @@ abstract class MinisiteTestBase extends BrowserTestBase {
   }
 
   /**
-   * Retrieves a sample file of the specified type.
+   * @param $absolute_file_path
    *
-   * @return \Drupal\file\FileInterface
-   *   The new unsaved file entity.
+   * @return \Drupal\file\Entity\File
    */
-  public function getTestArchive($files) {
-    // Get a file to upload.
-
-    // Create valid fixture archive.
-    // All files must reside in the top-level directory and archive must contain
-    // index.html file.
-    $archive_file_absolute = $this->fixtureCreateArchive($files);
-    $archive_file = basename($archive_file_absolute);
+  protected function convertToFileEntity($absolute_file_path) {
+    $archive_file = basename($absolute_file_path);
 
     $file = new \stdClass();
-    $file->uri = $archive_file_absolute;
+    $file->uri = $absolute_file_path;
     $file->filename = $archive_file;
     $file->name = pathinfo($archive_file, PATHINFO_FILENAME);
     // Add a filesize property to files as would be read by
@@ -241,11 +234,22 @@ abstract class MinisiteTestBase extends BrowserTestBase {
    * @return \Drupal\file\FileInterface
    */
   public function getTestArchiveValid() {
-    return $this->getTestArchive([
+    // Create valid fixture archive.
+    // All files must reside in the top-level directory and archive must contain
+    // index.html file.
+    $archive_file_absolute =  $this->fixtureCreateArchive([
       'parent/index.html' => $this->fixtureHtmlPage('Index page', $this->fixtureLink('Go to Page 1', 'page1.html')),
       'parent/page1.html' => $this->fixtureHtmlPage('Page 1', $this->fixtureLink('Go to Page 2', 'page2.html')),
       'parent/page2.html' => $this->fixtureHtmlPage('Page 2'),
     ]);
+
+    return $this->convertToFileEntity($archive_file_absolute);
+  }
+
+  public function getTestArchiveInvalidFormat() {
+    $filename = $this->fixtureCreateFile('invalid.zip', rand(1,9));
+
+    return $this->convertToFileEntity($filename);
   }
 
 }
