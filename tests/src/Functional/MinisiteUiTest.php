@@ -7,7 +7,7 @@ use Drupal\Tests\field_ui\Traits\FieldUiTestTrait;
 /**
  * Tests the minisite field creation through UI.
  *
- * @group file
+ * @group minisite
  */
 class MinisiteUiTest extends MinisiteTestBase {
 
@@ -44,12 +44,7 @@ class MinisiteUiTest extends MinisiteTestBase {
     // Create valid fixture archive.
     // All files must reside in the top-level directory and archive must contain
     // index.html file.
-    $archive_file_absolute = $this->fixtureCreateArchive([
-      'parent/index.html' => $this->fixtureHtmlPage('Index page', $this->fixtureLink('Go to Page 1', 'page1.html')),
-      'parent/page1.html' => $this->fixtureHtmlPage('Page 1', $this->fixtureLink('Go to Page 2', 'page2.html')),
-      'parent/page2.html' => $this->fixtureHtmlPage('Page 2'),
-    ]);
-    $archive_file = basename($archive_file_absolute);
+    $test_file = $this->getTestArchiveValid();
 
     // Manually clear cache on the tester side.
     \Drupal::entityManager()->clearCachedFieldDefinitions();
@@ -57,7 +52,7 @@ class MinisiteUiTest extends MinisiteTestBase {
     // Create node and upload fixture file.
     $edit = [
       'title[0][value]' => $this->randomMachineName(),
-      'files[field_' . $field_name . '_' . 0 . ']' => $archive_file_absolute,
+      'files[field_' . $field_name . '_' . 0 . ']' => $test_file->getFileUri(),
     ];
     $this->drupalPostForm("node/add/$type_name", $edit, t('Save'));
     $node = $this->drupalGetNodeByTitle($edit['title[0][value]']);
@@ -65,8 +60,8 @@ class MinisiteUiTest extends MinisiteTestBase {
     // Visit note and start browsing minisite.
     $this->drupalGet('node/' . $node->id());
     $this->assertResponse(200);
-    $this->assertLink($archive_file);
-    $this->clickLink($archive_file);
+    $this->assertLink($test_file->getFilename());
+    $this->clickLink($test_file->getFilename());
 
     // Brose minisite pages starting from index page.
     $this->assertText('Index page');
