@@ -81,6 +81,7 @@ class MinisiteValidationTest extends MinisiteTestBase {
    */
   public function testValidateArchiveFormat() {
     $field_name = strtolower($this->randomMachineName());
+    $this->createMinisiteField($field_name, 'node', $this->contentType, [], ['required' => '1']);
 
     // Try uploading a file with correct extension, but invalid format.
     $test_file = $this->getTestArchiveInvalidFormat();
