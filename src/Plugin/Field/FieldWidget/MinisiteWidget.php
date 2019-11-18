@@ -75,15 +75,17 @@ class MinisiteWidget extends FileWidget {
   public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
     $element = parent::formElement($items, $delta, $element, $form, $form_state);
 
-    $field_settings = $this->getFieldSettings();
-
-    // If not using custom extension validation, ensure this is an archive file.
+    // A list of extensions supported by this module.
     $supported_extensions = array('zip');
+
+    // If not using custom extension validation, enforce validation which check
+    // that this is an archive file.
     $extensions = isset($element['#upload_validators']['file_validate_extensions'][0]) ? $element['#upload_validators']['file_validate_extensions'][0] : implode(' ', $supported_extensions);
     $extensions = array_intersect(explode(' ', $extensions), $supported_extensions);
     $element['#upload_validators']['file_validate_extensions'][0] = implode(' ', $extensions);
 
-    // Add properties needed by process() method.
+    // Add archive format validator.
+    $element['#upload_validators']['minisite_validate_is_archive'][] = $supported_extensions;
 
     return $element;
   }

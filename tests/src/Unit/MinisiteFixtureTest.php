@@ -13,7 +13,7 @@ use Symfony\Component\Filesystem\Filesystem;
  *
  * Tests for fixture creation trait (tests for test helpers).
  *
- * @group Minisite
+ * @group minisite
  *
  * @package Drupal\testmode\Tests
  */

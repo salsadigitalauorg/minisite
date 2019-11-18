@@ -24,7 +24,7 @@ netstat "${netstat_opts[@]}" | grep -q 8000 || (echo "ERROR: Unable to start inb
 curl -s -o /dev/null -w "%{http_code}" -L -I http://localhost:8000 | grep -q 200 || (echo "ERROR: Server is started, but site cannot be served" && exit 1)
 
 echo "==> Install Drupal"
-build/vendor/bin/drush -r build/web si "${DRUPAL_PROFILE:-standard}" -y --db-url sqlite://localhost//tmp/site.sqlite --account-name=admin install_configure_form.enable_update_status_module=NULL install_configure_form.enable_update_status_emails=NULL
+build/vendor/bin/drush -r build/web si "${DRUPAL_PROFILE:-standard}" -y --db-url sqlite:///tmp/site.sqlite --account-name=admin install_configure_form.enable_update_status_module=NULL install_configure_form.enable_update_status_emails=NULL
 
 echo "==> Symlink module code"
 MODULE=$(basename -s .info.yml -- ./*.info.yml)

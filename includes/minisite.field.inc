@@ -8,6 +8,8 @@
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
+use Drupal\file\FileInterface;
+use Drupal\minisite\Minisite\MinisiteAbstract;
 
 /**
  * Implements hook_form_FORM_ID_alter().
@@ -236,4 +238,21 @@ function _minisite_field_validate_minisite_file_blacklist(array $extensions) {
       return FALSE;
     }
   }
+}
+
+
+function minisite_validate_is_archive(FileInterface $file, $supported_extensions) {
+  $errors = [];
+
+  if (!in_array('zip', $supported_extensions)) {
+    throw new \RuntimeException('Only ZIP archives are supported');
+  }
+
+  $archive = MinisiteAbstract::open($file);
+
+  if (!$archive) {
+    $errors[] = t('Provided file has incorrect format.');
+  }
+
+  return $errors;
 }
