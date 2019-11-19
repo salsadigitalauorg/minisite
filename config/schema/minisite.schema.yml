@@ -39,9 +39,6 @@ base_minisite_field_field_settings:
     minisite_extensions:
       type: string
       label: 'Allowed extensions of minisite files'
-    minisite_extensions_disallowed:
-      type: string
-      label: 'Disallowed extensions of minisite files'
 
 field.field_settings.minisite:
   type: base_minisite_field_field_settings

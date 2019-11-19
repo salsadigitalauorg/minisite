@@ -1,0 +1,4 @@
+services:
+  plugin.manager.minisite_archiver:
+    class: Drupal\minisite\MinisiteArchiverManager
+    parent: plugin.manager.archiver

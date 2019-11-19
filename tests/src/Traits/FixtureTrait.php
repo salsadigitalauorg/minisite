@@ -29,7 +29,6 @@ trait FixtureTrait {
     $fs->mkdir($this->fixtureDir);
   }
 
-
   /**
    * Tear down functionality.
    *
@@ -81,6 +80,17 @@ trait FixtureTrait {
     return $paths;
   }
 
+  /**
+   * Create a single file with content.
+   *
+   * @param string $filename
+   *   File name of the resulting file.
+   * @param string $content
+   *   (optional) Content of the resulting file.
+   *
+   * @return string
+   *   Absolute path to created file.
+   */
   public function fixtureCreateFile($filename, $content = '') {
     $created_files = $this->fixtureCreateFiles([$filename => $content]);
     $created_file = key($created_files);
@@ -95,7 +105,7 @@ trait FixtureTrait {
    *   Array of files as described in fixtureCreateFiles().
    * @param string $type
    *   (optional) The type of the archive. Defaults to 'zip'.
-   * @param null $filename
+   * @param string $filename
    *   (optional) The resulting file name of the archive. If not provided, a
    *   random file name is generated.
    *
@@ -172,7 +182,7 @@ HEREDOC;
    *
    * @param string $text
    *   Link text.
-   * @param $url
+   * @param string $url
    *   Link URL.
    *
    * @return string

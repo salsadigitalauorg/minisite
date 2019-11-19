@@ -54,7 +54,7 @@ class MinisiteUiTest extends MinisiteTestBase {
       'title[0][value]' => $this->randomMachineName(),
       'files[field_' . $field_name . '_' . 0 . ']' => $test_file->getFileUri(),
     ];
-    $this->drupalPostForm("node/add/$type_name", $edit, t('Save'));
+    $this->drupalPostForm("node/add/$type_name", $edit, $this->t('Save'));
     $node = $this->drupalGetNodeByTitle($edit['title[0][value]']);
 
     // Visit note and start browsing minisite.
