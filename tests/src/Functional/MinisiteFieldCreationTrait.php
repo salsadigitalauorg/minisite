@@ -29,7 +29,7 @@ trait MinisiteFieldCreationTrait {
    * @return \Drupal\field\FieldStorageConfigInterface
    *   The minisite field.
    */
-  public function createMinisiteField($name, $entity_type, $bundle, $storage_settings = [], $field_settings = [], $widget_settings = []) {
+  public function createMinisiteField($name, $entity_type, $bundle, array $storage_settings = [], array $field_settings = [], array $widget_settings = []) {
     $field_storage = FieldStorageConfig::create([
       'entity_type' => $entity_type,
       'field_name' => $name,
@@ -58,7 +58,7 @@ trait MinisiteFieldCreationTrait {
    * @param array $widget_settings
    *   A list of widget settings that will be added to the widget defaults.
    */
-  public function attachMinisiteField($name, $entity_type, $bundle, $field_settings = [], $widget_settings = []) {
+  public function attachMinisiteField($name, $entity_type, $bundle, array $field_settings = [], array $widget_settings = []) {
     $field = [
       'field_name' => $name,
       'label' => $name,

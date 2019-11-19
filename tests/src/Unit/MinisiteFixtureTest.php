@@ -3,7 +3,6 @@
 namespace Drupal\Tests\minisite\Unit;
 
 use Drupal\Core\Archiver\Zip;
-use Drupal\testmode\Testmode;
 use Drupal\Tests\minisite\Traits\FixtureTrait;
 use Drupal\Tests\UnitTestCase;
 use Symfony\Component\Filesystem\Filesystem;
@@ -21,11 +20,17 @@ class MinisiteFixtureTest extends UnitTestCase {
 
   use FixtureTrait;
 
+  /**
+   * {@inheritdoc}
+   */
   protected function setUp() {
     parent::setUp();
     $this->fixtureSetUp();
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function tearDown() {
     parent::tearDown();
     $this->fixtureTearDown();
@@ -60,6 +65,7 @@ class MinisiteFixtureTest extends UnitTestCase {
    * Test fixtureCreateFiles() method.
    */
   public function testFixtureCreateFiles() {
+    // @codingStandardsIgnoreStart
     $files = [
       'dir1',
       'file1' => 'content1',
@@ -67,6 +73,7 @@ class MinisiteFixtureTest extends UnitTestCase {
       'dir2/file22' => 'content22',
       'dir3/dir31/dir/311',
     ];
+    // @codingStandardsIgnoreEnd
 
     $expected_files = [
       $this->fixtureDir . \DIRECTORY_SEPARATOR . 'dir1' => 'dir1',
@@ -91,6 +98,7 @@ class MinisiteFixtureTest extends UnitTestCase {
    * Test fixtureCreateArchive() method.
    */
   public function testFixtureCreateArchive() {
+    // @codingStandardsIgnoreStart
     $files = [
       'dir1',
       'file1' => 'content1',
@@ -98,6 +106,7 @@ class MinisiteFixtureTest extends UnitTestCase {
       'dir2/file22' => 'content22',
       'dir3/dir31/dir/311',
     ];
+    // @codingStandardsIgnoreEnd
 
     $expected_files = [
       'dir1/',

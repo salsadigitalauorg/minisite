@@ -3,6 +3,7 @@
 namespace Drupal\Tests\minisite\Functional;
 
 use Drupal\Component\Utility\Html;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\file\Entity\File;
 use Drupal\file\FileInterface;
@@ -16,6 +17,7 @@ abstract class MinisiteTestBase extends BrowserTestBase {
 
   use FixtureTrait;
   use MinisiteFieldCreationTrait;
+  use StringTranslationTrait;
 
   /**
    * {@inheritdoc}
@@ -44,7 +46,18 @@ abstract class MinisiteTestBase extends BrowserTestBase {
 
     $this->fixtureSetUp();
 
-    $this->adminUser = $this->drupalCreateUser(['access content', 'access administration pages', 'administer site configuration', 'administer users', 'administer permissions', 'administer content types', 'administer node fields', 'administer node display', 'administer nodes', 'bypass node access']);
+    $this->adminUser = $this->drupalCreateUser([
+      'access content',
+      'access administration pages',
+      'administer site configuration',
+      'administer users',
+      'administer permissions',
+      'administer content types',
+      'administer node fields',
+      'administer node display',
+      'administer nodes',
+      'bypass node access',
+    ]);
     $this->drupalLogin($this->adminUser);
     $this->drupalCreateContentType(['type' => $this->contentType, 'name' => 'Article']);
   }
@@ -97,7 +110,7 @@ abstract class MinisiteTestBase extends BrowserTestBase {
    *   The File to be uploaded.
    * @param string $field_name
    *   The name of the field on which the files should be saved.
-   * @param $nid_or_type
+   * @param int|string $nid_or_type
    *   A numeric node id to upload files to an existing node, or a string
    *   indicating the desired bundle for a new node.
    * @param bool $new_revision
@@ -119,7 +132,7 @@ abstract class MinisiteTestBase extends BrowserTestBase {
    *   The files to be uploaded.
    * @param string $field_name
    *   The name of the field on which the files should be saved.
-   * @param $nid_or_type
+   * @param int|string $nid_or_type
    *   A numeric node id to upload files to an existing node, or a string
    *   indicating the desired bundle for a new node.
    * @param bool $new_revision
@@ -173,11 +186,11 @@ abstract class MinisiteTestBase extends BrowserTestBase {
       }
       else {
         $page->attachFileToField($name, $file_path);
-        $this->drupalPostForm(NULL, [], t('Upload'));
+        $this->drupalPostForm(NULL, [], $this->t('Upload'));
       }
     }
 
-    $this->drupalPostForm(NULL, $edit, t('Save'));
+    $this->drupalPostForm(NULL, $edit, $this->t('Save'));
 
     return $nid;
   }
@@ -194,7 +207,7 @@ abstract class MinisiteTestBase extends BrowserTestBase {
    *   (optional) A message to display with the assertion.
    */
   public static function assertFileExists($file, $message = NULL) {
-    $message = isset($message) ? $message : format_string('File %file exists on the disk.', ['%file' => $file->getFileUri()]);
+    $message = isset($message) ? $message : new FormattableMarkup('File %file exists on the disk.', ['%file' => $file->getFileUri()]);
     $filename = $file instanceof FileInterface ? $file->getFileUri() : $file;
     parent::assertFileExists($filename, $message);
   }
@@ -205,14 +218,18 @@ abstract class MinisiteTestBase extends BrowserTestBase {
   public function assertFileEntryExists($file, $message = NULL) {
     $this->container->get('entity.manager')->getStorage('file')->resetCache();
     $db_file = File::load($file->id());
-    $message = isset($message) ? $message : format_string('File %file exists in database at the correct path.', ['%file' => $file->getFileUri()]);
+    $message = isset($message) ? $message : new FormattableMarkup('File %file exists in database at the correct path.', ['%file' => $file->getFileUri()]);
     $this->assertEqual($db_file->getFileUri(), $file->getFileUri(), $message);
   }
 
   /**
-   * @param $absolute_file_path
+   * Convert file provided by absolute path to file entity.
+   *
+   * @param string $absolute_file_path
+   *   Absolute path to file.
    *
    * @return \Drupal\file\Entity\File
+   *   The File entity object.
    */
   protected function convertToFileEntity($absolute_file_path) {
     $archive_file = basename($absolute_file_path);
@@ -231,13 +248,14 @@ abstract class MinisiteTestBase extends BrowserTestBase {
   /**
    * Shorthand to get a valid archive file.
    *
-   * @return \Drupal\file\FileInterface
+   * @return \Drupal\file\Entity\File
+   *   The File entity object.
    */
   public function getTestArchiveValid() {
     // Create valid fixture archive.
-    // All files must reside in the top-level directory and archive must contain
-    // index.html file.
-    $archive_file_absolute =  $this->fixtureCreateArchive([
+    // All files must reside in the top-level directory, archive must contain
+    // index.html file, and files should have allowed extension.
+    $archive_file_absolute = $this->fixtureCreateArchive([
       'parent/index.html' => $this->fixtureHtmlPage('Index page', $this->fixtureLink('Go to Page 1', 'page1.html')),
       'parent/page1.html' => $this->fixtureHtmlPage('Page 1', $this->fixtureLink('Go to Page 2', 'page2.html')),
       'parent/page2.html' => $this->fixtureHtmlPage('Page 2'),
@@ -246,8 +264,14 @@ abstract class MinisiteTestBase extends BrowserTestBase {
     return $this->convertToFileEntity($archive_file_absolute);
   }
 
+  /**
+   * Shorthand to get an invalid archive file.
+   *
+   * @return \Drupal\file\Entity\File
+   *   The File entity object.
+   */
   public function getTestArchiveInvalidFormat() {
-    $filename = $this->fixtureCreateFile('invalid.zip', rand(1,9));
+    $filename = $this->fixtureCreateFile('invalid.zip', rand(1, 9));
 
     return $this->convertToFileEntity($filename);
   }
