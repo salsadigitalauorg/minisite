@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\minisite\Functional;
 
+use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\file\Entity\File;
@@ -42,13 +43,17 @@ class MinisiteValidationTest extends MinisiteTestBase {
     // Try to post a new node without uploading a file.
     $edit = [];
     $edit['title[0][value]'] = $this->randomMachineName();
-    $this->drupalPostForm('node/add/' . $this->contentType, $edit, t('Save'));
-    $this->assertRaw(t('@title field is required.', ['@title' => $field->getLabel()]));
+    $this->drupalPostForm('node/add/' . $this->contentType, $edit, $this->t('Save'));
+    $this->assertRaw($this->t('@title field is required.', ['@title' => $field->getLabel()]));
 
     // Create a new node with the uploaded file.
     $test_file = $this->getTestArchiveValid();
     $nid = $this->uploadNodeFile($test_file, $field_name, $this->contentType);
-    $this->assertTrue($nid !== FALSE, format_string('uploadNodeFile(@test_file, @field_name, @type_name) succeeded', ['@test_file' => $test_file->getFileUri(), '@field_name' => $field_name, '@type_name' => $this->contentType]));
+    $this->assertTrue($nid !== FALSE, new FormattableMarkup('uploadNodeFile(@test_file, @field_name, @type_name) succeeded', [
+      '@test_file' => $test_file->getFileUri(),
+      '@field_name' => $field_name,
+      '@type_name' => $this->contentType,
+    ]));
 
     $node_storage->resetCache([$nid]);
     $node = $node_storage->load($nid);
@@ -64,8 +69,8 @@ class MinisiteValidationTest extends MinisiteTestBase {
     // Try to post a new node without uploading a file in the multivalue field.
     $edit = [];
     $edit['title[0][value]'] = $this->randomMachineName();
-    $this->drupalPostForm('node/add/' . $this->contentType, $edit, t('Save'));
-    $this->assertRaw(t('@title field is required.', ['@title' => $field->getLabel()]));
+    $this->drupalPostForm('node/add/' . $this->contentType, $edit, $this->t('Save'));
+    $this->assertRaw($this->t('@title field is required.', ['@title' => $field->getLabel()]));
 
     // Create a new node with the uploaded file into the multivalue field.
     $nid = $this->uploadNodeFile($test_file, $field_name, $this->contentType);
@@ -86,8 +91,8 @@ class MinisiteValidationTest extends MinisiteTestBase {
     // Try uploading a file with correct extension, but invalid format.
     $test_file = $this->getTestArchiveInvalidFormat();
     $this->uploadNodeFile($test_file, $field_name, $this->contentType);
-    $this->assertRaw(t('The specified file %filename could not be uploaded.', ['%filename' => $test_file->getFilename()]));
-    $this->assertRaw(t('Provided file has incorrect format.'));
+    $this->assertRaw($this->t('The specified file %filename could not be uploaded.', ['%filename' => $test_file->getFilename()]));
+    $this->assertRaw($this->t('File @filename is not an archive file.', ['@filename' => $test_file->getFilename()]));
   }
 
 }

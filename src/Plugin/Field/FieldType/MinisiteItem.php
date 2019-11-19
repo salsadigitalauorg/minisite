@@ -5,11 +5,12 @@ namespace Drupal\minisite\Plugin\Field\FieldType;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StreamWrapper\StreamWrapperInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\TypedData\DataDefinition;
 use Drupal\Core\TypedData\MapDataDefinition;
-use Drupal\file\Entity\File;
 use Drupal\file\Plugin\Field\FieldType\FileItem;
 use Drupal\minisite\Minisite;
+use Drupal\minisite\MinisiteInterface;
 
 /**
  * Plugin implementation of the 'minisite' field type.
@@ -26,16 +27,19 @@ use Drupal\minisite\Minisite;
  * )
  */
 class MinisiteItem extends FileItem {
+
+  use StringTranslationTrait;
+
   /**
    * {@inheritdoc}
    */
   public static function defaultFieldSettings() {
-    $settings = array(
-        'file_extensions' => 'zip',
-        'file_directory' => MINISITE_UPLOAD_PATH,
-        'minisite_extensions' => MINISITE_EXTENSIONS_WHITELIST,
-        'minisite_extensions_disallowed' => MINISITE_EXTENSIONS_BLACKLIST,
-      ) + parent::defaultFieldSettings();
+    $defaults = [
+      'file_extensions' => 'zip',
+      'file_directory' => MinisiteInterface::ARCHIVE_UPLOAD_DIR,
+      'minisite_extensions' => MinisiteInterface::ALLOWED_EXTENSIONS,
+    ];
+    $settings = $defaults + parent::defaultFieldSettings();
 
     unset($settings['description_field']);
 
@@ -46,36 +50,36 @@ class MinisiteItem extends FileItem {
    * {@inheritdoc}
    */
   public static function schema(FieldStorageDefinitionInterface $field_definition) {
-    return array(
-      'columns' => array(
-        'target_id' => array(
+    return [
+      'columns' => [
+        'target_id' => [
           'description' => 'The ID of the file entity.',
           'type' => 'int',
           'unsigned' => TRUE,
-        ),
-        'asset_path' => array(
-          'description' => 'The URI of the minisite asset path.',
+        ],
+        'asset_path' => [
+          'description' => 'The URI of the entry point minisite asset path (index.html).',
           'type' => 'varchar',
           'length' => 255,
-        ),
-        'options' => array(
+        ],
+        'options' => [
           'description' => 'Serialized array of options for the link.',
           'type' => 'blob',
           'size' => 'big',
           'serialize' => TRUE,
-        ),
-      ),
-      'indexes' => array(
-        'target_id' => array('target_id'),
-        'asset_path' => array('asset_path'),
-      ),
-      'foreign keys' => array(
-        'target_id' => array(
+        ],
+      ],
+      'indexes' => [
+        'target_id' => ['target_id'],
+        'asset_path' => ['asset_path'],
+      ],
+      'foreign keys' => [
+        'target_id' => [
           'table' => 'file_managed',
-          'columns' => array('target_id' => 'fid'),
-        ),
-      ),
-    );
+          'columns' => ['target_id' => 'fid'],
+        ],
+      ],
+    ];
   }
 
   /**
@@ -84,14 +88,13 @@ class MinisiteItem extends FileItem {
   public static function propertyDefinitions(FieldStorageDefinitionInterface $field_definition) {
     $properties = parent::propertyDefinitions($field_definition);
 
+    // Remove properties set by the parent class.
     unset($properties['display']);
     unset($properties['description']);
 
-    $properties['asset_path'] = DataDefinition::create('string')
-      ->setLabel(t('Minisite asset path'));
+    $properties['asset_path'] = DataDefinition::create('string')->setLabel(t('Minisite asset path'));
 
-    $properties['options'] = MapDataDefinition::create()
-      ->setLabel(t('Options'));
+    $properties['options'] = MapDataDefinition::create()->setLabel(t('Options'));
 
     return $properties;
   }
@@ -100,26 +103,22 @@ class MinisiteItem extends FileItem {
    * {@inheritdoc}
    */
   public function storageSettingsForm(array &$form, FormStateInterface $form_state, $has_data) {
-    $element = array();
+    $element = [];
 
-    // We need the field-level 'minisite' setting, and $this->getSettings()
-    // will only provide the instance-level one, so we need to explicitly fetch
+    // We need the field-level 'minisite' setting and $this->getSettings()
+    // to only provide the instance-level one, so we need to explicitly fetch
     // the field.
-    $settings = $this->getFieldDefinition()
-      ->getFieldStorageDefinition()
-      ->getSettings();
+    $settings = $this->getFieldDefinition()->getFieldStorageDefinition()->getSettings();
 
-    $scheme_options = \Drupal::service('stream_wrapper_manager')
-      ->getNames(StreamWrapperInterface::WRITE_VISIBLE);
-    $element['uri_scheme'] = array(
+    $scheme_options = \Drupal::service('stream_wrapper_manager')->getNames(StreamWrapperInterface::WRITE_VISIBLE);
+
+    $element['uri_scheme'] = [
       '#type' => 'radios',
-      '#title' => t('Upload destination'),
+      '#title' => $this->t('Upload destination'),
       '#options' => $scheme_options,
       '#default_value' => $settings['uri_scheme'],
-      '#description' => t('Select where the final files should be stored. Private file storage has significantly more overhead than public files, but allows restricted access to files within this field.'),
-    );
-
-    // Add more storage settings.
+      '#description' => $this->t('Select where the final files should be stored. Private file storage has significantly more overhead than public files, but allows restricted access to files within this field.'),
+    ];
 
     return $element;
   }
@@ -138,23 +137,19 @@ class MinisiteItem extends FileItem {
 
     // Make the extension list a little more human-friendly by comma-separation.
     $extensions = str_replace(' ', ', ', $settings['minisite_extensions']);
-    $element['minisite_extensions'] = array(
+
+    $element['minisite_extensions'] = [
       '#type' => 'textfield',
-      '#title' => t('Allowed file extensions in uploaded minisite files'),
+      '#title' => $this->t('Allowed file extensions in uploaded minisite files'),
       '#default_value' => $extensions,
-      '#description' => t('Separate extensions with a space or comma and do not include the leading dot.'),
-      '#element_validate' => array(
-        array(
-          get_class($this),
-          'validateExtensions',
-        ),
-      ),
+      '#description' => $this->t('Separate extensions with a space or comma and do not include the leading dot.'),
+      '#element_validate' => [[get_class($this), 'validateExtensions']],
       '#weight' => 11,
       '#maxlength' => 256,
       // By making this field required, we prevent a potential security issue
       // that would allow files of any type to be uploaded.
       '#required' => TRUE,
-    );
+    ];
 
     return $element;
   }
@@ -165,15 +160,20 @@ class MinisiteItem extends FileItem {
   public function preSave() {
     parent::preSave();
 
-    // Minisite presave.
-    $this->asset_path = Minisite::preSave($this->entity, $this->getEntity());
+    // Set asset path from uploaded archive.
+    $minisite = Minisite::fromArchive($this->entity, $this->getFieldDefinition()->getSetting('minisite_extensions'));
+    if ($minisite) {
+      $this->asset_path = $minisite->getIndexAssetUri();
+    }
   }
 
   /**
    * {@inheritdoc}
    */
   public function isDisplayed() {
-    // Minisite items do not have per-item visibility settings.
+    // Override parent class setting as Minisite items do not have per-item
+    // visibility settings.
     return TRUE;
   }
+
 }

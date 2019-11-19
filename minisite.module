@@ -2,26 +2,15 @@
 
 /**
  * @file
- * Main functions of the module.
+ * Main functions of the Minisite module.
  */
 
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\file\FileInterface;
+use Drupal\minisite\Exception\ArchiveException;
+use Drupal\minisite\Minisite;
 
-define('MINISITE_UPLOAD_PATH', 'minisite/upload');
-define('MINISITE_ASSET_PATH', 'minisite/static');
-define('MINISITE_EXTENSIONS_WHITELIST', 'html htm js css png jpg gif svg pdf doc docx ppt pptx xls xlsx tif xml txt woff woff2 ttf eot');
-define('MINISITE_EXTENSIONS_BLACKLIST', 'exe scr bmp');
-define('MINISITE_EXTENSIONS_NOREWRITE', 'pdf doc docx ppt pptx xls xlsx tif xml txt');
-define('MINISITE_MAXFILESIZE', format_size(file_upload_max_size()));
-
-// Load lib for Minisite.
-require_once dirname(__FILE__) . '/includes/minisite.loader.inc';
-// Load all theme hooks for Minisite.
-require_once dirname(__FILE__) . '/includes/minisite.theme.inc';
-// Load all site functions for Minisite.
-require_once dirname(__FILE__) . '/includes/minisite.site.inc';
-// Load all Field module hooks for Minisite.
-require_once dirname(__FILE__) . '/includes/minisite.field.inc';
+require_once dirname(__FILE__) . '/minisite.theme.inc';
 
 /**
  * Implements hook_help().
@@ -31,8 +20,35 @@ function minisite_help($route_name, RouteMatchInterface $route_match) {
     case 'help.page.minisite':
       $output = '';
       $output .= '<h3>' . t('About') . '</h3>';
-      $output .= '<p>' . t('Provides the ability to upload arbitrary \'minisites\' to a Drupal website.') . '</p>';
+      $output .= '<p>' . t('Upload and serve arbitrary "minisites" archives from a Drupal website.') . '</p>';
 
       return $output;
   }
+}
+
+/**
+ * Validation callback.
+ *
+ * @param \Drupal\file\FileInterface $file
+ *   The file to validate.
+ * @param string $content_extensions
+ *   String list of the allowed archive content extensions.
+ *
+ * @return array
+ *   Array of errors, if any.
+ */
+function minisite_validate_archive(FileInterface $file, $content_extensions) {
+  $errors = [];
+
+  try {
+    Minisite::validateArchive($file, $content_extensions);
+  }
+  catch (ArchiveException $exception) {
+    $errors[] = $exception->getMessage();
+  }
+  catch (\Exception $exception) {
+    $errors[] = t('Unable to use uploaded file as a Minisite');
+  }
+
+  return $errors;
 }
