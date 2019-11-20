@@ -18,16 +18,13 @@ until refactoring is finished.
    configuration works.~~
 5. Add other tests:
     - ~~Validation: invalid archive format~~
-    - Validation: invalid archive contents - invalid structure (no top-level)
-    - Validation: invalid archive contents - not allowed files     
-    - Use node alias as minisite path prefix (not clear how to serve from root 
-      of the site).
-    - Show file description (or whatever other field we can use) to replace the 
-      file name with this label value on node view.
-6. Fix coding standards.
-7. Remove obsolete and stale code.
-8. Assess and simplify config schema, field names etc.
-9. Refactor procedural code in to classes.
+    - ~~Validation: invalid archive contents - invalid 
+      structure (no top-level)~~
+    - ~~Validation: invalid archive contents - not allowed files~~         
+6. ~~Fix coding standards.~~
+7. ~~Remove obsolete and stale code.~~
+8. ~~Assess and simplify config schema, field names etc.~~
+9. ~~Refactor procedural code in to classes.~~
 10. Enable deployment to D.O.
 11. Check that D.O. testbot passes all tests.
 12. Submit for formal review by providing a patch on D.O.
@@ -35,9 +32,9 @@ until refactoring is finished.
 
 Instructions
 ------------
-This module provides the ability to upload static 'minisites' to a Drupal 
-website and maintain the minisite's look and feel. Please note this module does 
-not actually import the minisite pages as Drupal nodes.
+Thi module allows to upload and serve arbitrary 'minisites' archives from a 
+Drupal website and maintain the minisite's look and feel. Please note this 
+module does not actually import the minisite pages as Drupal nodes.
 
 > A minisite is a website by which companies offer information about one 
 specific product or product group. Typically, a minisite is enhanced by 
