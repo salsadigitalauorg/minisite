@@ -35,7 +35,7 @@ class MinisiteItem extends FileItem {
    */
   public static function defaultFieldSettings() {
     $defaults = [
-      'file_extensions' => 'zip',
+      'file_extensions' => MinisiteInterface::SUPPORTED_ARCHIVE_EXTENSIONS,
       'file_directory' => MinisiteInterface::ARCHIVE_UPLOAD_DIR,
       'minisite_extensions' => MinisiteInterface::ALLOWED_EXTENSIONS,
     ];
@@ -134,6 +134,12 @@ class MinisiteItem extends FileItem {
 
     // Remove the description option.
     unset($element['description_field']);
+
+    $element['file_extensions']['#title'] = $this->t('Allowed archive file extensions');
+
+    if (!\Drupal::currentUser()->hasPermission('administer site configuration')) {
+      $element['file_extensions']['#disabled'] = TRUE;
+    }
 
     // Make the extension list a little more human-friendly by comma-separation.
     $extensions = str_replace(' ', ', ', $settings['minisite_extensions']);
