@@ -95,4 +95,37 @@ class MinisiteFieldValidationTest extends MinisiteTestBase {
     $this->assertRaw($this->t('File @filename is not an archive file.', ['@filename' => $test_file->getFilename()]));
   }
 
+  /**
+   * Test setting extensions on field configuration page.
+   */
+  public function testFieldAllowedExtensions() {
+    $field_name = strtolower($this->randomMachineName());
+    $this->createMinisiteField($field_name, 'node', $this->contentType);
+    $path = 'admin/structure/types/manage/' . $this->contentType . '/fields/node.' . $this->contentType . '.' . $field_name;
+
+    // Valid extensions.
+    $allowed_extensions = 'html, htm, js, css, png';
+    $edit['settings[minisite_extensions]'] = $allowed_extensions;
+    $this->drupalPostForm($path, $edit, $this->t('Save settings'));
+    $this->assertRaw($this->t('Saved %field configuration.', [
+      '%field' => $field_name,
+    ]));
+
+    // Single denied extensions entered.
+    $denied_extensions = 'scr';
+    $edit['settings[minisite_extensions]'] = $allowed_extensions . ' ' . $denied_extensions;
+    $this->drupalPostForm($path, $edit, $this->t('Save settings'));
+    $this->assertRaw($this->t('The list of allowed extensions is not valid, be sure to not include %ext extension(s).', [
+      '%ext' => $denied_extensions,
+    ]));
+
+    // Multiple denied extensions entered.
+    $denied_extensions = 'scr exe';
+    $edit['settings[minisite_extensions]'] = $allowed_extensions . ' ' . $denied_extensions;
+    $this->drupalPostForm($path, $edit, $this->t('Save settings'));
+    $this->assertRaw($this->t('The list of allowed extensions is not valid, be sure to not include %ext extension(s).', [
+      '%ext' => str_replace(' ', ', ', $denied_extensions),
+    ]));
+  }
+
 }
