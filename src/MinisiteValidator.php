@@ -58,6 +58,9 @@ class MinisiteValidator {
 
     $root_files = array_keys($tree);
 
+    // Remove any expected root directories.
+    $root_files = array_values(array_diff($root_files, self::allowedRootDirectories()));
+
     // Check that a single top directory is always exists and it's only one.
     if (count($root_files) !== 1 || !is_array($tree[$root_files[0]])) {
       throw new InvalidContentArchiveException(['A single top level directory is expected.']);
@@ -87,6 +90,18 @@ class MinisiteValidator {
   }
 
   /**
+   * Array of allowed root-level directories.
+   *
+   * @return array
+   *   Array of directories.
+   */
+  public static function allowedRootDirectories() {
+    return [
+      '__MACOSX',
+    ];
+  }
+
+  /**
    * Normalise extensions to convert them to array.
    *
    * @param string $extensions
@@ -109,8 +124,45 @@ class MinisiteValidator {
   /**
    * Convert a list of files and directories to a tree.
    *
+   * Note that this method will normalise output by filling-in directory levels
+   * missing from the list.
+   *
+   * @code
+   * $files = [
+   *  'dir1/',
+   *  'file1.txt',
+   *  'dir2/file21.txt'
+   *  'dir2/file22.txt'
+   *  'dir3/dir31/file311.txt'
+   * ];
+   *
+   * $tree = filesToTree($files);
+   *
+   * $tree = [
+   *   'dir1/' => [
+   *     '.' => 'dir1/'
+   *   ],
+   *   'file1.txt' => 'file1.txt',
+   *   'dir2/' => [
+   *     '.' => 'dir2/'
+   *     'file21.txt' => 'dir2/file21.txt'
+   *     'file22.txt' => 'dir2/file22.txt'
+   *   ],
+   *   'dir3/' => [
+   *     '.' => 'dir3/'
+   *     'dir31/' => [
+   *        '.' => 'dir3/dir31/'
+   *        'file311.txt' => 'dir3/dir31/file311.txt'
+   *      ]
+   *   ]
+   * ];
+   * @endcode
+   *
    * @return array
-   *   Files and directories tree, keyed by directories.
+   *   Files and directories tree, keyed by list of files within the directory
+   *   on the current level and values are full originally provided paths.
+   *   Directories entries have themselves listed as children with special
+   *   key '.' that have a value of the directory path.
    */
   protected static function filesToTree(array $files) {
     $tree = [];
@@ -118,13 +170,38 @@ class MinisiteValidator {
     foreach ($files as $file_path) {
       $parts = explode('/', $file_path);
 
-      if (substr($file_path, -1) === '/') {
+      // Directory would end with '/' and have an empty last element.
+      if (empty(end($parts))) {
+        // Replace last empty element with dot (.) to use it as a dir name
+        // in the current dir.
         $parts = array_slice($parts, 0, -1);
-        NestedArray::setValue($tree, $parts, ['.' => $file_path]);
+        $parts[] = '.';
       }
-      else {
-        NestedArray::setValue($tree, $parts, $file_path);
+
+      // Set the value of the path's parents to make sure that every parent
+      // directory is listed.
+      for ($i = 0; $i < count($parts) - 1; $i++) {
+        $parent_parts = array_slice($parts, 0, $i + 1);
+        $key_exists = FALSE;
+        $existing_value = NestedArray::getValue($tree, $parent_parts, $key_exists);
+        // Check if the value was not previously set as file and now set as
+        // directory.
+        if ($key_exists && !is_array($existing_value)) {
+          throw new \RuntimeException('Invalid file list provided');
+        }
+        NestedArray::setValue($tree, array_merge($parent_parts, ['.']), implode('/', $parent_parts) . '/');
       }
+
+      // Check if the value was not previously set as directory and now set as
+      // file.
+      $key_exists = FALSE;
+      $existing_value = NestedArray::getValue($tree, $parts, $key_exists);
+      if (end($parts) != '.' && $key_exists && is_array($existing_value)) {
+        throw new \RuntimeException('Invalid file list provided');
+      }
+
+      // Set the value of the path at the provided hierarchy.
+      NestedArray::setValue($tree, $parts, $file_path);
     }
 
     return $tree;
