@@ -143,7 +143,10 @@ class MinisiteItem extends FileItem {
       '#title' => $this->t('Allowed file extensions in uploaded minisite files'),
       '#default_value' => $extensions,
       '#description' => $this->t('Separate extensions with a space or comma and do not include the leading dot.'),
-      '#element_validate' => [[get_class($this), 'validateExtensions']],
+      '#element_validate' => [
+        [get_class($this), 'validateExtensions'],
+        [get_class($this), 'validateNoDeniedExtensions'],
+      ],
       '#weight' => 11,
       '#maxlength' => 256,
       // By making this field required, we prevent a potential security issue
@@ -152,6 +155,23 @@ class MinisiteItem extends FileItem {
     ];
 
     return $element;
+  }
+
+  /**
+   * Check that entered extensions are not in the denied extensions list.
+   */
+  public static function validateNoDeniedExtensions($element, FormStateInterface $form_state) {
+    if (!empty($element['#value'])) {
+      $extensions = preg_replace('/([, ]+\.?)/', ' ', trim(strtolower($element['#value'])));
+      $extensions = array_filter(explode(' ', $extensions));
+
+      $denied_extensions = explode(' ', MinisiteInterface::DENIED_EXTENSIONS);
+
+      $invalid_extensions = array_intersect($extensions, $denied_extensions);
+      if (count($invalid_extensions) > 0) {
+        $form_state->setError($element, t('The list of allowed extensions is not valid, be sure to not include %ext extension(s).', ['%ext' => implode(', ', $invalid_extensions)]));
+      }
+    }
   }
 
   /**
