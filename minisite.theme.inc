@@ -77,6 +77,8 @@ function template_preprocess_minisite_widget(array &$variables) {
  *   - attributes: An associative array of attributes to be placed in the a tag.
  */
 function template_preprocess_minisite_link(array &$variables) {
+  $variables['attributes'] = new Attribute($variables['attributes']);
+
   $file = $variables['file'];
   $options = [];
 
@@ -86,13 +88,39 @@ function template_preprocess_minisite_link(array &$variables) {
   // to ensure different file URLs are generated for different sites in a
   // multisite setup, including HTTP and HTTPS versions of the same site.
   // Fix in https://www.drupal.org/node/2646744.
-  $url = isset($variables['asset_path']) ? file_create_url($variables['asset_path']) : file_create_url($file_entity->getFileUri());
   $variables['#cache']['contexts'][] = 'url.site';
 
-  $mime_type = $file->getMimeType();
-  // Set options as per anchor format described at
-  // http://microformats.org/wiki/file-format-examples
-  $options['attributes']['type'] = $mime_type . '; length=' . $file->getSize();
+  // Asset path is provided.
+  if (isset($variables['asset_path'])) {
+    // Asset path is a file.
+    if (file_valid_uri($variables['asset_path'])) {
+      $url = file_create_url($variables['asset_path']);
+    }
+    // Asset path is an alias to a path.
+    else {
+      $url = Url::fromUserInput($variables['asset_path'])->toString();
+    }
+  }
+  // Falling back to the archive file.
+  else {
+    $url = file_create_url($file_entity->getFileUri());
+
+    $mime_type = $file->getMimeType();
+    // Set options as per anchor format described at
+    // http://microformats.org/wiki/file-format-examples
+    $options['attributes']['type'] = $mime_type . '; length=' . $file->getSize();
+
+    // Classes to add to the file field for icons.
+    $classes = [
+      'file',
+      // Add a specific class for each and every mime type.
+      'file--mime-' . strtr($mime_type, ['/' => '-', '.' => '-']),
+      // Add a more general class for groups of well known MIME types.
+      'file--' . file_icon_class($mime_type),
+    ];
+
+    $variables['attributes']->addClass($classes);
+  }
 
   // Use the description as the link text if available.
   if (empty($variables['description'])) {
@@ -103,18 +131,5 @@ function template_preprocess_minisite_link(array &$variables) {
     $options['attributes']['title'] = $file_entity->getFilename();
   }
 
-  // Classes to add to the file field for icons.
-  $classes = [
-    'file',
-    // Add a specific class for each and every mime type.
-    'file--mime-' . strtr($mime_type, ['/' => '-', '.' => '-']),
-    // Add a more general class for groups of well known MIME types.
-    'file--' . file_icon_class($mime_type),
-  ];
-
-  // Set file classes to the options array.
-  $variables['attributes'] = new Attribute($variables['attributes']);
-  $variables['attributes']->addClass($classes);
-
-  $variables['link'] = Link::fromTextAndUrl($link_text, Url::fromUri($url, $options));
+  $variables['link'] = Link::fromTextAndUrl($link_text, Url::fromUserInput($url, $options));
 }

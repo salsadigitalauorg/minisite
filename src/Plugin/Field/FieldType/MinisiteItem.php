@@ -23,7 +23,7 @@ use Drupal\minisite\MinisiteInterface;
  *   default_widget = "minisite_default",
  *   default_formatter = "minisite_link",
  *   cardinality = 1,
- *   list_class = "\Drupal\file\Plugin\Field\FieldType\FileFieldItemList",
+ *   list_class = "\Drupal\minisite\Plugin\Field\FieldType\MinisiteItemList",
  *   constraints = {"ReferenceAccess" = {}, "FileValidation" = {}}
  * )
  */
@@ -72,6 +72,12 @@ class MinisiteItem extends FileItem {
           'size' => 'big',
           'serialize' => TRUE,
         ],
+        'alias_status' => [
+          'type' => 'int',
+          'size' => 'tiny',
+          'not null' => TRUE,
+          'default' => 0,
+        ],
       ],
       'indexes' => [
         'target_id' => ['target_id'],
@@ -98,6 +104,8 @@ class MinisiteItem extends FileItem {
     $properties['asset_path'] = DataDefinition::create('string')->setLabel(t('Minisite asset path'));
 
     $properties['options'] = MapDataDefinition::create()->setLabel(t('Options'));
+
+    $properties['alias_status'] = DataDefinition::create('boolean')->setLabel(t('Minisite URL alias status'));
 
     return $properties;
   }
@@ -183,14 +191,16 @@ class MinisiteItem extends FileItem {
   /**
    * {@inheritdoc}
    */
-  public function preSave() {
-    parent::preSave();
-
+  public function postSave($update) {
+    $items_list = $this->getParent();
     // Set asset path from uploaded archive.
-    $minisite = Minisite::fromArchive($this->entity, $this->getFieldDefinition()->getSetting('minisite_extensions'));
+    $minisite = Minisite::createInstance($items_list);
+    $minisite->processArchive();
     if ($minisite) {
       $this->asset_path = $minisite->getIndexAssetUri();
     }
+
+    return TRUE;
   }
 
   /**

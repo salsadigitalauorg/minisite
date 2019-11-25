@@ -86,12 +86,13 @@ class MinisiteFormatter extends GenericFileFormatter {
   public function viewElements(FieldItemListInterface $items, $langcode) {
     $elements = [];
 
-    $minisite = Minisite::fromFieldItems($items);
+    $minisite = Minisite::createInstance($items);
+    $minisite->processArchive();
     if ($minisite) {
       $elements[0] = [
         '#theme' => 'minisite_link',
         '#file' => $minisite->getArchiveFile(),
-        '#asset_path' => $minisite->getIndexAssetUri(),
+        '#asset_path' => $minisite->getIndexAssetUrl(),
         '#description' => $minisite->getDescription(),
         '#cache' => [
           'tags' => $minisite->getCacheTags(),
