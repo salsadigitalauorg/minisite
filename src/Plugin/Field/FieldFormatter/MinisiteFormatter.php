@@ -6,6 +6,7 @@ use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\file\Plugin\Field\FieldFormatter\GenericFileFormatter;
+use Drupal\minisite\Minisite;
 
 /**
  * Plugin implementation of the 'minisite' formatter.
@@ -85,17 +86,15 @@ class MinisiteFormatter extends GenericFileFormatter {
   public function viewElements(FieldItemListInterface $items, $langcode) {
     $elements = [];
 
-    // @todo:r Review if it is possible to not use direct access to field's
-    // options here and use Minisite class instead.
-    foreach ($items as $delta => $file) {
-      $file->entity->asset_path = $file->asset_path;
-
-      $elements[$delta] = [
+    $minisite = Minisite::fromFieldItems($items);
+    if ($minisite) {
+      $elements[0] = [
         '#theme' => 'minisite_link',
-        '#file' => $file->entity,
-        '#description' => $file->description,
+        '#file' => $minisite->getArchiveFile(),
+        '#asset_path' => $minisite->getIndexAssetUri(),
+        '#description' => $minisite->getDescription(),
         '#cache' => [
-          'tags' => $file->entity->getCacheTags(),
+          'tags' => $minisite->getCacheTags(),
         ],
       ];
     }

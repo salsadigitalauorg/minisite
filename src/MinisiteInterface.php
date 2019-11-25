@@ -37,12 +37,54 @@ interface MinisiteInterface {
   const SUPPORTED_ARCHIVE_EXTENSIONS = 'zip tar';
 
   /**
+   * Set archive file.
+   *
+   * @param \Drupal\file\FileInterface $file
+   *   Already uploaded archive file object to set.
+   */
+  public function setArchiveFile(FileInterface $file);
+
+  /**
+   * Get archive file.
+   *
+   * @return \Drupal\file\FileInterface
+   *   Archive file used to instantiate this minisite.
+   */
+  public function getArchiveFile();
+
+  /**
+   * Get description.
+   *
+   * @return string
+   *   The description string.
+   */
+  public function getDescription();
+
+  /**
+   * Set description.
+   *
+   * @param string $description
+   *   The description to set.
+   */
+  public function setDescription($description);
+
+  /**
    * Get asset entry point URI.
    *
    * @return string
    *   String URI of the entry point for the minisite.
    */
   public function getIndexAssetUri();
+
+  /**
+   * Process archive by extracting files and filling-in assets information.
+   */
+  public function processArchive();
+
+  /**
+   * Delete minisite.
+   */
+  public function delete();
 
   /**
    * Validate archive.

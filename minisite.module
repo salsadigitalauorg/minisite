@@ -5,6 +5,9 @@
  * Main functions of the Minisite module.
  */
 
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\FieldableEntityInterface;
+use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\file\FileInterface;
 use Drupal\minisite\Exception\ArchiveException;
@@ -51,4 +54,31 @@ function minisite_validate_archive(FileInterface $file, $content_extensions) {
   }
 
   return $errors;
+}
+
+/**
+ * Implements hook_entity_delete().
+ */
+function minisite_entity_predelete(EntityInterface $entity) {
+  if (!$entity instanceof FieldableEntityInterface) {
+    return;
+  }
+
+  /** @var \Drupal\Core\Entity\EntityFieldManagerInterface $entity_field_manager */
+  $entity_field_manager = Drupal::service('entity_field.manager');
+  /** @var \Drupal\Core\Field\FieldDefinitionInterface[] $minisite_fields */
+  $minisite_fields = array_filter($entity_field_manager->getFieldDefinitions($entity->getEntityTypeId(), $entity->bundle()), function (FieldDefinitionInterface $field_definition) {
+    return $field_definition->getType() == 'minisite';
+  });
+
+  /** @var \Drupal\Core\Entity\FieldableEntityInterface $entity */
+  foreach ($minisite_fields as $minisite_field) {
+    if ($entity->hasField($minisite_field->getName())) {
+      $minisite = Minisite::fromFieldItems($entity->{$minisite_field->getName()});
+      if ($minisite) {
+        $minisite->delete();
+      }
+    }
+  }
+
 }

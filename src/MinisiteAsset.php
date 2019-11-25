@@ -71,4 +71,23 @@ class MinisiteAsset {
     return \Drupal::service('file_system')->basename($this->source) == self::INDEX_FILE;
   }
 
+  /**
+   * Delete asset, while also removing empty directories.
+   */
+  public function delete() {
+    /** @var \Drupal\Core\File\FileSystem $fs */
+    $fs = \Drupal::service('file_system');
+
+    $fs->deleteRecursive($this->source);
+
+    // Remove parent directories if there is no other files up until common
+    // assets directory.
+    $dirname = $this->source;
+    while (($dirname = $fs->dirname($dirname)) && $dirname != Minisite::getCommonAssetDir()) {
+      if (empty(file_scan_directory($dirname, '/.*/'))) {
+        \Drupal::service('file_system')->deleteRecursive($dirname);
+      }
+    }
+  }
+
 }
