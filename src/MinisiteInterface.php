@@ -27,6 +27,11 @@ interface MinisiteInterface {
   const ALLOWED_EXTENSIONS = 'html htm js css png jpg gif svg pdf doc docx ppt pptx xls xlsx tif xml txt woff woff2 ttf eot';
 
   /**
+   * Ext extensions that can never be allowed.
+   */
+  const DENIED_EXTENSIONS = 'exe scr bmp';
+
+  /**
    * Archive extensions supported by the current implementation.
    */
   const SUPPORTED_ARCHIVE_EXTENSIONS = 'tar zip';
