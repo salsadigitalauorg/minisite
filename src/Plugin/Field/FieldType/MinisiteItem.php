@@ -22,6 +22,7 @@ use Drupal\minisite\MinisiteInterface;
  *   category = @Translation("Reference"),
  *   default_widget = "minisite_default",
  *   default_formatter = "minisite_link",
+ *   cardinality = 1,
  *   list_class = "\Drupal\file\Plugin\Field\FieldType\FileFieldItemList",
  *   constraints = {"ReferenceAccess" = {}, "FileValidation" = {}}
  * )
