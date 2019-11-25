@@ -8,7 +8,7 @@ use Drupal\field\Entity\FieldStorageConfig;
 /**
  * Provides methods for creating minisite fields.
  */
-trait MinisiteFieldCreationTrait {
+trait FieldCreationTrait {
 
   /**
    * Creates a new ministe field.

@@ -2,23 +2,21 @@
 
 namespace Drupal\Tests\minisite\Unit;
 
-use Drupal\minisite\Exception\InvalidContentArchiveException;
 use Drupal\minisite\Exception\InvalidExtensionValidatorException;
-use Drupal\minisite\MinisiteAsset;
-use Drupal\minisite\MinisiteValidator;
+use Drupal\minisite\FileValidator;
 use Drupal\Tests\minisite\Traits\MockHelperTrait;
 use Drupal\Tests\UnitTestCase;
 
 /**
- * Class MinisiteValidatorTest.
+ * Class FileValidatorTest.
  *
- * Tests validator.
+ * Tests file validator.
  *
  * @group minisite
  *
  * @package Drupal\testmode\Tests
  */
-class MinisiteValidatorTest extends UnitTestCase {
+class FileValidatorTest extends UnitTestCase {
 
   use MockHelperTrait;
 
@@ -26,12 +24,12 @@ class MinisiteValidatorTest extends UnitTestCase {
    * Test validateFileExtension() method.
    *
    * @dataProvider dataProviderValidateFileExtension
-   * @covers \Drupal\minisite\MinisiteValidator::validateFileExtension
+   * @covers \Drupal\minisite\FileValidator::validateFileExtension
    */
   public function testValidateFileExtension($filename, $extensions) {
     $this->expectException(InvalidExtensionValidatorException::class);
     $this->expectExceptionMessage(sprintf('File %s has invalid extension.', $filename));
-    MinisiteValidator::validateFileExtension($filename, $extensions);
+    FileValidator::validateFileExtension($filename, $extensions);
   }
 
   /**
@@ -50,10 +48,10 @@ class MinisiteValidatorTest extends UnitTestCase {
    * Test normaliseExtensions() method.
    *
    * @dataProvider dataProviderNormaliseExtensions
-   * @covers \Drupal\minisite\MinisiteValidator::normaliseExtensions
+   * @covers \Drupal\minisite\FileValidator::normaliseExtensions
    */
   public function testNormaliseExtensions($extensions, $expected) {
-    $actual = MinisiteValidator::normaliseExtensions($extensions);
+    $actual = FileValidator::normaliseExtensions($extensions);
     $this->assertEquals($expected, $actual);
   }
 
@@ -83,14 +81,14 @@ class MinisiteValidatorTest extends UnitTestCase {
    * Test filesToTree() method.
    *
    * @dataProvider dataProviderFilesToTree
-   * @covers \Drupal\minisite\MinisiteValidator::filesToTree
+   * @covers \Drupal\minisite\FileValidator::filesToTree
    */
   public function testFilesToTree($files, $expected, $expectException = FALSE) {
     if ($expectException) {
       $this->expectException(\RuntimeException::class);
       $this->expectExceptionMessage('Invalid file list provided');
     }
-    $actual = $this->callProtectedMethod(MinisiteValidator::class, 'filesToTree', [$files]);
+    $actual = FileValidator::filesToTree($files);
     $this->assertEquals($expected, $actual);
   }
 
@@ -303,94 +301,6 @@ class MinisiteValidatorTest extends UnitTestCase {
             'file1.txt' => 'dir1/file1.txt',
           ],
         ],
-      ],
-    ];
-  }
-
-  /**
-   * Test validateFiles() method.
-   *
-   * @dataProvider dataProviderValidateFiles
-   * @covers \Drupal\minisite\MinisiteValidator::validateFiles
-   */
-  public function testValidateFiles($files, $extensions, $message) {
-    $this->expectException(InvalidContentArchiveException::class);
-    $this->expectExceptionMessage($message);
-    MinisiteValidator::validateFiles($files, $extensions);
-  }
-
-  /**
-   * Data provider for testValidateFiles.
-   */
-  public function dataProviderValidateFiles() {
-    return [
-      [
-        [
-          'file.txt',
-        ],
-        ['ext'],
-        'A single top level directory is expected.',
-      ],
-      [
-        [
-          'file.txt',
-          'dir1/file.txt',
-        ],
-        ['ext'],
-        'A single top level directory is expected.',
-      ],
-      [
-        [
-          'dir1/',
-          'dir2/',
-          'dir1/file.txt',
-        ],
-        ['ext'],
-        'A single top level directory is expected.',
-      ],
-      [
-        [
-          'dir1/file.txt',
-        ],
-        ['ext'],
-        sprintf('Missing required %s file.', MinisiteAsset::INDEX_FILE),
-      ],
-      [
-        [
-          'dir1/',
-          'dir1/file.txt',
-        ],
-        ['ext'],
-        sprintf('Missing required %s file.', MinisiteAsset::INDEX_FILE),
-      ],
-      [
-        [
-          'dir1/' . MinisiteAsset::INDEX_FILE,
-          'dir1/file.txt',
-        ],
-        ['html', 'ext'],
-        'Archive has invalid content: File dir1/file.txt has invalid extension.',
-      ],
-      [
-        [
-          'dir1/' . MinisiteAsset::INDEX_FILE,
-          'dir1/file.txt', 'dir1/file2.txt',
-        ],
-        ['html', 'ext'],
-        'Archive has invalid content: File dir1/file.txt has invalid extension.' . PHP_EOL . 'File dir1/file2.txt has invalid extension.',
-      ],
-
-      // Special case testing for allowed root-level directories.
-      // If the allowed root-level directory not correctly excluded - a
-      // different exception will be thrown.
-      [
-        [
-          '__MACOSX/',
-          'dir1/' . MinisiteAsset::INDEX_FILE,
-          'dir1/file.txt',
-        ],
-        ['html', 'ext'],
-        'Archive has invalid content: File dir1/file.txt has invalid extension.',
       ],
     ];
   }

@@ -76,8 +76,10 @@ trait MockHelperTrait {
    *
    * @param string $class
    *   Class name to generate the mock.
-   * @param array $methodsMap
-   *   Optional array of methods and values, keyed by method name.
+   * @param array|null $methodsMap
+   *   Optional array of methods and values, keyed by method name. If set to
+   *   NULL, none of the methods will be mocked. Set to empty array if you want
+   *   all methods to be mocked.
    * @param array $args
    *   Optional array of constructor arguments. If omitted, a constructor will
    *   not be called.
@@ -85,8 +87,8 @@ trait MockHelperTrait {
    * @return object
    *   Mocked class.
    */
-  protected function prepareMock($class, array $methodsMap = [], array $args = []) {
-    $methods = array_keys($methodsMap);
+  protected function prepareMock($class, $methodsMap = [], array $args = []) {
+    $methods = is_array($methodsMap) ? array_keys($methodsMap) : $methodsMap;
 
     $reflectionClass = new \ReflectionClass($class);
 
@@ -108,17 +110,19 @@ trait MockHelperTrait {
         ->getMock();
     }
 
-    foreach ($methodsMap as $method => $value) {
-      // Handle callback values differently.
-      if (is_object($value) && strpos(get_class($value), 'Callback') !== FALSE) {
-        $mock->expects($this->any())
-          ->method($method)
-          ->will($value);
-      }
-      else {
-        $mock->expects($this->any())
-          ->method($method)
-          ->willReturn($value);
+    if (is_array($methodsMap)) {
+      foreach ($methodsMap as $method => $value) {
+        // Handle callback values differently.
+        if (is_object($value) && strpos(get_class($value), 'Callback') !== FALSE) {
+          $mock->expects($this->any())
+            ->method($method)
+            ->will($value);
+        }
+        else {
+          $mock->expects($this->any())
+            ->method($method)
+            ->willReturn($value);
+        }
       }
     }
 

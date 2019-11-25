@@ -12,7 +12,7 @@ use Drupal\Tests\field_ui\Traits\FieldUiTestTrait;
  *
  * @group minisite
  */
-class MinisiteFieldValidationTest extends MinisiteTestBase {
+class FieldValidationTest extends MinisiteTestBase {
 
   use FieldUiTestTrait;
 

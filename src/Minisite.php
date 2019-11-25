@@ -2,6 +2,7 @@
 
 namespace Drupal\minisite;
 
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\file\FileInterface;
@@ -34,82 +35,123 @@ class Minisite implements MinisiteInterface {
   protected $description;
 
   /**
-   * Array of assets for this minisite.
+   * The parent entity type.
    *
-   * @var \Drupal\minisite\MinisiteAsset[]
+   * @var string
    */
-  protected $assets = [];
+  protected $entityType;
+
+  /**
+   * The parent entity bundle.
+   *
+   * @var string
+   */
+  protected $entityBundle;
+
+  /**
+   * The parent entity id.
+   *
+   * @var int
+   */
+  protected $entityId;
+
+  /**
+   * The parent entity revision.
+   *
+   * @var int
+   */
+  protected $entityRid;
+
+  /**
+   * The parent entity language.
+   *
+   * @var string
+   */
+  protected $entityLanguage;
+
+  /**
+   * The field name.
+   *
+   * @var string
+   */
+  protected $fieldName;
+
+  /**
+   * Alias prefix taken from the parent entity.
+   *
+   * @var string
+   */
+  protected $aliasPrefix;
+
+  /**
+   * Assets container.
+   *
+   * @var \Drupal\minisite\AssetContainer
+   *
+   * @todo: Remove this container and use assets directly.
+   */
+  protected $assetContainer;
 
   /**
    * Minisite constructor.
    *
-   * @param \Drupal\file\FileInterface $archiveFile
-   *   The archive file.
+   * @param \Drupal\Core\Entity\EntityInterface $entity
+   *   Parent entity where the minisite field is located.
+   * @param string $field_name
+   *   The minisite field name.
+   * @param \Drupal\file\FileInterface $archive_file
+   *   The archive managed file.
    */
-  public function __construct(FileInterface $archiveFile) {
-    $this->archiveFile = $archiveFile;
-    $this->processArchive();
+  public function __construct(EntityInterface $entity, $field_name, FileInterface $archive_file) {
+    $this->entityType = $entity->getEntityTypeId();
+    $this->entityBundle = $entity->bundle();
+    $this->entityId = $entity->id();
+    $this->entityLanguage = $entity->language()->getId();
+    $this->fieldName = $field_name;
+    $this->archiveFile = $archive_file;
+
+    if ($entity->getEntityType()->isRevisionable()) {
+      $this->entityRid = $entity->getRevisionId();
+    }
+
+    $this->assetContainer = new AssetContainer();
   }
 
   /**
-   * Instantiate this class from the archive file.
-   *
-   * @param \Drupal\file\FileInterface $archiveFile
-   *   The file to instantiate the class.
-   * @param string $extensions
-   *   String list of archive content extensions.
-   *
-   * @return \Drupal\minisite\Minisite
-   *   An instance of this class.
+   * {@inheritdoc}
    */
-  public static function fromArchive(FileInterface $archiveFile, $extensions) {
-    try {
-      // Although archive has already been validated during upload, we still
-      // need to ensure that provided file is valid to ensure data integrity.
-      static::validateArchive($archiveFile, $extensions);
-      $instance = new self($archiveFile);
-    }
-    catch (ArchiveException $exception) {
-      $instance = NULL;
-    }
-
-    return $instance;
-  }
-
-  /**
-   * Instantiate this class from the field items.
-   *
-   * @param \Drupal\Core\Field\FieldItemListInterface $items
-   *   The existing field items.
-   *
-   * @return \Drupal\minisite\Minisite
-   *   An instance of this class.
-   */
-  public static function fromFieldItems(FieldItemListInterface $items) {
+  public static function createInstance(FieldItemListInterface $items) {
     $archive_file = $items->entity;
 
     if (!$archive_file) {
       return NULL;
     }
 
+    $field_definition = $items->getFieldDefinition();
+
     try {
-      $extensions = $items->getFieldDefinition()->getSetting('minisite_extensions');
-      static::validateArchive($archive_file, $extensions);
-      $instance = new self($archive_file);
-      $instance->setDescription($items->get(0)->description);
+      static::validateArchive($archive_file, $field_definition->getSetting('minisite_extensions'));
+
+      $entity = $items->getEntity();
+      $instance = new self($entity, $field_definition->getName(), $archive_file);
+
+      if (!empty($items->get(0))) {
+        $instance->setDescription($items->get(0)->description);
+
+        // Set alias for all assets of this minisite if it was selected for this
+        // field on this entity and the entity has a path alias set.
+        $value = $items->get(0)->getValue();
+        $entity_alias = self::getEntityPathAlias($entity);
+        if (!empty($value['options']['alias_status']) && !empty($entity_alias)) {
+          $instance->setAlias($entity_alias);
+        }
+      }
     }
     catch (ArchiveException $exception) {
       $instance = NULL;
     }
 
     return $instance;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setArchiveFile(FileInterface $file) {
-    $this->archiveFile = $file;
   }
 
   /**
@@ -122,8 +164,15 @@ class Minisite implements MinisiteInterface {
   /**
    * {@inheritdoc}
    */
-  public function setDescription($description) {
-    $this->description = $description;
+  public function setArchiveFile(FileInterface $file) {
+    $this->archiveFile = $file;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setAlias($alias_prefix) {
+    $this->aliasPrefix = $alias_prefix;
   }
 
   /**
@@ -136,9 +185,90 @@ class Minisite implements MinisiteInterface {
   /**
    * {@inheritdoc}
    */
-  public static function validateArchive(FileInterface $file, $contentExtensions) {
+  public function setDescription($description) {
+    $this->description = $description;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getIndexAssetUrl() {
+    $asset = $this->assetContainer->getIndexAsset();
+
+    if (empty($asset)) {
+      throw new InvalidContentArchiveException([sprintf('Missing index file %s', AssetInterface::INDEX_FILE)]);
+    }
+
+    return $asset->getUrl();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getIndexAssetUri() {
+    $uri = $this->assetContainer->getIndexAssetUri();
+
+    if (empty($uri)) {
+      throw new InvalidContentArchiveException([sprintf('Missing index file %s', AssetInterface::INDEX_FILE)]);
+    }
+
+    return $uri;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function processArchive() {
+    $asset_directory = $this->prepareAssetDirectory();
+
+    $files = file_scan_directory($asset_directory, '/.*/');
+
+    if (!$files) {
+      $archiver = self::getArchiver($this->archiveFile->getFileUri());
+      $archiver->listContents();
+      $archiver->extract($asset_directory);
+      $files = file_scan_directory($asset_directory, '/.*/');
+    }
+
+    foreach (array_keys($files) as $file_uri) {
+      $this->assetContainer->add(
+        $this->entityType,
+        $this->entityBundle,
+        $this->entityId,
+        $this->entityRid,
+        $this->entityLanguage,
+        $this->fieldName,
+        // Full uri to a file, e.g.
+        // @code
+        // public://minisite/static/24c22dd1-2cf1-47ae-ac8a-23a7ff8b86c5/ms/page1.html
+        // @endcode
+        $file_uri
+      );
+    }
+
+    if (!empty($this->aliasPrefix)) {
+      $this->assetContainer->updateAliases($this->aliasPrefix);
+    }
+
+    // @todo: Do not save on each init.
+    $this->assetContainer->saveAll();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delete() {
+    $this->assetContainer->deleteAll();
+    $this->archiveFile->delete();
+    $this->archiveFile = NULL;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function validateArchive(FileInterface $file, $content_extensions) {
     // Does it have a correct extension?
-    MinisiteValidator::validateFileExtension($file->getFilename(), static::supportedArchiveExtensions());
+    FileValidator::validateFileExtension($file->getFilename(), static::supportedArchiveExtensions());
 
     // Is it a valid archive?
     // File URI is different from file name is this is a file being uploaded,
@@ -156,20 +286,7 @@ class Minisite implements MinisiteInterface {
     }
 
     // Does it have correct structure?
-    MinisiteValidator::validateFiles($files, $contentExtensions);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getIndexAssetUri() {
-    foreach ($this->assets as $asset) {
-      if ($asset->isIndex()) {
-        return $asset->getSource();
-      }
-    }
-
-    throw new InvalidContentArchiveException(sprintf('Missing index file %s', MinisiteAsset::INDEX_FILE));
+    ArchiveValidator::validate($files, $content_extensions);
   }
 
   /**
@@ -196,22 +313,29 @@ class Minisite implements MinisiteInterface {
   /**
    * {@inheritdoc}
    */
-  public function processArchive() {
-    $asset_directory = $this->prepareAssetDirectory();
+  public function getCacheTags() {
+    // Currently using only archive file's cache tags.
+    return $this->archiveFile->getCacheTags();
+  }
 
-    $files = file_scan_directory($asset_directory, '/.*/');
-
-    if (!$files) {
-      $archiver = self::getArchiver($this->archiveFile->getFileUri());
-      $archiver->listContents();
-      $archiver->extract($asset_directory);
-      $files = file_scan_directory($asset_directory, '/.*/');
+  /**
+   * Get the path alias set on the parent entity.
+   *
+   * @param \Drupal\Core\Entity\EntityInterface $entity
+   *   The parent entity on which the field is set.
+   *
+   * @return string
+   *   Alias as a string or empty string if there is no alias.
+   */
+  protected static function getEntityPathAlias(EntityInterface $entity) {
+    // @todo: Add support for non-root entities (like paragraphs) to retrieve
+    // alias information from.
+    if ($entity->hasField('path')) {
+      $path_items = $entity->path->get(0)->getValue();
     }
 
-    foreach (array_keys($files) as $file_uri) {
-      $asset = new MinisiteAsset($file_uri);
-      $this->assets[] = $asset;
-    }
+    // Using toUrl() to get aliased entity URL.
+    return !empty($path_items) && !empty($path_items['alias']) ? $entity->toUrl()->toString() : '';
   }
 
   /**
@@ -261,28 +385,6 @@ class Minisite implements MinisiteInterface {
     }
 
     return $archiver;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delete() {
-    foreach ($this->assets as $asset) {
-      $asset->delete();
-    }
-
-    $this->archiveFile->delete();
-  }
-
-  /**
-   * Get cache tags for this site.
-   *
-   * @return string[]
-   *   Array of cache tags.
-   */
-  public function getCacheTags() {
-    // Currently using only archive file's cache tags.
-    return $this->archiveFile->getCacheTags();
   }
 
 }

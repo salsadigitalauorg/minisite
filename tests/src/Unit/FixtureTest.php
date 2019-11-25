@@ -8,7 +8,7 @@ use Drupal\Tests\UnitTestCase;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
- * Class MinisiteFixtureTest.
+ * Class FixtureTest.
  *
  * Tests for fixture creation trait (tests for test helpers).
  *
@@ -16,7 +16,7 @@ use Symfony\Component\Filesystem\Filesystem;
  *
  * @package Drupal\testmode\Tests
  */
-class MinisiteFixtureTest extends UnitTestCase {
+class FixtureTest extends UnitTestCase {
 
   use FixtureTrait;
 

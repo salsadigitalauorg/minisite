@@ -18,7 +18,7 @@ class InvalidContentArchiveException extends ArchiveException {
    *   Array of error messages encountered during archive content validation.
    */
   public function __construct(array $errors) {
-    parent::__construct(sprintf('Archive has invalid content: %s.', implode(PHP_EOL, $errors)));
+    parent::__construct(sprintf('Archive has invalid content: %s', implode(PHP_EOL, $errors)));
   }
 
 }
