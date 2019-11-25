@@ -71,7 +71,6 @@ class MinisiteWidget extends FileWidget {
    * {@inheritdoc}
    */
   public static function process($element, FormStateInterface $form_state, $form) {
-    // @todo:r Review this.
     $element['#theme'] = 'minisite_widget';
 
     return parent::process($element, $form_state, $form);
