@@ -2,14 +2,14 @@
 
 namespace Drupal\minisite;
 
-use Drupal\Core\Archiver\ArchiverManager;
+use Drupal\Core\Archiver\ArchiverManager as CoreArchiverManager;
 
 /**
- * Class MinisiteArchiverManager.
+ * Class ArchiverManager.
  *
  * @package Drupal\minisite
  */
-class MinisiteArchiverManager extends ArchiverManager {
+class ArchiverManager extends CoreArchiverManager {
 
   /**
    * {@inheritdoc}

@@ -4,6 +4,8 @@ namespace Drupal\minisite\Plugin\Field\FieldWidget;
 
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Link;
+use Drupal\Core\Url;
 use Drupal\file\Plugin\Field\FieldWidget\FileWidget;
 use Drupal\minisite\MinisiteInterface;
 
@@ -71,7 +73,23 @@ class MinisiteWidget extends FileWidget {
    * {@inheritdoc}
    */
   public static function process($element, FormStateInterface $form_state, $form) {
+    $item = $element['#value'];
+    $item['fids'] = $element['fids']['#value'];
+
     $element['#theme'] = 'minisite_widget';
+
+    // Add the additional fields.
+    $element['options']['alias_status'] = [
+      '#type' => 'checkbox',
+      '#title' => t('Use URL alias'),
+      '#default_value' => isset($item['options']['alias_status']) ? $item['options']['alias_status'] : FALSE,
+      '#description' => t("Use the current page's URL (defined in URL path settings) as minisite base URL.<br/>For example, if the alias of the page is <code>/my-page-alias</code> and your uploaded ZIP top directory is called <code>mysite</code>, the final URL will be <code>@url</code>.<br/>Note that this will rewrite relative links within uploaded pages. See @help for more information about URL rewrite.", [
+        '@url' => Url::fromUserInput('/my-page-alias/mysite/index.html', ['absolute' => TRUE])->toString(),
+        '@help' => Link::fromTextAndUrl(t('Minisite help'), Url::fromUri('base:/admin/help/minisite'))->toString(),
+      ]),
+      '#weight' => -11,
+      '#access' => (bool) $item['fids'],
+    ];
 
     return parent::process($element, $form_state, $form);
   }

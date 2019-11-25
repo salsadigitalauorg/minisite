@@ -13,8 +13,12 @@ use Drupal\minisite\Minisite;
  */
 function minisite_uninstall() {
   // Remove the minisite directory and generated files.
-  \Drupal::service('file_system')->deleteRecursive(Minisite::getCommonArchiveDir());
-  \Drupal::service('file_system')->deleteRecursive(Minisite::getCommonAssetDir());
+  if (file_exists(Minisite::getCommonArchiveDir())) {
+    \Drupal::service('file_system')->deleteRecursive(Minisite::getCommonArchiveDir());
+  }
+  if (file_exists(Minisite::getCommonAssetDir())) {
+    \Drupal::service('file_system')->deleteRecursive(Minisite::getCommonAssetDir());
+  }
 }
 
 /**
@@ -58,4 +62,102 @@ function minisite_requirements($phase) {
   }
 
   return $requirements;
+}
+
+/**
+ * Implements hook_schema().
+ */
+function minisite_schema() {
+  $schema['minisite_asset'] = [
+    'description' => 'Asset information for minisite.',
+    'fields' => [
+      'id' => [
+        'description' => 'The primary identifier for a minisite asset',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'entity_type' => [
+        'description' => 'The entity type of that entity.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'entity_bundle' => [
+        'description' => 'The type of this entity.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'entity_id' => [
+        'description' => 'The entity id this data is attached to',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'entity_rid' => [
+        'description' => 'The entity revision id this data is attached to, or NULL if the entity type is not versioned',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'default' => 0,
+      ],
+      'entity_language' => [
+        'description' => 'The {language}.langcode of this entity.',
+        'type' => 'varchar_ascii',
+        'length' => 12,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'field_name' => [
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'source' => [
+        'description' => 'The asset file source path.',
+        'type' => 'varchar',
+        'length' => 191,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'alias' => [
+        'description' => 'The alias for the asset path.',
+        'type' => 'varchar',
+        'length' => 191,
+        'not null' => FALSE,
+        'default' => '',
+      ],
+    ],
+    'primary key' => [
+      'id',
+    ],
+    'unique keys' => [
+      'id' => [
+        'id',
+        'entity_type',
+        'entity_bundle',
+        'entity_id',
+        'entity_language',
+        'field_name',
+        'source',
+      ],
+    ],
+    'indexes' => [
+      'entity_type' => ['entity_type'],
+      'entity_bundle' => ['entity_bundle'],
+      'entity_id' => ['entity_id'],
+      'entity_rid' => ['entity_rid'],
+      'entity_language' => ['entity_language'],
+      'field_name' => ['field_name'],
+      'source' => ['source'],
+      'alias' => ['alias'],
+    ],
+  ];
+
+  return $schema;
 }

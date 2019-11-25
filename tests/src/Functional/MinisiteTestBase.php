@@ -18,13 +18,20 @@ use Drupal\Tests\minisite\Traits\FixtureTrait;
 abstract class MinisiteTestBase extends BrowserTestBase {
 
   use FixtureTrait;
-  use MinisiteFieldCreationTrait;
+  use FieldCreationTrait;
   use StringTranslationTrait;
 
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['node', 'file', 'field', 'field_ui', 'minisite'];
+  protected static $modules = [
+    'node',
+    'file',
+    'field',
+    'field_ui',
+    'path',
+    'minisite',
+  ];
 
   /**
    * An user with administration permissions.
@@ -59,6 +66,7 @@ abstract class MinisiteTestBase extends BrowserTestBase {
       'administer node display',
       'administer nodes',
       'bypass node access',
+      'administer url aliases',
     ]);
     $this->drupalLogin($this->adminUser);
     $this->drupalCreateContentType(['type' => $this->contentType, 'name' => 'Article']);
