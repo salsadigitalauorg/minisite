@@ -2,8 +2,10 @@
 
 namespace Drupal\minisite;
 
+use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\file\FileInterface;
+use Drupal\minisite\Exception\ArchiveException;
 use Drupal\minisite\Exception\AssetException;
 use Drupal\minisite\Exception\InvalidContentArchiveException;
 use Drupal\minisite\Exception\InvalidFormatArchiveException;
@@ -25,6 +27,13 @@ class Minisite implements MinisiteInterface {
   protected $archiveFile;
 
   /**
+   * The minisite description.
+   *
+   * @var string
+   */
+  protected $description;
+
+  /**
    * Array of assets for this minisite.
    *
    * @var \Drupal\minisite\MinisiteAsset[]
@@ -36,13 +45,8 @@ class Minisite implements MinisiteInterface {
    *
    * @param \Drupal\file\FileInterface $archiveFile
    *   The archive file.
-   * @param string $extensions
-   *   String list of archive content extensions.
    */
-  public function __construct(FileInterface $archiveFile, $extensions) {
-    // Although archive has already been validated during upload, we still
-    // need to ensure that provided file is valid to ensure data integrity.
-    static::validateArchive($archiveFile, $extensions);
+  public function __construct(FileInterface $archiveFile) {
     $this->archiveFile = $archiveFile;
     $this->processArchive();
   }
@@ -59,29 +63,74 @@ class Minisite implements MinisiteInterface {
    *   An instance of this class.
    */
   public static function fromArchive(FileInterface $archiveFile, $extensions) {
-    $instance = new self($archiveFile, $extensions);
+    try {
+      // Although archive has already been validated during upload, we still
+      // need to ensure that provided file is valid to ensure data integrity.
+      static::validateArchive($archiveFile, $extensions);
+      $instance = new self($archiveFile);
+    }
+    catch (ArchiveException $exception) {
+      $instance = NULL;
+    }
 
     return $instance;
   }
 
   /**
-   * Set archive file.
+   * Instantiate this class from the field items.
    *
-   * @param \Drupal\file\FileInterface $file
-   *   Already uploaded archive file object to set.
+   * @param \Drupal\Core\Field\FieldItemListInterface $items
+   *   The existing field items.
+   *
+   * @return \Drupal\minisite\Minisite
+   *   An instance of this class.
+   */
+  public static function fromFieldItems(FieldItemListInterface $items) {
+    $archive_file = $items->entity;
+
+    if (!$archive_file) {
+      return NULL;
+    }
+
+    try {
+      $extensions = $items->getFieldDefinition()->getSetting('minisite_extensions');
+      static::validateArchive($archive_file, $extensions);
+      $instance = new self($archive_file);
+      $instance->setDescription($items->get(0)->description);
+    }
+    catch (ArchiveException $exception) {
+      $instance = NULL;
+    }
+
+    return $instance;
+  }
+
+  /**
+   * {@inheritdoc}
    */
   public function setArchiveFile(FileInterface $file) {
     $this->archiveFile = $file;
   }
 
   /**
-   * Get archive file.
-   *
-   * @return \Drupal\file\FileInterface
-   *   Archive file used to instantiate this minisite.
+   * {@inheritdoc}
    */
   public function getArchiveFile() {
     return $this->archiveFile;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setDescription($description) {
+    $this->description = $description;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDescription() {
+    return $this->description;
   }
 
   /**
@@ -145,19 +194,22 @@ class Minisite implements MinisiteInterface {
   }
 
   /**
-   * Process archive.
-   *
-   * @throws \Drupal\minisite\Exception\UnableToExtractArchiveException
+   * {@inheritdoc}
    */
-  protected function processArchive() {
-    $archiver = self::getArchiver($this->archiveFile->getFileUri());
-
+  public function processArchive() {
     $asset_directory = $this->prepareAssetDirectory();
-    $files = $archiver->listContents();
-    $archiver->extract($asset_directory);
 
-    foreach ($files as $file) {
-      $asset = new MinisiteAsset($asset_directory . DIRECTORY_SEPARATOR . $file);
+    $files = file_scan_directory($asset_directory, '/.*/');
+
+    if (!$files) {
+      $archiver = self::getArchiver($this->archiveFile->getFileUri());
+      $archiver->listContents();
+      $archiver->extract($asset_directory);
+      $files = file_scan_directory($asset_directory, '/.*/');
+    }
+
+    foreach (array_keys($files) as $file_uri) {
+      $asset = new MinisiteAsset($file_uri);
       $this->assets[] = $asset;
     }
   }
@@ -209,6 +261,28 @@ class Minisite implements MinisiteInterface {
     }
 
     return $archiver;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delete() {
+    foreach ($this->assets as $asset) {
+      $asset->delete();
+    }
+
+    $this->archiveFile->delete();
+  }
+
+  /**
+   * Get cache tags for this site.
+   *
+   * @return string[]
+   *   Array of cache tags.
+   */
+  public function getCacheTags() {
+    // Currently using only archive file's cache tags.
+    return $this->archiveFile->getCacheTags();
   }
 
 }

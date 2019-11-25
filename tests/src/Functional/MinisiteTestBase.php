@@ -2,11 +2,13 @@
 
 namespace Drupal\Tests\minisite\Functional;
 
+use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Component\Utility\Html;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\file\Entity\File;
 use Drupal\file\FileInterface;
+use Drupal\minisite\Minisite;
 use Drupal\Tests\BrowserTestBase;
 use Drupal\Tests\minisite\Traits\FixtureTrait;
 
@@ -223,6 +225,16 @@ abstract class MinisiteTestBase extends BrowserTestBase {
   }
 
   /**
+   * Asserts that a file does not exist in the database.
+   */
+  public function assertFileEntryNotExists($file, $message = NULL) {
+    $this->container->get('entity.manager')->getStorage('file')->resetCache();
+    $db_file = File::load($file->id());
+    $message = isset($message) ? $message : new FormattableMarkup('File %file does not exists in database at the correct path.', ['%file' => $file->getFileUri()]);
+    $this->assertNull($db_file, $message);
+  }
+
+  /**
    * Convert file provided by absolute path to file entity.
    *
    * @param string $absolute_file_path
@@ -246,6 +258,17 @@ abstract class MinisiteTestBase extends BrowserTestBase {
   }
 
   /**
+   * Get valid test files stub.
+   */
+  public function getTestFilesStubValid() {
+    return [
+      'parent/index.html' => $this->fixtureHtmlPage('Index page', $this->fixtureLink('Go to Page 1', 'page1.html')),
+      'parent/page1.html' => $this->fixtureHtmlPage('Page 1', $this->fixtureLink('Go to Page 2', 'page2.html')),
+      'parent/page2.html' => $this->fixtureHtmlPage('Page 2'),
+    ];
+  }
+
+  /**
    * Shorthand to get a valid archive file.
    *
    * @return \Drupal\file\Entity\File
@@ -255,11 +278,7 @@ abstract class MinisiteTestBase extends BrowserTestBase {
     // Create valid fixture archive.
     // All files must reside in the top-level directory, archive must contain
     // index.html file, and files should have allowed extension.
-    $archive_file_absolute = $this->fixtureCreateArchive([
-      'parent/index.html' => $this->fixtureHtmlPage('Index page', $this->fixtureLink('Go to Page 1', 'page1.html')),
-      'parent/page1.html' => $this->fixtureHtmlPage('Page 1', $this->fixtureLink('Go to Page 2', 'page2.html')),
-      'parent/page2.html' => $this->fixtureHtmlPage('Page 2'),
-    ]);
+    $archive_file_absolute = $this->fixtureCreateArchive($this->getTestFilesStubValid());
 
     return $this->convertToFileEntity($archive_file_absolute);
   }
@@ -274,6 +293,52 @@ abstract class MinisiteTestBase extends BrowserTestBase {
     $filename = $this->fixtureCreateFile('invalid.zip', rand(1, 9));
 
     return $this->convertToFileEntity($filename);
+  }
+
+  /**
+   * Assert archive file exists.
+   */
+  public function assertArchiveFileExist(FileInterface $file) {
+    $this->assertFileEntryExists($file, 'Archive file entry exists');
+    $this->assertFileExists(Minisite::getCommonArchiveDir() . DIRECTORY_SEPARATOR . $file->getFilename(), 'Archive file exists');
+  }
+
+  /**
+   * Assert archive file does not exist.
+   */
+  public function assertArchiveFileNotExist(FileInterface $file) {
+    $this->assertFileEntryNotExists($file, 'Archive file entry does not');
+    $this->assertFileNotExists(Minisite::getCommonArchiveDir() . DIRECTORY_SEPARATOR . $file->getFilename(), 'Archive file does not exist');
+  }
+
+  /**
+   * Assert assets paths exist.
+   */
+  public function assertAssetFilesExist($files) {
+    $actual_files = array_keys(file_scan_directory(Minisite::getCommonAssetDir(), '/.*/'));
+
+    $this->assertEquals(count($actual_files), count($files));
+    foreach ($files as $test_file) {
+      $found_files = array_filter($actual_files, function ($value) use ($test_file) {
+        return substr($value, -strlen($test_file)) === $test_file;
+      });
+
+      $this->assertTrue(count($found_files) == 1, 'Asset file found in the list of created files');
+    }
+  }
+
+  /**
+   * Assert assets paths not exist.
+   */
+  public function assertAssetFilesNotExist($files) {
+    $actual_files = array_keys(file_scan_directory(Minisite::getCommonAssetDir(), '/.*/'));
+    foreach ($files as $test_file) {
+      $found_files = array_filter($actual_files, function ($value) use ($test_file) {
+        return substr($value, -strlen($test_file)) === $test_file;
+      });
+
+      $this->assertTrue(empty($found_files), 'Asset file does not exist');
+    }
   }
 
 }

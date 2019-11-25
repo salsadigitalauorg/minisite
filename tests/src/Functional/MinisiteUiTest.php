@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\minisite\Functional;
 
+use Drupal\file\Entity\File;
 use Drupal\Tests\field_ui\Traits\FieldUiTestTrait;
 
 /**
@@ -44,24 +45,29 @@ class MinisiteUiTest extends MinisiteTestBase {
     // Create valid fixture archive.
     // All files must reside in the top-level directory and archive must contain
     // index.html file.
-    $test_file = $this->getTestArchiveValid();
+    $test_archive = $this->getTestArchiveValid();
 
     // Manually clear cache on the tester side.
-    \Drupal::entityManager()->clearCachedFieldDefinitions();
+    \Drupal::service('entity_field.manager')->clearCachedFieldDefinitions();
 
     // Create node and upload fixture file.
     $edit = [
       'title[0][value]' => $this->randomMachineName(),
-      'files[field_' . $field_name . '_' . 0 . ']' => $test_file->getFileUri(),
+      'files[field_' . $field_name . '_' . 0 . ']' => $test_archive->getFileUri(),
     ];
     $this->drupalPostForm("node/add/$type_name", $edit, $this->t('Save'));
     $node = $this->drupalGetNodeByTitle($edit['title[0][value]']);
 
+    // Assert that files exist.
+    $node_file = File::load($node->{'field_' . $field_name}->target_id);
+    $this->assertArchiveFileExist($node_file);
+    $this->assertAssetFilesExist(array_keys($this->getTestFilesStubValid()));
+
     // Visit note and start browsing minisite.
     $this->drupalGet('node/' . $node->id());
     $this->assertResponse(200);
-    $this->assertLink($test_file->getFilename());
-    $this->clickLink($test_file->getFilename());
+    $this->assertLink($test_archive->getFilename());
+    $this->clickLink($test_archive->getFilename());
 
     // Brose minisite pages starting from index page.
     $this->assertText('Index page');
@@ -73,6 +79,11 @@ class MinisiteUiTest extends MinisiteTestBase {
     $this->clickLink('Go to Page 2');
 
     $this->assertText('Page 2');
+
+    $this->drupalPostForm('node/' . $node->id() . '/delete', [], $this->t('Delete'));
+    $this->assertResponse(200);
+    $this->assertArchiveFileNotExist($node_file);
+    $this->assertAssetFilesNotExist(array_keys($this->getTestFilesStubValid()));
   }
 
   /**

@@ -39,10 +39,9 @@ class MinisiteItem extends FileItem {
       'file_extensions' => MinisiteInterface::SUPPORTED_ARCHIVE_EXTENSIONS,
       'file_directory' => MinisiteInterface::ARCHIVE_UPLOAD_DIR,
       'minisite_extensions' => MinisiteInterface::ALLOWED_EXTENSIONS,
+      'description_field' => TRUE,
     ];
     $settings = $defaults + parent::defaultFieldSettings();
-
-    unset($settings['description_field']);
 
     return $settings;
   }
@@ -57,6 +56,10 @@ class MinisiteItem extends FileItem {
           'description' => 'The ID of the file entity.',
           'type' => 'int',
           'unsigned' => TRUE,
+        ],
+        'description' => [
+          'description' => 'A description of the file.',
+          'type' => 'text',
         ],
         'asset_path' => [
           'description' => 'The URI of the entry point minisite asset path (index.html).',
@@ -91,7 +94,6 @@ class MinisiteItem extends FileItem {
 
     // Remove properties set by the parent class.
     unset($properties['display']);
-    unset($properties['description']);
 
     $properties['asset_path'] = DataDefinition::create('string')->setLabel(t('Minisite asset path'));
 
@@ -132,9 +134,6 @@ class MinisiteItem extends FileItem {
     $element = parent::fieldSettingsForm($form, $form_state);
 
     $settings = $this->getSettings();
-
-    // Remove the description option.
-    unset($element['description_field']);
 
     $element['file_extensions']['#title'] = $this->t('Allowed archive file extensions');
 
