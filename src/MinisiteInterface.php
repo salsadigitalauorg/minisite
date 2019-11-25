@@ -34,7 +34,7 @@ interface MinisiteInterface {
   /**
    * Archive extensions supported by the current implementation.
    */
-  const SUPPORTED_ARCHIVE_EXTENSIONS = 'tar zip';
+  const SUPPORTED_ARCHIVE_EXTENSIONS = 'zip tar';
 
   /**
    * Get asset entry point URI.
