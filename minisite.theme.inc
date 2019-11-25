@@ -22,6 +22,7 @@ function minisite_theme($existing, $type, $theme, $path) {
     'minisite_link' => [
       'variables' => [
         'file' => NULL,
+        'asset_path' => NULL,
         'description' => NULL,
         'attributes' => [],
       ],
@@ -69,6 +70,7 @@ function template_preprocess_minisite_widget(array &$variables) {
  * @param array $variables
  *   An associative array containing:
  *   - file: A file object to which the link will be created.
+ *   - asset_path: Path to the first asset in the minisite.
  *   - icon_directory: (optional) A path to a directory of icons to be used for
  *     files. Defaults to the value of the "icon.directory" variable.
  *   - description: A description to be displayed instead of the filename.
@@ -84,7 +86,7 @@ function template_preprocess_minisite_link(array &$variables) {
   // to ensure different file URLs are generated for different sites in a
   // multisite setup, including HTTP and HTTPS versions of the same site.
   // Fix in https://www.drupal.org/node/2646744.
-  $url = isset($file->asset_path) ? file_create_url($file->asset_path) : file_create_url($file_entity->getFileUri());
+  $url = isset($variables['asset_path']) ? file_create_url($variables['asset_path']) : file_create_url($file_entity->getFileUri());
   $variables['#cache']['contexts'][] = 'url.site';
 
   $mime_type = $file->getMimeType();
