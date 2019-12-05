@@ -48,3 +48,21 @@ User Reports
 Please post to the [issue queue](https://www.drupal.org/project/issues/minisite) 
 to help make the module better. Feel free to provide patches and suggestions 
 too.
+
+Local module development
+------------------------
+
+### Build
+Run `.circleci/build.sh` to start inbuilt PHP server locally and run the same
+commands as in CI, plus installing a site and your module automatically.
+
+### Code linting
+Run `.circleci/lint.sh` to lint your code according to the 
+[Drupal coding standards](https://www.drupal.org/docs/develop/standards).
+
+### Tests
+Run `.circleci/test.sh` to run all test for your module.         
+
+### Browsing SQLite database
+To browse the content of created SQLite database 
+(located at `/tmp/site_[MODULE_NAME].sqlite`), use [DB Browser for SQLite](https://sqlitebrowser.org/).
