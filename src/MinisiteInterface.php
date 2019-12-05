@@ -101,9 +101,11 @@ interface MinisiteInterface {
   public function getIndexAssetUri();
 
   /**
-   * Process archive by extracting files and filling-in assets information.
+   * Save minisite.
+   *
+   * Note that assets would already be extracted.
    */
-  public function processArchive();
+  public function save();
 
   /**
    * Delete minisite.
@@ -152,5 +154,13 @@ interface MinisiteInterface {
    *   Array of cache tags.
    */
   public function getCacheTags();
+
+  /**
+   * Get the path to the asset directory.
+   *
+   * @return string
+   *   The path to the assets directory.
+   */
+  public function getAssetDirectory();
 
 }

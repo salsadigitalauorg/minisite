@@ -3,6 +3,6 @@ services:
     class: Drupal\minisite\ArchiverManager
     parent: plugin.manager.archiver
   minisite.subscriber:
-    class: Drupal\minisite\EventSubscriber\MinisiteSubscriber
+    class: Drupal\minisite\EventSubscriber\AliasSubscriber
     tags:
       - { name: event_subscriber }

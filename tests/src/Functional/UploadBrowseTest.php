@@ -9,8 +9,8 @@ use Drupal\Tests\field_ui\Traits\FieldUiTestTrait;
 /**
  * Tests the minisite file upload and browsing through UI.
  *
- * This is a behavioural-driven tests. If these tests are failing - the module
- * does not work correctly.
+ * These are behavioural-driven tests. If these tests are failing - the module
+ * does not work correctly and the users will experience issues.
  *
  * @group minisite
  */
