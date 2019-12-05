@@ -90,6 +90,8 @@ function template_preprocess_minisite_link(array &$variables) {
   // Fix in https://www.drupal.org/node/2646744.
   $variables['#cache']['contexts'][] = 'url.site';
 
+  $link_text = $file_entity->getFilename();
+
   // Asset path is provided.
   if (isset($variables['asset_path'])) {
     // Asset path is a file.
@@ -99,6 +101,11 @@ function template_preprocess_minisite_link(array &$variables) {
     // Asset path is an alias to a path.
     else {
       $url = Url::fromUserInput($variables['asset_path'])->toString();
+    }
+
+    // Use the description as the link text if available.
+    if (!empty($variables['description'])) {
+      $link_text = $variables['description'];
     }
   }
   // Falling back to the archive file.
@@ -122,14 +129,8 @@ function template_preprocess_minisite_link(array &$variables) {
     $variables['attributes']->addClass($classes);
   }
 
-  // Use the description as the link text if available.
-  if (empty($variables['description'])) {
-    $link_text = $file_entity->getFilename();
-  }
-  else {
-    $link_text = $variables['description'];
-    $options['attributes']['title'] = $file_entity->getFilename();
-  }
+  // Set link title.
+  $options['attributes']['title'] = $link_text;
 
   $variables['link'] = Link::fromTextAndUrl($link_text, Url::fromUserInput($url, $options));
 }
