@@ -24,21 +24,23 @@ function minisite_help($route_name, RouteMatchInterface $route_match) {
     case 'help.page.minisite':
       $output = '';
       $output .= '<h3>' . t('About') . '</h3>';
-      $output .= '<p>' . t('Upload and serve arbitrary "minisites" archives from a Drupal website.') . '</p>';
+      $output .= '<p>' . t('Used to upload and run self contained structured but static content as "mini websites".') . '</p>';
 
       $output .= '<h3>' . t('Archives') . '</h3>';
-      $output .= '<p>' . t('Supported archives are <code>@archives</code>.', ['@archives' => implode(', ', Minisite::supportedArchiveExtensions())]) . '</p>';
+      $output .= '<p>' . t('Supported archive files are <code>@archives</code>.', ['@archives' => implode(', ', Minisite::supportedArchiveExtensions())]) . '</p>';
 
-      $output .= '<p>' . t('Archive must abide by the following constraints:') . '</p>';
+      $output .= '<p>' . t('Archives must abide by the following constraints:') . '</p>';
       $output .= '<ul>';
       $output .= '  <li>' . t('Must contain only one top-level directory.') . '</li>';
-      $output .= '  <li>' . t('Must contain only files with extensions from the allowed list (configured for each field).') . '</li>';
+      $output .= '  <li>' . t('Must contain only files with extensions from the "allowed list" (configured for each field).') . '</li>';
       $output .= '  <li>' . t('Must contain <code>@index</code> page under topmost root directory.', ['@index' => AssetInterface::INDEX_FILE]) . '</li>';
       $output .= '  <li>' . t('Should contain pages with relative links.') . '</li>';
       $output .= '</ul>';
 
-      $output .= '<h3>' . t('URL rewrite') . '</h3>';
-      $output .= '<p>' . t('When a minisite is served through aliased URL, the internal links are rewritten based on the following rules:') . '</p>';
+      $output .= '<h3>' . t('URL rewrite (alias)') . '</h3>';
+      $output .= '<p>' . t('Applies when the "Use alias" option is selected after a mini-site archive is uploaded.</p>');
+      $output .= '<p>' . t('A mini-site served through an aliased URL updates internal links that are rewritten based on the following rules:') . '</p>';
+
       $output .= '<ul>';
 
       $output .= '  <li>';
@@ -47,7 +49,7 @@ function minisite_help($route_name, RouteMatchInterface $route_match) {
       $output .= '      <li>' . t('If link is external, do not alter it.') . '</li>';
       $output .= '      <li>' . t('If link is to the HTML document and relative to root (starts with <code>./</code> or <code>/</code>), rewrite it to point to the aliased path.') . '</li>';
       $output .= '      <li>' . t('If link is to the HTML document and relative to other documents (starts with <code>../</code>), rewrite it to always point to the aliased path.') . '</li>';
-      $output .= '      <li>' . t('If link is to the non-HTML file, rewrite it to always point to the expanded file in the filesystem.') . '</li>';
+      $output .= '      <li>' . t('If link is to the non-HTML file, rewrite it to always point to the expanded file in the file system.') . '</li>';
       $output .= '    </ul>';
       $output .= '  </li>';
 
@@ -55,7 +57,7 @@ function minisite_help($route_name, RouteMatchInterface $route_match) {
       $output .= '    <p>' . t('For <code>&lt;link&gt;</code>, <code>&lt;script&gt;</code> and <code>&lt;img&gt;</code> tags:') . '</p>';
       $output .= '    <ul>';
       $output .= '      <li>' . t('If link is external, do not alter it.') . '</li>';
-      $output .= '      <li>' . t('All other types of links are rewritten to always point to the expanded file in the filesystem.') . '</li>';
+      $output .= '      <li>' . t('All other types of links are rewritten to always point to the expanded file in the file system.') . '</li>';
       $output .= '    </ul>';
       $output .= '  </li>';
 
