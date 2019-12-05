@@ -87,7 +87,6 @@ class MinisiteFormatter extends GenericFileFormatter {
     $elements = [];
 
     $minisite = Minisite::createInstance($items);
-    $minisite->processArchive();
     if ($minisite) {
       $elements[0] = [
         '#theme' => 'minisite_link',

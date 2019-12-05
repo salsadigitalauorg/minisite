@@ -8,13 +8,13 @@ use Symfony\Component\HttpKernel\Event\GetResponseEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
- * Class MinisiteSubscriber.
+ * Class AliasSubscriber.
  *
  * Listener to process request controller information.
  *
  * @package Drupal\minisite\EventSubscriber
  */
-class MinisiteSubscriber implements EventSubscriberInterface {
+class AliasSubscriber implements EventSubscriberInterface {
 
   /**
    * Set Minisite delivery controller if request URI matches asset alias.
@@ -23,11 +23,21 @@ class MinisiteSubscriber implements EventSubscriberInterface {
    *   Event that is created to create a response for a request.
    */
   public function onRequestSetController(GetResponseEvent $event) {
+    // Do not alter non-master request (this is a case when an exception is
+    // thrown in controller).
+    if (!$event->isMasterRequest()) {
+      return;
+    }
+
     $request = $event->getRequest();
 
+    // Load asset by the request URI which is an asset alias. This call must
+    // be as "lightweight" as possible as it will run before any other routes
+    // are considered (it is still faster to run this before all RouterListener
+    // processing).
     $asset = Asset::loadByAlias($request->getRequestUri());
     if ($asset) {
-      $request->attributes->set('_controller', '\Drupal\minisite\Controller\MinisiteController::deliverMinisiteAsset');
+      $request->attributes->set('_controller', '\Drupal\minisite\Controller\AliasController::deliverAsset');
       $request->attributes->set('asset_id', $asset->id());
     }
   }
@@ -36,8 +46,10 @@ class MinisiteSubscriber implements EventSubscriberInterface {
    * {@inheritdoc}
    */
   public static function getSubscribedEvents() {
-    // The RouterListener has priority 32, and we need to run after that.
-    $events[KernelEvents::REQUEST][] = ['onRequestSetController', 30];
+    // The RouterListener has priority 32, and we need to run before that
+    // because we are assessing raw URL path (we do not have a route for
+    // asset aliases).
+    $events[KernelEvents::REQUEST][] = ['onRequestSetController', 33];
 
     return $events;
   }

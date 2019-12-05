@@ -87,8 +87,6 @@ class Minisite implements MinisiteInterface {
    * Assets container.
    *
    * @var \Drupal\minisite\AssetContainer
-   *
-   * @todo: Remove this container and use assets directly.
    */
   protected $assetContainer;
 
@@ -114,7 +112,11 @@ class Minisite implements MinisiteInterface {
       $this->entityRid = $entity->getRevisionId();
     }
 
-    $this->assetContainer = new AssetContainer();
+    // Always process archive when instantiating this class. This does not
+    // necessarily mean extracting the archive into new directory every time
+    // this constructor is called, but will guarantee that the archive have
+    // been extracted and all files are ready.
+    $this->processArchive();
   }
 
   /**
@@ -133,18 +135,28 @@ class Minisite implements MinisiteInterface {
       static::validateArchive($archive_file, $field_definition->getSetting('minisite_extensions'));
 
       $entity = $items->getEntity();
-      $instance = new self($entity, $field_definition->getName(), $archive_file);
+      $description = '';
+      $parent_alias = '';
 
       if (!empty($items->get(0))) {
-        $instance->setDescription($items->get(0)->description);
+        $description = $items->get(0)->description;
 
         // Set alias for all assets of this minisite if it was selected for this
         // field on this entity and the entity has a path alias set.
         $value = $items->get(0)->getValue();
         $entity_alias = self::getEntityPathAlias($entity);
         if (!empty($value['options']['alias_status']) && !empty($entity_alias)) {
-          $instance->setAlias($entity_alias);
+          $parent_alias = $entity_alias;
         }
+      }
+
+      $instance = new self($entity, $field_definition->getName(), $archive_file);
+      if (!empty($description)) {
+        $instance->setDescription($description);
+      }
+
+      if (!empty($parent_alias)) {
+        $instance->setAlias($parent_alias);
       }
     }
     catch (ArchiveException $exception) {
@@ -173,6 +185,10 @@ class Minisite implements MinisiteInterface {
    */
   public function setAlias($alias_prefix) {
     $this->aliasPrefix = $alias_prefix;
+
+    if (isset($this->assetContainer)) {
+      $this->assetContainer->updateAliases($alias_prefix);
+    }
   }
 
   /**
@@ -216,21 +232,35 @@ class Minisite implements MinisiteInterface {
   }
 
   /**
-   * {@inheritdoc}
+   * Process archive by extracting files and filling-in assets information.
    */
-  public function processArchive() {
+  protected function processArchive() {
+    /** @var \Drupal\Core\File\FileSystemInterface $fs */
+    $fs = \Drupal::service('file_system');
+
     $asset_directory = $this->prepareAssetDirectory();
 
-    $files = file_scan_directory($asset_directory, '/.*/');
+    // Scan directory for previously extracted files.
+    // Note that we are not checking if _all_ files from archive exist: if any
+    // were removed - the archive file would need to be re-uploaded to have
+    // the files re-extracted.
+    $files = $fs->scanDirectory($asset_directory, '/.*/');
 
     if (!$files) {
+      // Files do not exist - looks like this is a first time processing, so
+      // we need to extract files. At this point, the archive file has already
+      // been validated, so it is a matter of extracting files.
       $archiver = self::getArchiver($this->archiveFile->getFileUri());
       $archiver->listContents();
       $archiver->extract($asset_directory);
-      $files = file_scan_directory($asset_directory, '/.*/');
+      // Re-scan files directory.
+      $files = $files = $fs->scanDirectory($asset_directory, '/.*/');
     }
 
+    $this->assetContainer = isset($this->assetContainer) ? $this->assetContainer : new AssetContainer();
+
     foreach (array_keys($files) as $file_uri) {
+      // Refactor to pass an entity instead of it's fields.
       $this->assetContainer->add(
         $this->entityType,
         $this->entityBundle,
@@ -249,8 +279,12 @@ class Minisite implements MinisiteInterface {
     if (!empty($this->aliasPrefix)) {
       $this->assetContainer->updateAliases($this->aliasPrefix);
     }
+  }
 
-    // @todo: Do not save on each init.
+  /**
+   * {@inheritdoc}
+   */
+  public function save() {
     $this->assetContainer->saveAll();
   }
 
@@ -348,13 +382,26 @@ class Minisite implements MinisiteInterface {
    *   When unable to prepare asset.
    */
   protected function prepareAssetDirectory() {
-    $suffix = $this->archiveFile->get('uuid')->value;
-    $dir = self::getCommonAssetDir() . DIRECTORY_SEPARATOR . $suffix;
-    if (!\Drupal::service('file_system')->prepareDirectory($dir, FileSystemInterface::CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS)) {
-      throw new AssetException(sprintf('Unable to prepare asset directory "%s"', $dir));
+    /** @var \Drupal\Core\File\FileSystemInterface $fs */
+    $fs = \Drupal::service('file_system');
+
+    $dir = $this->getAssetDirectory();
+    if (!file_exists($dir)) {
+      if (!$fs->prepareDirectory($dir, FileSystemInterface::CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS)) {
+        throw new AssetException(sprintf('Unable to prepare asset directory "%s"', $dir));
+      }
     }
 
     return $dir;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getAssetDirectory() {
+    $suffix = $this->archiveFile->get('uuid')->value;
+
+    return self::getCommonAssetDir() . DIRECTORY_SEPARATOR . $suffix;
   }
 
   /**
@@ -370,8 +417,9 @@ class Minisite implements MinisiteInterface {
    *   The archiver instance.
    */
   protected static function getArchiver($uri, $filename = NULL) {
-    $filename_real = \Drupal::service('file_system')->realpath($uri);
-    $filename = $filename ? $filename : \Drupal::service('file_system')->basename($uri);
+    $fs = \Drupal::service('file_system');
+    $filename_real = $fs->realpath($uri);
+    $filename = $filename ? $filename : $fs->basename($uri);
 
     try {
       /** @var \Drupal\Core\Archiver\ArchiverInterface $archiver */

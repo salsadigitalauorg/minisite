@@ -195,8 +195,9 @@ class MinisiteItem extends FileItem {
     $items_list = $this->getParent();
     // Set asset path from uploaded archive.
     $minisite = Minisite::createInstance($items_list);
-    $minisite->processArchive();
     if ($minisite) {
+      $minisite->save();
+
       $this->asset_path = $minisite->getIndexAssetUri();
     }
 

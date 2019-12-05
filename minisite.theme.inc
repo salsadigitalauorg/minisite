@@ -93,7 +93,7 @@ function template_preprocess_minisite_link(array &$variables) {
   // Asset path is provided.
   if (isset($variables['asset_path'])) {
     // Asset path is a file.
-    if (file_valid_uri($variables['asset_path'])) {
+    if (\Drupal::service('stream_wrapper_manager')->isValidUri($variables['asset_path'])) {
       $url = file_create_url($variables['asset_path']);
     }
     // Asset path is an alias to a path.
