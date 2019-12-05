@@ -155,4 +155,36 @@ class AssetTest extends MinisiteTestBase {
     ];
   }
 
+  /**
+   * Test Asset::isIndex().
+   *
+   * @dataProvider dataProviderIsIndex
+   * @covers \Drupal\minisite\Asset::isIndex
+   */
+  public function testIsIndex($path, $is_index) {
+    $instance = new Asset(
+      'node',
+      $this->contentType,
+      1,
+      2,
+      Language::LANGCODE_DEFAULT,
+      'field_minisite_test',
+      $path
+    );
+
+    $this->assertEqual($instance->isIndex(), $is_index);
+  }
+
+  /**
+   * Data provider for testIsIndex.
+   */
+  public function dataProviderIsIndex() {
+    return [
+      ['public://minisite/static/24c22dd1-2cf1-47ae-ac8a-23a7ff8b86c5/rootpath/index.html', TRUE],
+      ['public://minisite/static/24c22dd1-2cf1-47ae-ac8a-23a7ff8b86c5/rootpath/page.html', FALSE],
+      ['public://minisite/static/24c22dd1-2cf1-47ae-ac8a-23a7ff8b86c5/rootpath/subpath/index.html', FALSE],
+      ['public://minisite/static/24c22dd1-2cf1-47ae-ac8a-23a7ff8b86c5/rootpath/subpath/page.html', FALSE],
+    ];
+  }
+
 }

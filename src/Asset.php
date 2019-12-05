@@ -378,7 +378,14 @@ class Asset implements AssetInterface {
    * {@inheritdoc}
    */
   public function isIndex() {
-    return UrlValidator::urlIsIndex($this->urlBag->getUri(), self::INDEX_FILE);
+    if (!UrlValidator::urlIsIndex($this->urlBag->getUri(), self::INDEX_FILE)) {
+      return FALSE;
+    }
+
+    $path = $this->urlBag->getPathInArchive();
+    $in_root = strpos($path, DIRECTORY_SEPARATOR) == FALSE;
+
+    return $in_root;
   }
 
   /**
