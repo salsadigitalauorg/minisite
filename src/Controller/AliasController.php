@@ -9,11 +9,15 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
- * Class MinisiteController.
+ * Class AliasController.
+ *
+ * Controller to deliver a single aliased asset.
+ * Non-aliased assets and non-html documents are never delivered through this
+ * controller.
  *
  * @package Drupal\minisite\Controller
  */
-class MinisiteController implements ContainerAwareInterface {
+class AliasController implements ContainerAwareInterface {
 
   use ContainerAwareTrait;
 
@@ -26,28 +30,47 @@ class MinisiteController implements ContainerAwareInterface {
    * @return \Symfony\Component\HttpFoundation\Response
    *   The response object.
    */
-  public function deliverMinisiteAsset($asset_id) {
+  public function deliverAsset($asset_id) {
     $asset = Asset::load($asset_id);
 
+    // Only deliver documents through alias controller. There are other checks
+    // in the class itself, but this is one last gate keeping check to
+    // explicitly prevent non-documents from being served through alias
+    // callback.
     if (!$asset || !$asset->isDocument()) {
       throw new NotFoundHttpException();
     }
 
     try {
-      $response = new Response($asset->render());
+      $render = $asset->render();
+      $response = new Response($render);
     }
     catch (\Exception $exception) {
       throw new NotFoundHttpException();
     }
 
+    $this->addResponseHeaders($response, $asset);
+
+    return $response;
+  }
+
+  /**
+   * Add headers to the response object.
+   *
+   * @param \Symfony\Component\HttpFoundation\Response $response
+   *   The response object.
+   * @param \Drupal\minisite\Asset $asset
+   *   The loaded asset to be used for contextual data.
+   */
+  protected function addResponseHeaders(Response $response, Asset $asset) {
     $headers = [];
+
     $headers['Content-Language'] = $asset->getLanguage();
     if (!$response->headers->has('Content-Type')) {
       $headers['Content-Type'] = 'text/html; charset=utf-8';
     }
-    $response->headers->add($headers);
 
-    return $response;
+    $response->headers->add($headers);
   }
 
 }

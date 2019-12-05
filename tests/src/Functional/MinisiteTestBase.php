@@ -34,6 +34,11 @@ abstract class MinisiteTestBase extends BrowserTestBase {
   ];
 
   /**
+   * {@inheritdoc}
+   */
+  protected $defaultTheme = 'stark';
+
+  /**
    * An user with administration permissions.
    *
    * @var \Drupal\user\UserInterface
@@ -159,7 +164,7 @@ abstract class MinisiteTestBase extends BrowserTestBase {
       'revision' => (string) (int) $new_revision,
     ];
 
-    $node_storage = $this->container->get('entity.manager')->getStorage('node');
+    $node_storage = $this->container->get('entity_type.manager')->getStorage('node');
     if (is_numeric($nid_or_type)) {
       $nid = $nid_or_type;
       $node_storage->resetCache([$nid]);
@@ -208,17 +213,17 @@ abstract class MinisiteTestBase extends BrowserTestBase {
   /**
    * Asserts that a file exists physically on disk.
    *
-   * Overrides PHPUnit\Framework\Assert::assertFileExists() to also work with
+   * Uses PHPUnit\Framework\Assert::assertFileUriExists() to work with
    * file entities.
    *
-   * @param \Drupal\File\FileInterface|string $file
+   * @param \Drupal\File\FileInterface|string $filename
    *   Either the file entity or the file URI.
    * @param string $message
    *   (optional) A message to display with the assertion.
    */
-  public static function assertFileExists($filename, $message = '') {
-    $message = isset($message) ? $message : new FormattableMarkup('File %file exists on the disk.', ['%file' => $file->getFileUri()]);
-    $filename = $file instanceof FileInterface ? $file->getFileUri() : $file;
+  public static function assertFileUriExists($filename, $message = '') {
+    $message = isset($message) ? $message : new FormattableMarkup('File %file exists on the disk.', ['%file' => $filename->getFileUri()]);
+    $filename = $filename instanceof FileInterface ? $filename->getFileUri() : $filename;
     parent::assertFileExists($filename, $message);
   }
 
@@ -226,7 +231,7 @@ abstract class MinisiteTestBase extends BrowserTestBase {
    * Asserts that a file exists in the database.
    */
   public function assertFileEntryExists($file, $message = NULL) {
-    $this->container->get('entity.manager')->getStorage('file')->resetCache();
+    $this->container->get('entity_type.manager')->getStorage('file')->resetCache();
     $db_file = File::load($file->id());
     $message = isset($message) ? $message : new FormattableMarkup('File %file exists in database at the correct path.', ['%file' => $file->getFileUri()]);
     $this->assertEqual($db_file->getFileUri(), $file->getFileUri(), $message);
@@ -236,7 +241,7 @@ abstract class MinisiteTestBase extends BrowserTestBase {
    * Asserts that a file does not exist in the database.
    */
   public function assertFileEntryNotExists($file, $message = NULL) {
-    $this->container->get('entity.manager')->getStorage('file')->resetCache();
+    $this->container->get('entity_type.manager')->getStorage('file')->resetCache();
     $db_file = File::load($file->id());
     $message = isset($message) ? $message : new FormattableMarkup('File %file does not exists in database at the correct path.', ['%file' => $file->getFileUri()]);
     $this->assertNull($db_file, $message);
@@ -308,7 +313,7 @@ abstract class MinisiteTestBase extends BrowserTestBase {
    */
   public function assertArchiveFileExist(FileInterface $file) {
     $this->assertFileEntryExists($file, 'Archive file entry exists');
-    $this->assertFileExists(Minisite::getCommonArchiveDir() . DIRECTORY_SEPARATOR . $file->getFilename(), 'Archive file exists');
+    $this->assertFileUriExists(Minisite::getCommonArchiveDir() . DIRECTORY_SEPARATOR . $file->getFilename(), 'Archive file exists');
   }
 
   /**
@@ -323,7 +328,10 @@ abstract class MinisiteTestBase extends BrowserTestBase {
    * Assert assets paths exist.
    */
   public function assertAssetFilesExist($files) {
-    $actual_files = array_keys(file_scan_directory(Minisite::getCommonAssetDir(), '/.*/'));
+    /** @var \Drupal\Core\File\FileSystemInterface $fs */
+    $fs = \Drupal::service('file_system');
+
+    $actual_files = array_keys($fs->scanDirectory(Minisite::getCommonAssetDir(), '/.*/'));
 
     $this->assertEquals(count($actual_files), count($files));
     foreach ($files as $test_file) {
@@ -339,7 +347,10 @@ abstract class MinisiteTestBase extends BrowserTestBase {
    * Assert assets paths not exist.
    */
   public function assertAssetFilesNotExist($files) {
-    $actual_files = array_keys(file_scan_directory(Minisite::getCommonAssetDir(), '/.*/'));
+    /** @var \Drupal\Core\File\FileSystemInterface $fs */
+    $fs = \Drupal::service('file_system');
+
+    $actual_files = array_keys($fs->scanDirectory(Minisite::getCommonAssetDir(), '/.*/'));
     foreach ($files as $test_file) {
       $found_files = array_filter($actual_files, function ($value) use ($test_file) {
         return substr($value, -strlen($test_file)) === $test_file;

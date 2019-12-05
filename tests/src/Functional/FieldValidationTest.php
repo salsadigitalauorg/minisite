@@ -34,7 +34,8 @@ class FieldValidationTest extends MinisiteTestBase {
    * Tests the required property on minisite field.
    */
   public function testValidateRequired() {
-    $node_storage = $this->container->get('entity.manager')->getStorage('node');
+    /** @var \Drupal\node\NodeStorageInterface $node_storage */
+    $node_storage = $this->container->get('entity_type.manager')->getStorage('node');
     $field_name = strtolower($this->randomMachineName());
     $this->createMinisiteField($field_name, 'node', $this->contentType, [], ['required' => '1']);
     $field = FieldConfig::loadByName('node', $this->contentType, $field_name);
@@ -58,7 +59,7 @@ class FieldValidationTest extends MinisiteTestBase {
     $node = $node_storage->load($nid);
 
     $node_file = File::load($node->{$field_name}->target_id);
-    $this->assertFileExists($node_file, 'File exists after uploading to the required field.');
+    $this->assertFileUriExists($node_file, 'File exists after uploading to the required field.');
     $this->assertFileEntryExists($node_file, 'File entry exists after uploading to the required field.');
   }
 

@@ -7,8 +7,6 @@ namespace Drupal\minisite;
  *
  * A single Minisite asset.
  *
- * @todo: Remove this class and access assets from within parent class directly.
- *
  * @package Drupal\minisite
  */
 class AssetContainer {

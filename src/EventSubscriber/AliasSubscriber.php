@@ -8,13 +8,13 @@ use Symfony\Component\HttpKernel\Event\GetResponseEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
- * Class MinisiteSubscriber.
+ * Class AliasSubscriber.
  *
  * Listener to process request controller information.
  *
  * @package Drupal\minisite\EventSubscriber
  */
-class MinisiteSubscriber implements EventSubscriberInterface {
+class AliasSubscriber implements EventSubscriberInterface {
 
   /**
    * Set Minisite delivery controller if request URI matches asset alias.
@@ -31,9 +31,13 @@ class MinisiteSubscriber implements EventSubscriberInterface {
 
     $request = $event->getRequest();
 
+    // Load asset by the request URI which is an asset alias. This call must
+    // be as "lightweight" as possible as it will run before any other routes
+    // are considered (it is still faster to run this before all RouterListener
+    // processing).
     $asset = Asset::loadByAlias($request->getRequestUri());
     if ($asset) {
-      $request->attributes->set('_controller', '\Drupal\minisite\Controller\MinisiteController::deliverMinisiteAsset');
+      $request->attributes->set('_controller', '\Drupal\minisite\Controller\AliasController::deliverAsset');
       $request->attributes->set('asset_id', $asset->id());
     }
   }

@@ -175,7 +175,7 @@ class Asset implements AssetInterface {
    * {@inheritdoc}
    */
   public static function loadByUri($uri) {
-    if (!file_valid_uri($uri)) {
+    if (!\Drupal::service('stream_wrapper_manager')->isValidUri($uri)) {
       return NULL;
     }
 
@@ -275,7 +275,7 @@ class Asset implements AssetInterface {
     // assets directory.
     $dirname = $this->urlBag->getUri();
     while (($dirname = $fs->dirname($dirname)) && $dirname != Minisite::getCommonAssetDir()) {
-      if (empty(file_scan_directory($dirname, '/.*/'))) {
+      if (empty($fs->scanDirectory($dirname, '/.*/'))) {
         $fs->deleteRecursive($dirname);
       }
     }

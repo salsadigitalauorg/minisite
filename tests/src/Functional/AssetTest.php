@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\minisite\Functional;
 
+use Drupal\Core\File\Exception\NotRegularDirectoryException;
 use Drupal\Core\File\Exception\NotRegularFileException;
 use Drupal\Core\Language\Language;
 use Drupal\minisite\Asset;
@@ -72,7 +73,7 @@ class AssetTest extends MinisiteTestBase {
     try {
       $asset4->delete();
     }
-    catch (NotRegularFileException $exception) {
+    catch (NotRegularFileException | NotRegularDirectoryException $exception) {
       // This test is not dealing with real files, so allow exceptions for
       // file removals.
     }

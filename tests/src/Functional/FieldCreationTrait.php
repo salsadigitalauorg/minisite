@@ -30,6 +30,7 @@ trait FieldCreationTrait {
    *   The minisite field.
    */
   public function createMinisiteField($name, $entity_type, $bundle, array $storage_settings = [], array $field_settings = [], array $widget_settings = []) {
+    /** @var \Drupal\field\FieldStorageConfigInterface $field_storage */
     $field_storage = FieldStorageConfig::create([
       'entity_type' => $entity_type,
       'field_name' => $name,
@@ -69,14 +70,16 @@ trait FieldCreationTrait {
     ];
     FieldConfig::create($field)->save();
 
-    entity_get_form_display($entity_type, $bundle, 'default')
+    \Drupal::service('entity_display.repository')
+      ->getFormDisplay($entity_type, $bundle, 'default')
       ->setComponent($name, [
         'type' => 'file_generic',
         'settings' => $widget_settings,
       ])
       ->save();
     // Assign display settings.
-    entity_get_display($entity_type, $bundle, 'default')
+    \Drupal::service('entity_display.repository')
+      ->getViewDisplay($entity_type, $bundle, 'default')
       ->setComponent($name, [
         'label' => 'hidden',
         'type' => 'file_default',
