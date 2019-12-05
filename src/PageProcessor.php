@@ -282,7 +282,7 @@ class PageProcessor implements PageProcessorInterface {
    * Cleanup content of the page before loading it int internal document.
    */
   protected function cleanupContent($content) {
-    $content = preg_replace('/\<meta\s+http-equiv\s*=\s*\"content-type\"\s+content\s*=\s*\".*charset=ISO-8859-1\"\s*\/\>/i', '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">', $content);
+    $content = preg_replace('/\<meta\s+http-equiv\s*=\s*\"content-type\"\s+content\s*=\s*\".*charset=ISO-8859-1\"\s*(\/?)\>/i', '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">', $content);
     $content = mb_convert_encoding($content, 'HTML-ENTITIES', "UTF-8");
 
     return $content;
