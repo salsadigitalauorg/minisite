@@ -33,6 +33,17 @@ Archive structure
 - Must have files only with allowed extensions (configured per-field).
 - May have documents with absolute or relative path in links, scripts etc.
 
+A shell script `fix-archives.sh` is provided to automatically check and cleanup
+multiple zip archives.
+
+1. Create a directory, say `data`, and place all your zip files there.
+2. Run `./fix-archives.sh data data_fixed`\.
+3. Fixed ZIPs will be saved to `data_fixed` directory.
+
+Any directories that does not follow the archive structure will trigger an error
+and stop processing. You would need to resolve any issues with those archives
+manually and re-try the script again.
+
 Attention
 ---------
 Only allow trusted user upload minisite archive file. Also, use antivirus 
