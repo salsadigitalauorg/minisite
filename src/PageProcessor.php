@@ -3,7 +3,7 @@
 namespace Drupal\minisite;
 
 use Drupal\Component\Utility\UrlHelper;
-use Drupal\minisite\Exception\DocumentProcessorException;
+use Drupal\minisite\Exception\PageProcessorException;
 
 /**
  * Class PageProcessor.
@@ -37,7 +37,7 @@ class PageProcessor implements PageProcessorInterface {
    *   A container for all URL used for the replacement of links. Usually,
    *   based on current path where document is accessed from.
    *
-   * @throws \Drupal\minisite\Exception\DocumentProcessorException
+   * @throws \Drupal\minisite\Exception\PageProcessorException
    *   If the provided content cannot be parsed into \DOMDocument.
    */
   public function __construct($content, UrlBag $url_bag) {
@@ -87,7 +87,7 @@ class PageProcessor implements PageProcessorInterface {
   /**
    * Process <base> tag.
    *
-   * @throws \Drupal\minisite\Exception\DocumentProcessorException
+   * @throws \Drupal\minisite\Exception\PageProcessorException
    *   If 'head' element is missing.
    */
   protected function processTagBase() {
@@ -223,7 +223,7 @@ class PageProcessor implements PageProcessorInterface {
    * @return \DOMDocument
    *   DOM Document object with loaded content.
    *
-   * @throws \Drupal\minisite\Exception\DocumentProcessorException
+   * @throws \Drupal\minisite\Exception\PageProcessorException
    *   If provided content is not valid HTML or empty.
    */
   protected function loadDocument($content) {
@@ -233,7 +233,7 @@ class PageProcessor implements PageProcessorInterface {
 
     $loaded = $document->loadHTML($content);
     if (!$loaded || empty($document) || empty($document->textContent)) {
-      throw new DocumentProcessorException(sprintf('Unable to parse document: %s', libxml_get_last_error()));
+      throw new PageProcessorException(sprintf('Unable to parse document: %s', libxml_get_last_error()));
     }
 
     return $document;

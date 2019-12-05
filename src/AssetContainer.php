@@ -42,7 +42,8 @@ class AssetContainer {
                       $entity_language,
                       $field_name,
                       $file_uri) {
-    $this->assets[$file_uri] = new Asset(
+
+    $asset = new Asset(
       $entity_type,
       $entity_bundle,
       $entity_id,
@@ -50,6 +51,15 @@ class AssetContainer {
       $entity_language,
       $field_name,
       $file_uri);
+
+    // We need to check if provided asset URI already exists and use currently
+    // provided asset fields to allow updating of existing asset in the DB.
+    $existing_asset = Asset::loadByUri($file_uri);
+    if ($existing_asset) {
+      $asset->setId($existing_asset->id());
+    }
+
+    $this->assets[$file_uri] = $asset;
   }
 
   /**

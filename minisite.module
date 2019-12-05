@@ -112,7 +112,6 @@ function minisite_entity_delete(EntityInterface $entity) {
   foreach ($minisite_fields as $minisite_field) {
     if ($entity->hasField($minisite_field->getName())) {
       $minisite = Minisite::createInstance($entity->{$minisite_field->getName()});
-      $minisite->processArchive();
       if ($minisite) {
         $minisite->delete();
       }

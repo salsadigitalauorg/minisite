@@ -6,6 +6,7 @@ use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Database\Database;
 use Drupal\minisite\Exception\AssetException;
 use Drupal\minisite\Exception\InvalidExtensionValidatorException;
+use Drupal\minisite\Exception\PageProcessorException;
 
 /**
  * Class Asset.
@@ -257,10 +258,13 @@ class Asset implements AssetInterface {
    * {@inheritdoc}
    */
   public function delete() {
-    Database::getConnection()->delete('minisite_asset')
-      ->condition('id', $this->id())
-      ->execute();
-    $this->id = NULL;
+    // Only delete assets that are stored in the database.
+    if (isset($this->id)) {
+      Database::getConnection()->delete('minisite_asset')
+        ->condition('id', $this->id())
+        ->execute();
+      $this->id = NULL;
+    }
 
     /** @var \Drupal\Core\File\FileSystem $fs */
     $fs = \Drupal::service('file_system');
@@ -281,12 +285,29 @@ class Asset implements AssetInterface {
    * {@inheritdoc}
    */
   public function render() {
-    $content = file_get_contents($this->urlBag->getUri());
+    $file_uri = $this->urlBag->getUri();
 
-    if ($this->isDocument()) {
+    // Last check that asset file exist before render.
+    if (!is_readable($file_uri)) {
+      throw new AssetException(sprintf('Unable to render file "%s" as it does not exist', $file_uri));
+    }
+
+    // We should never render non-document files - those files are expected to
+    // be accessed directly (not through aliased path).
+    if (!$this->isDocument()) {
+      throw new AssetException(sprintf('Unable to render a non-document file "%s"', $file_uri));
+    }
+
+    $content = file_get_contents($file_uri);
+
+    try {
       $processor = new PageProcessor($content, $this->urlBag);
       $processor->process();
       $content = $processor->content();
+    }
+    catch (PageProcessorException $exception) {
+      // Simply pass-through as unprocessed content on processor exception and
+      // fail for anything else.
     }
 
     return $content;

@@ -101,11 +101,6 @@ interface MinisiteInterface {
   public function getIndexAssetUri();
 
   /**
-   * Process archive by extracting files and filling-in assets information.
-   */
-  public function processArchive();
-
-  /**
    * Delete minisite.
    */
   public function delete();
