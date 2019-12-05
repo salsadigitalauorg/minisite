@@ -66,6 +66,10 @@ class PageProcessor implements PageProcessorInterface {
     foreach ($this->document->getElementsByTagName('script') as $item) {
       $this->processTagScript($item);
     }
+
+    foreach ($this->document->getElementsByTagName('style') as $item) {
+      $this->processTagStyle($item);
+    }
   }
 
   /**
@@ -199,6 +203,39 @@ class PageProcessor implements PageProcessorInterface {
   }
 
   /**
+   * Process <style> tag.
+   *
+   * @param \DOMNode $item
+   *   Document node object to process.
+   */
+  protected function processTagStyle(\DOMNode $item) {
+    $content = $item->textContent;
+
+    // Replace imported styles.
+    preg_match_all('/@import url\(([^)]+)\)/i', $content, $matches, PREG_SET_ORDER);
+
+    if (empty($matches)) {
+      return;
+    }
+
+    foreach ($matches as $match) {
+      if (count($match) != 2) {
+        continue;
+      }
+
+      $url = $match[1];
+
+      $url = self::urlExtractPath($url);
+      $url = UrlValidator::relativeToRoot($url, $this->urlBag->getAssetDir() . '/' . $this->urlBag->getRootDir());
+
+      $str = str_replace($match[1], $url, $match[0]);
+      $content = str_replace($match[0], $str, $content);
+    }
+
+    $item->textContent = $content;
+  }
+
+  /**
    * Process <img> tag.
    *
    * @param \DOMNode $item
@@ -231,12 +268,24 @@ class PageProcessor implements PageProcessorInterface {
 
     $document = new \DOMDocument();
 
+    $content = $this->cleanupContent($content);
+
     $loaded = $document->loadHTML($content);
     if (!$loaded || empty($document) || empty($document->textContent)) {
       throw new PageProcessorException(sprintf('Unable to parse document: %s', libxml_get_last_error()));
     }
 
     return $document;
+  }
+
+  /**
+   * Cleanup content of the page before loading it int internal document.
+   */
+  protected function cleanupContent($content) {
+    $content = preg_replace('/\<meta\s+http-equiv\s*=\s*\"content-type\"\s+content\s*=\s*\".*charset=ISO-8859-1\"\s*(\/?)\>/i', '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">', $content);
+    $content = mb_convert_encoding($content, 'HTML-ENTITIES', "UTF-8");
+
+    return $content;
   }
 
   /**
