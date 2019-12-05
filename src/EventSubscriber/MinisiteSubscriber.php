@@ -23,6 +23,12 @@ class MinisiteSubscriber implements EventSubscriberInterface {
    *   Event that is created to create a response for a request.
    */
   public function onRequestSetController(GetResponseEvent $event) {
+    // Do not alter non-master request (this is a case when an exception is
+    // thrown in controller).
+    if (!$event->isMasterRequest()) {
+      return;
+    }
+
     $request = $event->getRequest();
 
     $asset = Asset::loadByAlias($request->getRequestUri());
@@ -36,8 +42,10 @@ class MinisiteSubscriber implements EventSubscriberInterface {
    * {@inheritdoc}
    */
   public static function getSubscribedEvents() {
-    // The RouterListener has priority 32, and we need to run after that.
-    $events[KernelEvents::REQUEST][] = ['onRequestSetController', 30];
+    // The RouterListener has priority 32, and we need to run before that
+    // because we are assessing raw URL path (we do not have a route for
+    // asset aliases).
+    $events[KernelEvents::REQUEST][] = ['onRequestSetController', 33];
 
     return $events;
   }
