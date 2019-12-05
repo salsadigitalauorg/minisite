@@ -13,8 +13,8 @@ The pages can be served from the location in the public or private files
 directory or from an alias set on the parent entity (where the field is attached
 to). 
 
-Please note this  module does not actually import the minisite pages as Drupal 
-nodes.
+Please note that this module does not actually import the minisite pages as 
+Drupal nodes.
 
 > A minisite is a website by which companies offer information about one 
 specific product or product group. Typically, a minisite is enhanced by 
@@ -37,6 +37,14 @@ Attention
 ---------
 Only allow trusted user upload minisite archive file. Also, use antivirus 
 software to detect malicious software, including viruses. 
-You may check this module [ClamAV](https://www.clamav.net/) which will verify 
-that files uploaded to a site are not infected with a virus, and prevent 
-infected files from being saved.
+Check out [ClamAV](https://www.drupal.org/project/clamav) module which will 
+verify that files uploaded to a site are not infected with a virus, and prevent
+infected files from being saved. It will also prevent uploading a 
+[ZIP-bomb](https://en.wikipedia.org/wiki/Zip_bomb) also known as a "ZIP of 
+death or decompression bomb".
+
+User Reports
+------------
+Please post to the [issue queue](https://www.drupal.org/project/issues/minisite) 
+to help make the module better. Feel free to provide patches and suggestions 
+too.
