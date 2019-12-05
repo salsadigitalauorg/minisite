@@ -216,7 +216,7 @@ abstract class MinisiteTestBase extends BrowserTestBase {
    * @param string $message
    *   (optional) A message to display with the assertion.
    */
-  public static function assertFileExists($file, $message = NULL) {
+  public static function assertFileExists($filename, $message = '') {
     $message = isset($message) ? $message : new FormattableMarkup('File %file exists on the disk.', ['%file' => $file->getFileUri()]);
     $filename = $file instanceof FileInterface ? $file->getFileUri() : $file;
     parent::assertFileExists($filename, $message);
