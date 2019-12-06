@@ -235,16 +235,13 @@ class Minisite implements MinisiteInterface {
    * Process archive by extracting files and filling-in assets information.
    */
   protected function processArchive() {
-    /** @var \Drupal\Core\File\FileSystemInterface $fs */
-    $fs = \Drupal::service('file_system');
-
     $asset_directory = $this->prepareAssetDirectory();
 
     // Scan directory for previously extracted files.
     // Note that we are not checking if _all_ files from archive exist: if any
     // were removed - the archive file would need to be re-uploaded to have
     // the files re-extracted.
-    $files = $fs->scanDirectory($asset_directory, '/.*/');
+    $files = LegacyWrapper::scanDirectory($asset_directory, '/.*/');
 
     if (!$files) {
       // Files do not exist - looks like this is a first time processing, so
@@ -254,7 +251,7 @@ class Minisite implements MinisiteInterface {
       $archiver->listContents();
       $archiver->extract($asset_directory);
       // Re-scan files directory.
-      $files = $files = $fs->scanDirectory($asset_directory, '/.*/');
+      $files = LegacyWrapper::scanDirectory($asset_directory, '/.*/');
     }
 
     $this->assetContainer = isset($this->assetContainer) ? $this->assetContainer : new AssetContainer();

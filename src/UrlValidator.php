@@ -91,7 +91,7 @@ class UrlValidator {
     // path.
     $url = str_replace('../', '', $url);
     $url = rtrim($parent, '/') . '/' . ltrim($url, '/');
-    $url = \Drupal::service('stream_wrapper_manager')->isValidUri($url) ? file_url_transform_relative(file_create_url($url)) : $url;
+    $url = LegacyWrapper::isValidUri($url) ? file_url_transform_relative(file_create_url($url)) : $url;
     // Decode URL encoded in file_create_url().
     $url = rawurldecode($url);
     $url = '/' . ltrim($url, '/');
