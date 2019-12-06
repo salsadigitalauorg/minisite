@@ -39,6 +39,8 @@ class AliasSubscriber implements EventSubscriberInterface {
     if ($asset) {
       $request->attributes->set('_controller', '\Drupal\minisite\Controller\AliasController::deliverAsset');
       $request->attributes->set('asset_id', $asset->id());
+      // Stop further propagation as our raw URL has matched.
+      $event->stopPropagation();
     }
   }
 
