@@ -8,6 +8,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\file\Entity\File;
 use Drupal\file\FileInterface;
+use Drupal\minisite\LegacyWrapper;
 use Drupal\minisite\Minisite;
 use Drupal\Tests\BrowserTestBase;
 use Drupal\Tests\minisite\Traits\FixtureTrait;
@@ -328,10 +329,7 @@ abstract class MinisiteTestBase extends BrowserTestBase {
    * Assert assets paths exist.
    */
   public function assertAssetFilesExist($files) {
-    /** @var \Drupal\Core\File\FileSystemInterface $fs */
-    $fs = \Drupal::service('file_system');
-
-    $actual_files = array_keys($fs->scanDirectory(Minisite::getCommonAssetDir(), '/.*/'));
+    $actual_files = array_keys(LegacyWrapper::scanDirectory(Minisite::getCommonAssetDir(), '/.*/'));
 
     $this->assertEquals(count($actual_files), count($files));
     foreach ($files as $test_file) {
@@ -347,10 +345,7 @@ abstract class MinisiteTestBase extends BrowserTestBase {
    * Assert assets paths not exist.
    */
   public function assertAssetFilesNotExist($files) {
-    /** @var \Drupal\Core\File\FileSystemInterface $fs */
-    $fs = \Drupal::service('file_system');
-
-    $actual_files = array_keys($fs->scanDirectory(Minisite::getCommonAssetDir(), '/.*/'));
+    $actual_files = array_keys(LegacyWrapper::scanDirectory(Minisite::getCommonAssetDir(), '/.*/'));
     foreach ($files as $test_file) {
       $found_files = array_filter($actual_files, function ($value) use ($test_file) {
         return substr($value, -strlen($test_file)) === $test_file;

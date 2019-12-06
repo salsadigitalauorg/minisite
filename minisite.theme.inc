@@ -10,6 +10,7 @@ use Drupal\Core\Render\Element;
 use Drupal\Core\Template\Attribute;
 use Drupal\Core\Url;
 use Drupal\file\Entity\File;
+use Drupal\minisite\LegacyWrapper;
 
 /**
  * Implements hook_theme().
@@ -95,7 +96,7 @@ function template_preprocess_minisite_link(array &$variables) {
   // Asset path is provided.
   if (isset($variables['asset_path'])) {
     // Asset path is a file.
-    if (\Drupal::service('stream_wrapper_manager')->isValidUri($variables['asset_path'])) {
+    if (LegacyWrapper::isValidUri($variables['asset_path'])) {
       $url = file_create_url($variables['asset_path']);
     }
     // Asset path is an alias to a path.

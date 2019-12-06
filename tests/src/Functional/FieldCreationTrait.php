@@ -4,6 +4,7 @@ namespace Drupal\Tests\minisite\Functional;
 
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\minisite\LegacyWrapper;
 
 /**
  * Provides methods for creating minisite fields.
@@ -70,16 +71,15 @@ trait FieldCreationTrait {
     ];
     FieldConfig::create($field)->save();
 
-    \Drupal::service('entity_display.repository')
-      ->getFormDisplay($entity_type, $bundle, 'default')
+    LegacyWrapper::getFormDisplay($entity_type, $bundle, 'default')
       ->setComponent($name, [
         'type' => 'file_generic',
         'settings' => $widget_settings,
       ])
       ->save();
+
     // Assign display settings.
-    \Drupal::service('entity_display.repository')
-      ->getViewDisplay($entity_type, $bundle, 'default')
+    LegacyWrapper::getViewDisplay($entity_type, $bundle, 'default')
       ->setComponent($name, [
         'label' => 'hidden',
         'type' => 'file_default',
