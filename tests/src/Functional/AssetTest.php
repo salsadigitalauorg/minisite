@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\minisite\Functional;
 
+use Drupal\Component\Utility\Random;
 use Drupal\Core\File\Exception\NotRegularDirectoryException;
 use Drupal\Core\File\Exception\NotRegularFileException;
 use Drupal\Core\Language\Language;
@@ -185,6 +186,56 @@ class AssetTest extends MinisiteTestBase {
       ['public://minisite/static/24c22dd1-2cf1-47ae-ac8a-23a7ff8b86c5/rootpath/subpath/index.html', FALSE],
       ['public://minisite/static/24c22dd1-2cf1-47ae-ac8a-23a7ff8b86c5/rootpath/subpath/page.html', FALSE],
     ];
+  }
+
+  /**
+   * Test Asset::save().
+   *
+   * @covers \Drupal\minisite\Asset::save
+   * @covers \Drupal\minisite\Asset::load
+   * @covers \Drupal\minisite\Asset::loadByAlias
+   */
+  public function testSaveLong() {
+    $randomizer = new Random();
+
+    $prefix = 'public://minisite/static/24c22dd1-2cf1-47ae-ac8a-23a7ff8b86c5/';
+    $suffix = '.html';
+
+    $dir_path = $randomizer->name(10) . '/';
+    // The full path of the file with the scheme should be exactly 2048
+    // characters long.
+    // Note that most of the browsers support URLs length under 2048 characters.
+    $file_path = $randomizer->name(2048 - strlen($dir_path) - strlen($prefix) - strlen($suffix)) . $suffix;
+    $path = $prefix . $dir_path . $file_path;
+
+    $asset = new Asset(
+      'node',
+      $this->contentType,
+      1,
+      2,
+      Language::LANGCODE_DEFAULT,
+      'field_minisite_test',
+      $path
+    );
+
+    $this->assertNull($asset->id(), 'Unsaved asset does not have and id');
+    $asset->save();
+    $this->assertNotNull($asset->id(), 'Saved asset has an id');
+
+    $loaded_asset = Asset::load($asset->id());
+    $this->assertNotNull($loaded_asset, 'Previously saved asset is not null');
+
+    // Assert that long aliases are accepted.
+    $alias_prefix = '/' . $randomizer->name(2048 - (strlen($file_path)) - 2);
+    $full_alias = $alias_prefix . '/' . $dir_path . $file_path;
+    $asset->setAliasPrefix($alias_prefix);
+    $this->assertEqual($asset->getUrl(), $full_alias);
+
+    $asset->save();
+
+    $asset_loaded_by_alias = Asset::loadByAlias($full_alias);
+    $this->assertNotNull($asset_loaded_by_alias, 'Re-saved asset with an alias is not null');
+    $this->assertNotNull($asset_loaded_by_alias->id(), 'Re-saved asset with an alias has an id');
   }
 
 }
