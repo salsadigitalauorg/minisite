@@ -26,7 +26,7 @@ if [ -n "${DRUPAL_PROJECT_SHA}" ] && [ -n "${DRUPAL_VERSION}" ] ; then
   cat build/composer.json
 
   echo "==> Install dependencies"
-  composer --working-dir=build install
+  php -d memory_limit=-1 $(which composer) --working-dir=build install
 else
   echo "==> Initialise Drupal site from the latest scaffold"
   composer create-project drupal-composer/drupal-project:8.x-dev build --no-interaction
