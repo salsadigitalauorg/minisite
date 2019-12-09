@@ -2,11 +2,6 @@
 
 namespace Drupal\Tests\minisite\Functional;
 
-use Drupal\Component\Utility\Random;
-use Drupal\file\Entity\File;
-use Drupal\minisite\Asset;
-use Drupal\Tests\field_ui\Traits\FieldUiTestTrait;
-
 /**
  * Tests the minisite file upload and browsing through UI with alias.
  *
@@ -16,8 +11,6 @@ use Drupal\Tests\field_ui\Traits\FieldUiTestTrait;
  * @group minisite
  */
 class UploadBrowseAliasTest extends MinisiteTestBase {
-
-  use FieldUiTestTrait;
 
   /**
    * {@inheritdoc}
@@ -41,128 +34,44 @@ class UploadBrowseAliasTest extends MinisiteTestBase {
    * required.
    */
   public function testUploadAndBrowsingAlias() {
-    $type_name = $this->contentType;
-
-    $field_name = 'ms_fn_' . strtolower($this->randomMachineName(4));
-    $field_label = 'ms_fl_' . strtolower($this->randomMachineName(4));
-
-    // Create field through UI.
-    // Note that config schema is also validated when field is created.
-    $storage_edit = ['settings[uri_scheme]' => 'public'];
-    $this->fieldUIAddNewField("admin/structure/types/manage/$type_name", $field_name, $field_label, 'minisite', $storage_edit);
-
-    // Create valid fixture archive.
-    // All files must reside in the top-level directory and archive must contain
-    // index.html file.
-    $test_archive = $this->getTestArchiveValid();
+    // Create test values.
     $test_archive_assets = array_keys($this->getTestFilesStubValid());
+    $node_title = $this->randomMachineName();
+    $minisite_description = 'D' . $this->randomMachineName();
+    $node_alias = '/a' . $this->randomMachineName();
 
-    $random = new Random();
-    $node_alias = '/a' . $random->name();
-    $description = 'D' . $random->name();
-
-    // Manually clear cache on the tester side.
-    \Drupal::service('entity_field.manager')->clearCachedFieldDefinitions();
-
-    // Create node and upload fixture file.
+    // Create field and a node with custom path alias.
     $edit = [
-      'title[0][value]' => $this->randomMachineName(),
-      'files[field_' . $field_name . '_' . 0 . ']' => $test_archive->getFileUri(),
       'path[0][alias]' => $node_alias,
     ];
-    $this->drupalPostForm("node/add/$type_name", $edit, $this->t('Save'));
-    $node = $this->drupalGetNodeByTitle($edit['title[0][value]']);
+
+    $field_name = $this->createFieldAndNode($this->contentType, $node_title, $minisite_description, $edit);
+    $node = $this->drupalGetNodeByTitle($node_title);
     $nid = $node->id();
-    $edit = [
-      'field_' . $field_name . '[' . 0 . '][description]' => $description,
-      'field_' . $field_name . '[' . 0 . '][options][alias_status]' => TRUE,
-    ];
-    $this->drupalPostForm("node/$nid/edit", $edit, $this->t('Save'));
 
-    // Assert that file exist.
-    $archive_file = File::load($node->{'field_' . $field_name}->target_id);
-    $this->assertArchiveFileExist($archive_file);
-    $this->assertAssetFilesExist($test_archive_assets);
+    // Assert that minisite archive file was uploaded.
+    $this->assertMinisiteUploaded($node, $field_name, $test_archive_assets);
 
-    // Visit node.
-    $this->drupalGet($node_alias);
-    $this->assertResponse(200);
-    $this->assertUrl($node_alias);
-
-    // Assert that a link to a minisite is present.
-    $this->assertLink($description);
-    $this->assertLinkByHref($node_alias . '/' . $test_archive_assets[0]);
-
-    // Start browsing the minisite.
-    $this->clickLink($description);
-
-    // Assert first index path as aliased.
-    $this->assertUrl($node_alias . '/' . $test_archive_assets[0]);
-
-    // Brose minisite pages starting from index page.
-    $this->assertText('Index page');
-    $this->assertLink('Go to Page 1');
-    $this->clickLink('Go to Page 1');
-
-    $this->assertText('Page 1');
-    $this->assertUrl($node_alias . '/' . $test_archive_assets[1]);
-
-    $this->assertLink('Go to Page 2');
-    $this->clickLink('Go to Page 2');
-
-    $this->assertText('Page 2');
-    $this->assertUrl($node_alias . '/' . $test_archive_assets[2]);
+    // Browse fixture minisite using manually provided alias.
+    $node_alias = $node->path->get(0)->getValue()['alias'];
+    $this->browseFixtureMinisite($node_alias, $minisite_description, $test_archive_assets);
 
     // Updated node's alias and assert that update has been applied.
-    $node_alias_updated = '/a' . $random->name();
+    $node_alias_updated = '/a' . $this->randomMachineName();
     $edit = [
       'path[0][alias]' => $node_alias_updated,
     ];
     $this->drupalPostForm("node/$nid/edit", $edit, $this->t('Save'));
 
-    // Visit node.
-    $this->drupalGet($node_alias_updated);
-    $this->assertResponse(200);
-    $this->assertUrl($node_alias_updated);
-
-    // Assert that a link to a minisite is present.
-    $this->assertLink($description);
-    $this->assertLinkByHref($node_alias_updated . '/' . $test_archive_assets[0]);
-
-    // Start browsing the minisite.
-    $this->clickLink($description);
-
-    // Assert first index path as aliased.
-    $this->assertUrl($node_alias_updated . '/' . $test_archive_assets[0]);
-
-    // Brose minisite pages starting from index page.
-    $this->assertText('Index page');
-    $this->assertLink('Go to Page 1');
-    $this->clickLink('Go to Page 1');
-
-    $this->assertText('Page 1');
-    $this->assertUrl($node_alias_updated . '/' . $test_archive_assets[1]);
-
-    $this->assertLink('Go to Page 2');
-    $this->clickLink('Go to Page 2');
-
-    $this->assertText('Page 2');
-    $this->assertUrl($node_alias_updated . '/' . $test_archive_assets[2]);
+    // Browse fixture minisite using updated manually provided alias.
+    $this->browseFixtureMinisite($node_alias_updated, $minisite_description, $test_archive_assets);
 
     // Delete node.
     $this->drupalPostForm("node/$nid/delete", [], $this->t('Delete'));
     $this->assertResponse(200);
 
-    // Assert that files no longer exist.
-    $this->assertArchiveFileNotExist($archive_file);
-    $this->assertAssetFilesNotExist($test_archive_assets);
-    // Assert that archive file has been removed.
-    $this->assertFileEntryNotExists($archive_file);
-    // Assert that there are no records in the 'minisites_assets' table about
-    // assets for this node.
-    foreach ($test_archive_assets as $test_archive_asset) {
-      $this->assertNull(Asset::loadByUri($test_archive_asset));
-    }
+    // Assert that Minisite assets were removed.
+    $this->assertMinisiteRemoved($node, $field_name, $test_archive_assets);
   }
 
 }

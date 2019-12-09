@@ -8,9 +8,12 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\file\Entity\File;
 use Drupal\file\FileInterface;
+use Drupal\minisite\Asset;
 use Drupal\minisite\LegacyWrapper;
 use Drupal\minisite\Minisite;
+use Drupal\node\Entity\Node;
 use Drupal\Tests\BrowserTestBase;
+use Drupal\Tests\field_ui\Traits\FieldUiTestTrait;
 use Drupal\Tests\minisite\Traits\FixtureTrait;
 
 /**
@@ -20,6 +23,7 @@ abstract class MinisiteTestBase extends BrowserTestBase {
 
   use FixtureTrait;
   use FieldCreationTrait;
+  use FieldUiTestTrait;
   use StringTranslationTrait;
 
   /**
@@ -363,6 +367,134 @@ abstract class MinisiteTestBase extends BrowserTestBase {
 
       $this->assertTrue(empty($found_files), 'Asset file does not exist');
     }
+  }
+
+  /**
+   * Create Minisite field through UI and upload a fixture archive.
+   *
+   * @param string $node_type
+   *   Node type (bundle).
+   * @param string $node_title
+   *   Node title to set.
+   * @param string $description
+   *   (optional) Minisite field description to set.
+   * @param array $edit
+   *   (optional) Additional node form elements to set before the node is
+   *   created.
+   *
+   * @return string
+   *   Created field name.
+   */
+  public function createFieldAndNode($node_type, $node_title, $description = NULL, array $edit = []) {
+    $field_name = 'ms_fn_' . strtolower($this->randomMachineName(4));
+    $field_label = 'ms_fl_' . strtolower($this->randomMachineName(4));
+
+    // Create field through UI.
+    // Note that config schema is also validated when field is created.
+    $storage_edit = ['settings[uri_scheme]' => 'public'];
+    $this->fieldUIAddNewField("admin/structure/types/manage/$node_type", $field_name, $field_label, 'minisite', $storage_edit);
+
+    // Create valid fixture archive.
+    // All files must reside in the top-level directory and archive must contain
+    // index.html file.
+    $test_archive = $this->getTestArchiveValid();
+
+    // Manually clear cache on the tester side.
+    \Drupal::service('entity_field.manager')->clearCachedFieldDefinitions();
+
+    // Create node and upload fixture file.
+    // Note that in order to reveal field fields available only after file
+    // is uploaded, we submitting a form with a file and without a title.
+    $edit1 = [
+      'files[field_' . $field_name . '_' . 0 . ']' => $test_archive->getFileUri(),
+    ];
+    $this->drupalPostForm("node/add/$node_type", $edit1, $this->t('Save'));
+    $edit2 = [
+      'title[0][value]' => $node_title,
+      'field_' . $field_name . '[' . 0 . '][options][alias_status]' => TRUE,
+    ];
+
+    $edit = $edit2 + $edit;
+
+    if (!empty($description)) {
+      $edit['field_' . $field_name . '[' . 0 . '][description]'] = $description;
+    }
+
+    $this->drupalPostForm(NULL, $edit, $this->t('Save'));
+
+    return $field_name;
+  }
+
+  /**
+   * Assert that Minisite archive file was uploaded and assets expanded.
+   */
+  public function assertMinisiteUploaded($node, $field_name, $test_archive_assets) {
+    $archive_file = $this->getUploadedArchiveFile($node, $field_name);
+    $this->assertArchiveFileExist($archive_file);
+    $this->assertAssetFilesExist($test_archive_assets);
+  }
+
+  /**
+   * Assert that a Minisite archive and assets were removed.
+   */
+  public function assertMinisiteRemoved($node, $field_name, $test_archive_assets) {
+    $archive_file = $this->getUploadedArchiveFile($node, $field_name);
+    $this->assertArchiveFileNotExist($archive_file);
+    $this->assertAssetFilesNotExist($test_archive_assets);
+    // Assert that archive file has been removed.
+    $this->assertFileEntryNotExists($archive_file);
+    // Assert that there are no records in the 'minisites_assets' table about
+    // assets for this node.
+    foreach ($test_archive_assets as $test_archive_asset) {
+      $this->assertNull(Asset::loadByUri($test_archive_asset));
+    }
+  }
+
+  /**
+   * Get uploaded archive file.
+   *
+   * @param \Drupal\node\Entity\Node $node
+   *   The node object to get the file from.
+   * @param string $field_name
+   *   Field name without 'field_' prefix.
+   *
+   * @return \Drupal\file\Entity\File|null
+   *   Uploaded file or NULL.
+   */
+  public function getUploadedArchiveFile(Node $node, $field_name) {
+    return File::load($node->{'field_' . $field_name}->target_id);
+  }
+
+  /**
+   * Helper to browse fixture pages.
+   */
+  public function browseFixtureMinisite($alias, $description, $assets_paths) {
+    $this->drupalGet($alias);
+    $this->assertResponse(200);
+
+    // Assert that a link to a minisite is present.
+    $this->assertLink($description);
+    $this->assertLinkByHref($alias . '/' . $assets_paths[0]);
+
+    // Start browsing the minisite.
+    $this->clickLink($description);
+
+    // Assert first index path as aliased.
+    $this->assertUrl($alias . '/' . $assets_paths[0]);
+
+    // Brose minisite pages starting from index page.
+    $this->assertText('Index page');
+    $this->assertLink('Go to Page 1');
+    $this->clickLink('Go to Page 1');
+
+    $this->assertText('Page 1');
+    $this->assertUrl($alias . '/' . $assets_paths[1]);
+
+    $this->assertLink('Go to Page 2');
+    $this->clickLink('Go to Page 2');
+
+    $this->assertText('Page 2');
+    $this->assertUrl($alias . '/' . $assets_paths[2]);
   }
 
 }
