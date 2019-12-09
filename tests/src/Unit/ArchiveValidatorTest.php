@@ -91,6 +91,15 @@ class ArchiveValidatorTest extends UnitTestCase {
         'Archive has invalid content: File dir1/file.txt has invalid extension.' . PHP_EOL . 'File dir1/file2.txt has invalid extension.',
       ],
 
+      [
+        [
+          'dir1/' . AssetInterface::INDEX_FILE,
+          'dir1/file.html', 'dir1/' . str_repeat('a', 2048) . '/file2.html',
+        ],
+        ['html'],
+        'Archive has invalid content: File "dir1/' . str_repeat('a', 2048) . '/file2.html" path within the archive should be under 1986 characters in length.',
+      ],
+
       // Special case testing for allowed root-level directories.
       // If the allowed root-level directory not correctly excluded - a
       // different exception will be thrown.
