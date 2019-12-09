@@ -2,11 +2,7 @@
 
 namespace Drupal\Tests\minisite\Functional;
 
-use Drupal\Component\Utility\Random;
-use Drupal\file\Entity\File;
-use Drupal\minisite\Asset;
 use Drupal\node\Entity\Node;
-use Drupal\Tests\field_ui\Traits\FieldUiTestTrait;
 use Drupal\Tests\pathauto\Functional\PathautoTestHelperTrait;
 
 /**
@@ -19,7 +15,6 @@ use Drupal\Tests\pathauto\Functional\PathautoTestHelperTrait;
  */
 class UploadBrowseAliasPathautoTest extends MinisiteTestBase {
 
-  use FieldUiTestTrait;
   use PathautoTestHelperTrait;
 
   /**
@@ -44,124 +39,43 @@ class UploadBrowseAliasPathautoTest extends MinisiteTestBase {
    * required.
    */
   public function testUploadAndBrowsingAlias() {
-    $type_name = $this->contentType;
+    // Create test values.
+    $test_archive_assets = array_keys($this->getTestFilesStubValid());
+    $node_title = $this->randomMachineName();
+    $minisite_description = 'D' . $this->randomMachineName();
 
+    // Create pathauto pattern.
     $this->createPattern('node', mb_strtolower($this->randomMachineName()) . '/' . '[node:title]');
 
-    $field_name = 'ms_fn_' . strtolower($this->randomMachineName(4));
-    $field_label = 'ms_fl_' . strtolower($this->randomMachineName(4));
-
-    // Create field through UI.
-    // Note that config schema is also validated when field is created.
-    $storage_edit = ['settings[uri_scheme]' => 'public'];
-    $this->fieldUIAddNewField("admin/structure/types/manage/$type_name", $field_name, $field_label, 'minisite', $storage_edit);
-
-    // Create valid fixture archive.
-    // All files must reside in the top-level directory and archive must contain
-    // index.html file.
-    $test_archive = $this->getTestArchiveValid();
-    $test_archive_assets = array_keys($this->getTestFilesStubValid());
-
-    $node_title = $this->randomMachineName();
-    $random = new Random();
-    $description = 'D' . $random->name();
-
-    // Manually clear cache on the tester side.
-    \Drupal::service('entity_field.manager')->clearCachedFieldDefinitions();
-
-    // Create node and upload fixture file, enabling path generation.
-    // Note that in order to reveal field fields available only after file
-    // is uploaded, we submitting a form with a file and without a title.
+    // Create field and a node with Pathauto enabled.
     $edit = [
-      'files[field_' . $field_name . '_' . 0 . ']' => $test_archive->getFileUri(),
-    ];
-    $this->drupalPostForm("node/add/$type_name", $edit, $this->t('Save'));
-    $edit = [
-      'title[0][value]' => $node_title,
       'path[0][pathauto]' => TRUE,
-      'field_' . $field_name . '[' . 0 . '][description]' => $description,
-      'field_' . $field_name . '[' . 0 . '][options][alias_status]' => TRUE,
     ];
-    $this->drupalPostForm(NULL, $edit, $this->t('Save'));
-
+    $field_name = $this->createFieldAndNode($this->contentType, $node_title, $minisite_description, $edit);
     $node = $this->drupalGetNodeByTitle($node_title);
     $nid = $node->id();
 
-    $node = Node::load($nid);
+    // Assert that an alias was created for a node.
     $this->assertEntityAliasExists($node);
 
+    // Assert that minisite archive file was uploaded.
+    $this->assertMinisiteUploaded($node, $field_name, $test_archive_assets);
+
+    // Browse fixture minisite using Pathauto-generated alias.
     $node_alias = $node->path->get(0)->getValue()['alias'];
-
-    // Assert that file exist.
-    $archive_file = File::load($node->{'field_' . $field_name}->target_id);
-    $this->assertArchiveFileExist($archive_file);
-    $this->assertAssetFilesExist($test_archive_assets);
-
-    // Visit node.
-    $this->drupalGet($node_alias);
-    $this->assertResponse(200);
-
-    // Assert that a link to a minisite is present.
-    $this->assertLink($description);
-    $this->assertLinkByHref($node_alias . '/' . $test_archive_assets[0]);
-
-    // Start browsing the minisite.
-    $this->clickLink($description);
-
-    // Assert first index path as aliased.
-    $this->assertUrl($node_alias . '/' . $test_archive_assets[0]);
-
-    // Brose minisite pages starting from index page.
-    $this->assertText('Index page');
-    $this->assertLink('Go to Page 1');
-    $this->clickLink('Go to Page 1');
-
-    $this->assertText('Page 1');
-    $this->assertUrl($node_alias . '/' . $test_archive_assets[1]);
-
-    $this->assertLink('Go to Page 2');
-    $this->clickLink('Go to Page 2');
-
-    $this->assertText('Page 2');
-    $this->assertUrl($node_alias . '/' . $test_archive_assets[2]);
+    $this->browseFixtureMinisite($node_alias, $minisite_description, $test_archive_assets);
 
     // Disable pathauto, update node's alias and assert that update has been
     // applied.
-    $node_alias_updated = '/a' . $random->name();
+    $node_alias_updated = '/a' . $this->randomMachineName();
     $edit = [
       'path[0][pathauto]' => FALSE,
       'path[0][alias]' => $node_alias_updated,
     ];
     $this->drupalPostForm("node/$nid/edit", $edit, $this->t('Save'));
 
-    // Visit node.
-    $this->drupalGet($node_alias_updated);
-    $this->assertResponse(200);
-    $this->assertUrl($node_alias_updated);
-
-    // Assert that a link to a minisite is present.
-    $this->assertLink($description);
-    $this->assertLinkByHref($node_alias_updated . '/' . $test_archive_assets[0]);
-
-    // Start browsing the minisite.
-    $this->clickLink($description);
-
-    // Assert first index path as aliased.
-    $this->assertUrl($node_alias_updated . '/' . $test_archive_assets[0]);
-
-    // Brose minisite pages starting from index page.
-    $this->assertText('Index page');
-    $this->assertLink('Go to Page 1');
-    $this->clickLink('Go to Page 1');
-
-    $this->assertText('Page 1');
-    $this->assertUrl($node_alias_updated . '/' . $test_archive_assets[1]);
-
-    $this->assertLink('Go to Page 2');
-    $this->clickLink('Go to Page 2');
-
-    $this->assertText('Page 2');
-    $this->assertUrl($node_alias_updated . '/' . $test_archive_assets[2]);
+    // Browse fixture minisite using updated manual alias.
+    $this->browseFixtureMinisite($node_alias_updated, $minisite_description, $test_archive_assets);
 
     // Enable pathauto and assert that re-generated path alias has been
     // applied.
@@ -172,49 +86,15 @@ class UploadBrowseAliasPathautoTest extends MinisiteTestBase {
     $node = Node::load($nid);
     $this->assertEntityAliasExists($node);
 
-    // Visit node.
-    $this->drupalGet($node_alias);
-    $this->assertResponse(200);
-    $this->assertUrl($node_alias);
-
-    // Assert that a link to a minisite is present.
-    $this->assertLink($description);
-    $this->assertLinkByHref($node_alias . '/' . $test_archive_assets[0]);
-
-    // Start browsing the minisite.
-    $this->clickLink($description);
-
-    // Assert first index path as aliased.
-    $this->assertUrl($node_alias . '/' . $test_archive_assets[0]);
-
-    // Brose minisite pages starting from index page.
-    $this->assertText('Index page');
-    $this->assertLink('Go to Page 1');
-    $this->clickLink('Go to Page 1');
-
-    $this->assertText('Page 1');
-    $this->assertUrl($node_alias . '/' . $test_archive_assets[1]);
-
-    $this->assertLink('Go to Page 2');
-    $this->clickLink('Go to Page 2');
-
-    $this->assertText('Page 2');
-    $this->assertUrl($node_alias . '/' . $test_archive_assets[2]);
+    // Browse fixture minisite using updated Pathauto-generated alias.
+    $this->browseFixtureMinisite($node_alias, $minisite_description, $test_archive_assets);
 
     // Delete node.
     $this->drupalPostForm("node/$nid/delete", [], $this->t('Delete'));
     $this->assertResponse(200);
 
-    // Assert that files no longer exist.
-    $this->assertArchiveFileNotExist($archive_file);
-    $this->assertAssetFilesNotExist($test_archive_assets);
-    // Assert that archive file has been removed.
-    $this->assertFileEntryNotExists($archive_file);
-    // Assert that there are no records in the 'minisites_assets' table about
-    // assets for this node.
-    foreach ($test_archive_assets as $test_archive_asset) {
-      $this->assertNull(Asset::loadByUri($test_archive_asset));
-    }
+    // Assert that Minisite assets were removed.
+    $this->assertMinisiteRemoved($node, $field_name, $test_archive_assets);
   }
 
 }

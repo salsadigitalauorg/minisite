@@ -2,10 +2,6 @@
 
 namespace Drupal\Tests\minisite\Functional;
 
-use Drupal\file\Entity\File;
-use Drupal\minisite\Asset;
-use Drupal\Tests\field_ui\Traits\FieldUiTestTrait;
-
 /**
  * Tests the minisite file upload and browsing through UI.
  *
@@ -15,8 +11,6 @@ use Drupal\Tests\field_ui\Traits\FieldUiTestTrait;
  * @group minisite
  */
 class UploadBrowseTest extends MinisiteTestBase {
-
-  use FieldUiTestTrait;
 
   /**
    * {@inheritdoc}
@@ -40,37 +34,19 @@ class UploadBrowseTest extends MinisiteTestBase {
    * required.
    */
   public function testUploadAndBrowsing() {
-    $type_name = $this->contentType;
-
-    $field_name = 'ms_fn_' . strtolower($this->randomMachineName(4));
-    $field_label = 'ms_fl_' . strtolower($this->randomMachineName(4));
-
-    // Create field through UI.
-    // Note that config schema is also validated when field is created.
-    $storage_edit = ['settings[uri_scheme]' => 'public'];
-    $this->fieldUIAddNewField("admin/structure/types/manage/$type_name", $field_name, $field_label, 'minisite', $storage_edit);
-
-    // Create valid fixture archive.
-    // All files must reside in the top-level directory and archive must contain
-    // index.html file.
-    $test_archive = $this->getTestArchiveValid();
+    // Create test values.
     $test_archive_assets = array_keys($this->getTestFilesStubValid());
+    $node_title = $this->randomMachineName();
 
-    // Manually clear cache on the tester side.
-    \Drupal::service('entity_field.manager')->clearCachedFieldDefinitions();
+    // Create field and a node.
+    $field_name = $this->createFieldAndNode($this->contentType, $node_title);
+    $node = $this->drupalGetNodeByTitle($node_title);
+    $nid = $node->id();
 
-    // Create node and upload fixture file.
-    $edit = [
-      'title[0][value]' => $this->randomMachineName(),
-      'files[field_' . $field_name . '_' . 0 . ']' => $test_archive->getFileUri(),
-    ];
-    $this->drupalPostForm("node/add/$type_name", $edit, $this->t('Save'));
-    $node = $this->drupalGetNodeByTitle($edit['title[0][value]']);
+    // Assert that minisite archive file was uploaded.
+    $this->assertMinisiteUploaded($node, $field_name, $test_archive_assets);
 
-    // Assert that file exist.
-    $archive_file = File::load($node->{'field_' . $field_name}->target_id);
-    $this->assertArchiveFileExist($archive_file);
-    $this->assertAssetFilesExist($test_archive_assets);
+    $test_archive = $this->getUploadedArchiveFile($node, $field_name);
 
     // Visit node and start browsing minisite.
     $this->drupalGet('node/' . $node->id());
@@ -90,19 +66,11 @@ class UploadBrowseTest extends MinisiteTestBase {
     $this->assertText('Page 2');
 
     // Delete node.
-    $this->drupalPostForm('node/' . $node->id() . '/delete', [], $this->t('Delete'));
+    $this->drupalPostForm("node/$nid/delete", [], $this->t('Delete'));
     $this->assertResponse(200);
 
-    // Assert that files no longer exist.
-    $this->assertArchiveFileNotExist($archive_file);
-    $this->assertAssetFilesNotExist($test_archive_assets);
-    // Assert that archive file has been removed.
-    $this->assertFileEntryNotExists($archive_file);
-    // Assert that there are no records in the 'minisites_assets' table about
-    // assets for this node.
-    foreach ($test_archive_assets as $test_archive_asset) {
-      $this->assertNull(Asset::loadByUri($test_archive_asset));
-    }
+    // Assert that Minisite assets were removed.
+    $this->assertMinisiteRemoved($node, $field_name, $test_archive_assets);
   }
 
 }
