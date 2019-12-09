@@ -32,7 +32,11 @@ else
   composer create-project drupal-composer/drupal-project:8.x-dev build --no-interaction
 fi
 
-echo "==> Install additional dev dependencies"
+echo "==> Install additional dev dependencies from module's composer.json"
+cat <<< "$(jq --indent 4 -M -s '.[0] * .[1]' composer.json build/composer.json)" > build/composer.json
+php -d memory_limit=-1 $(which composer) --working-dir=build update --lock
+
+echo "==> Install other dev dependencies"
 composer --working-dir=build require --dev dealerdirect/phpcodesniffer-composer-installer:^0.5
 
 echo "==> Start inbuilt PHP server in $(pwd)/build/web"
