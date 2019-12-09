@@ -113,8 +113,44 @@ class UploadBrowseAliasTest extends MinisiteTestBase {
     $this->assertText('Page 2');
     $this->assertUrl($node_alias . '/' . $test_archive_assets[2]);
 
+    // Updated node's alias and assert that update has been applied.
+    $node_alias_updated = '/a' . $random->name();
+    $edit = [
+      'path[0][alias]' => $node_alias_updated,
+    ];
+    $this->drupalPostForm("node/$nid/edit", $edit, $this->t('Save'));
+
+    // Visit node.
+    $this->drupalGet($node_alias_updated);
+    $this->assertResponse(200);
+    $this->assertUrl($node_alias_updated);
+
+    // Assert that a link to a minisite is present.
+    $this->assertLink($description);
+    $this->assertLinkByHref($node_alias_updated . '/' . $test_archive_assets[0]);
+
+    // Start browsing the minisite.
+    $this->clickLink($description);
+
+    // Assert first index path as aliased.
+    $this->assertUrl($node_alias_updated . '/' . $test_archive_assets[0]);
+
+    // Brose minisite pages starting from index page.
+    $this->assertText('Index page');
+    $this->assertLink('Go to Page 1');
+    $this->clickLink('Go to Page 1');
+
+    $this->assertText('Page 1');
+    $this->assertUrl($node_alias_updated . '/' . $test_archive_assets[1]);
+
+    $this->assertLink('Go to Page 2');
+    $this->clickLink('Go to Page 2');
+
+    $this->assertText('Page 2');
+    $this->assertUrl($node_alias_updated . '/' . $test_archive_assets[2]);
+
     // Delete node.
-    $this->drupalPostForm('node/' . $node->id() . '/delete', [], $this->t('Delete'));
+    $this->drupalPostForm("node/$nid/delete", [], $this->t('Delete'));
     $this->assertResponse(200);
 
     // Assert that files no longer exist.
