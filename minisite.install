@@ -59,6 +59,17 @@ function minisite_requirements($phase) {
       $requirements['minisite_asset']['severity'] = REQUIREMENT_ERROR;
       $requirements['minisite_asset']['value'] = t('Unable to create');
     }
+
+    $requirements['minisite_archiver'] = [
+      'title' => t('Minisite archiver library'),
+      'severity' => REQUIREMENT_OK,
+      'value' => t('Present'),
+    ];
+    if (!class_exists(\ZipArchive::class)) {
+      $requirements['minisite_archiver']['description'] = t('ZipArchive is required to extract Minisite assets from uploaded archives. Please install php-zip extension.');
+      $requirements['minisite_asset']['severity'] = REQUIREMENT_ERROR;
+      $requirements['minisite_asset']['value'] = t('Absent');
+    }
   }
 
   return $requirements;
