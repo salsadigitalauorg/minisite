@@ -144,7 +144,8 @@ class UrlBag {
   /**
    * Set parent alias.
    *
-   * This sets the "prefix" part of the alias.
+   * This sets the "prefix" part of the alias. Note that this can be empty
+   * to unset the parent part of the alias.
    *
    * @param string $parent_alias
    *   Relative or absolute path.

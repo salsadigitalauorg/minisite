@@ -54,7 +54,7 @@ class UploadBrowseAliasTest extends MinisiteTestBase {
 
     // Browse fixture minisite using manually provided alias.
     $node_alias = $node->path->get(0)->getValue()['alias'];
-    $this->browseFixtureMinisite($node_alias, $minisite_description, $test_archive_assets);
+    $this->browseFixtureMinisiteAliased($node_alias, $minisite_description, $test_archive_assets);
 
     // Updated node's alias and assert that update has been applied.
     $node_alias_updated = '/a' . $this->randomMachineName();
@@ -64,7 +64,14 @@ class UploadBrowseAliasTest extends MinisiteTestBase {
     $this->drupalPostForm("node/$nid/edit", $edit, $this->t('Save'));
 
     // Browse fixture minisite using updated manually provided alias.
-    $this->browseFixtureMinisite($node_alias_updated, $minisite_description, $test_archive_assets);
+    $this->browseFixtureMinisiteAliased($node_alias_updated, $minisite_description, $test_archive_assets);
+
+    // Remove node's alias and assert that update has been applied.
+    $edit = [
+      'path[0][alias]' => '',
+    ];
+    $this->drupalPostForm("node/$nid/edit", $edit, $this->t('Save'));
+    $this->browseFixtureMinisite($node, $minisite_description);
 
     // Delete node.
     $this->drupalPostForm("node/$nid/delete", [], $this->t('Delete'));

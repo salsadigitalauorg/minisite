@@ -100,26 +100,22 @@ function minisite_validate_archive(FileInterface $file, $content_extensions) {
  * Implements hook_path_insert().
  */
 function minisite_path_insert($path) {
-  $params = Url::fromUri("internal:" . $path['source'])->getRouteParameters();
-  $entity_type = key($params);
-  $entity = \Drupal::entityTypeManager()->getStorage($entity_type)->load($params[$entity_type]);
+  $entity = _minisite_get_entity_from_path($path['source']);
 
-  if ($entity) {
-    /** @var \Drupal\Core\Entity\EntityFieldManagerInterface $entity_field_manager */
-    $entity_field_manager = Drupal::service('entity_field.manager');
-    /** @var \Drupal\Core\Field\FieldDefinitionInterface[] $minisite_fields */
-    $minisite_fields = array_filter($entity_field_manager->getFieldDefinitions($entity->getEntityTypeId(), $entity->bundle()), function (FieldDefinitionInterface $field_definition) {
-      return $field_definition->getType() == 'minisite';
-    });
+  if (!$entity) {
+    return;
+  }
 
-    /** @var \Drupal\Core\Entity\FieldableEntityInterface $entity */
-    foreach ($minisite_fields as $minisite_field) {
-      if ($entity->hasField($minisite_field->getName())) {
-        $minisite = Minisite::createInstance($entity->{$minisite_field->getName()});
-        if ($minisite) {
-          $minisite->setAlias($path['alias']);
-          $minisite->save();
-        }
+  $path_alias = isset($path['alias']) ? $path['alias'] : '';
+
+  $minisite_fields = _minisite_get_fields($entity);
+
+  foreach ($minisite_fields as $minisite_field) {
+    if ($entity->hasField($minisite_field->getName())) {
+      $minisite = Minisite::createInstance($entity->{$minisite_field->getName()});
+      if ($minisite) {
+        $minisite->setAlias($path_alias);
+        $minisite->save();
       }
     }
   }
@@ -129,45 +125,14 @@ function minisite_path_insert($path) {
  * Implements hook_path_update().
  */
 function minisite_path_update($path) {
-  $params = Url::fromUri("internal:" . $path['source'])->getRouteParameters();
-  $entity_type = key($params);
-  $entity = \Drupal::entityTypeManager()->getStorage($entity_type)->load($params[$entity_type]);
-
-  if ($entity) {
-    /** @var \Drupal\Core\Entity\EntityFieldManagerInterface $entity_field_manager */
-    $entity_field_manager = Drupal::service('entity_field.manager');
-    /** @var \Drupal\Core\Field\FieldDefinitionInterface[] $minisite_fields */
-    $minisite_fields = array_filter($entity_field_manager->getFieldDefinitions($entity->getEntityTypeId(), $entity->bundle()), function (FieldDefinitionInterface $field_definition) {
-      return $field_definition->getType() == 'minisite';
-    });
-
-    /** @var \Drupal\Core\Entity\FieldableEntityInterface $entity */
-    foreach ($minisite_fields as $minisite_field) {
-      if ($entity->hasField($minisite_field->getName())) {
-        $minisite = Minisite::createInstance($entity->{$minisite_field->getName()});
-        if ($minisite) {
-          $minisite->setAlias($path['alias']);
-          $minisite->save();
-        }
-      }
-    }
-  }
+  minisite_path_insert($path);
 }
 
 /**
  * Implements hook_entity_delete().
  */
 function minisite_entity_delete(EntityInterface $entity) {
-  if (!$entity instanceof FieldableEntityInterface) {
-    return;
-  }
-
-  /** @var \Drupal\Core\Entity\EntityFieldManagerInterface $entity_field_manager */
-  $entity_field_manager = Drupal::service('entity_field.manager');
-  /** @var \Drupal\Core\Field\FieldDefinitionInterface[] $minisite_fields */
-  $minisite_fields = array_filter($entity_field_manager->getFieldDefinitions($entity->getEntityTypeId(), $entity->bundle()), function (FieldDefinitionInterface $field_definition) {
-    return $field_definition->getType() == 'minisite';
-  });
+  $minisite_fields = _minisite_get_fields($entity);
 
   /** @var \Drupal\Core\Entity\FieldableEntityInterface $entity */
   foreach ($minisite_fields as $minisite_field) {
@@ -178,4 +143,48 @@ function minisite_entity_delete(EntityInterface $entity) {
       }
     }
   }
+}
+
+/**
+ * Get Minisite fields from the entity.
+ *
+ * @param \Drupal\Core\Entity\EntityInterface $entity
+ *   Entity to get fields from.
+ *
+ * @return array
+ *   Array of Minisite field names.
+ */
+function _minisite_get_fields(EntityInterface $entity) {
+  if (!$entity instanceof FieldableEntityInterface) {
+    return [];
+  }
+
+  /** @var \Drupal\Core\Entity\EntityFieldManagerInterface $entity_field_manager */
+  $entity_field_manager = Drupal::service('entity_field.manager');
+
+  /** @var \Drupal\Core\Field\FieldDefinitionInterface[] $minisite_fields */
+  return array_filter($entity_field_manager->getFieldDefinitions($entity->getEntityTypeId(), $entity->bundle()), function (FieldDefinitionInterface $field_definition) {
+    return $field_definition->getType() == 'minisite';
+  });
+}
+
+/**
+ * Get entity from provided path.
+ *
+ * @param string $path
+ *   Source path to find the entity.
+ *
+ * @return \Drupal\Core\Entity\FieldableEntityInterface|null
+ *   Found entity or NULL if the entity was not found.
+ */
+function _minisite_get_entity_from_path($path) {
+  try {
+    $params = Url::fromUri('internal:' . $path)->getRouteParameters();
+  }
+  catch (\InvalidArgumentException $exception) {
+    return NULL;
+  }
+  $entity_type = key($params);
+
+  return \Drupal::entityTypeManager()->getStorage($entity_type)->load($params[$entity_type]);
 }
