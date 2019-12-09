@@ -29,5 +29,8 @@
     "source": "https://git.drupalcode.org/project/minisite"
   },
   "minimum-stability": "dev",
-  "prefer-stable": true
+  "prefer-stable": true,
+  "require-dev": {
+    "drupal/pathauto": "~1.0"
+  }
 }

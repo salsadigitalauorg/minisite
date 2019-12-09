@@ -5,24 +5,27 @@ namespace Drupal\Tests\minisite\Functional;
 use Drupal\Component\Utility\Random;
 use Drupal\file\Entity\File;
 use Drupal\minisite\Asset;
+use Drupal\node\Entity\Node;
 use Drupal\Tests\field_ui\Traits\FieldUiTestTrait;
+use Drupal\Tests\pathauto\Functional\PathautoTestHelperTrait;
 
 /**
- * Tests the minisite file upload and browsing through UI with alias.
+ * Tests the minisite file upload and browsing with alias set in pathauto.
  *
  * These are behavioural-driven tests. If these tests are failing - the module
  * does not work correctly and the users will experience issues.
  *
  * @group minisite
  */
-class UploadBrowseAliasTest extends MinisiteTestBase {
+class UploadBrowseAliasPathautoTest extends MinisiteTestBase {
 
   use FieldUiTestTrait;
+  use PathautoTestHelperTrait;
 
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['block'];
+  protected static $modules = ['block', 'pathauto', 'token'];
 
   /**
    * {@inheritdoc}
@@ -34,7 +37,7 @@ class UploadBrowseAliasTest extends MinisiteTestBase {
   }
 
   /**
-   * Tests file upload and browsing minisite pages with alias.
+   * Tests file upload and browsing minisite pages with Pathauto alias.
    *
    * This is a simple UI test using archive fixture in default format.
    * If this test does not pass - the module definitely does not work as
@@ -42,6 +45,8 @@ class UploadBrowseAliasTest extends MinisiteTestBase {
    */
   public function testUploadAndBrowsingAlias() {
     $type_name = $this->contentType;
+
+    $this->createPattern('node', mb_strtolower($this->randomMachineName()) . '/' . '[node:title]');
 
     $field_name = 'ms_fn_' . strtolower($this->randomMachineName(4));
     $field_label = 'ms_fl_' . strtolower($this->randomMachineName(4));
@@ -57,27 +62,35 @@ class UploadBrowseAliasTest extends MinisiteTestBase {
     $test_archive = $this->getTestArchiveValid();
     $test_archive_assets = array_keys($this->getTestFilesStubValid());
 
+    $node_title = $this->randomMachineName();
     $random = new Random();
-    $node_alias = '/a' . $random->name();
     $description = 'D' . $random->name();
 
     // Manually clear cache on the tester side.
     \Drupal::service('entity_field.manager')->clearCachedFieldDefinitions();
 
-    // Create node and upload fixture file.
+    // Create node and upload fixture file, enabling path generation.
+    // Note that in order to reveal field fields available only after file
+    // is uploaded, we submitting a form with a file and without a title.
     $edit = [
-      'title[0][value]' => $this->randomMachineName(),
       'files[field_' . $field_name . '_' . 0 . ']' => $test_archive->getFileUri(),
-      'path[0][alias]' => $node_alias,
     ];
     $this->drupalPostForm("node/add/$type_name", $edit, $this->t('Save'));
-    $node = $this->drupalGetNodeByTitle($edit['title[0][value]']);
-    $nid = $node->id();
     $edit = [
+      'title[0][value]' => $node_title,
+      'path[0][pathauto]' => TRUE,
       'field_' . $field_name . '[' . 0 . '][description]' => $description,
       'field_' . $field_name . '[' . 0 . '][options][alias_status]' => TRUE,
     ];
-    $this->drupalPostForm("node/$nid/edit", $edit, $this->t('Save'));
+    $this->drupalPostForm(NULL, $edit, $this->t('Save'));
+
+    $node = $this->drupalGetNodeByTitle($node_title);
+    $nid = $node->id();
+
+    $node = Node::load($nid);
+    $this->assertEntityAliasExists($node);
+
+    $node_alias = $node->path->get(0)->getValue()['alias'];
 
     // Assert that file exist.
     $archive_file = File::load($node->{'field_' . $field_name}->target_id);
@@ -87,7 +100,6 @@ class UploadBrowseAliasTest extends MinisiteTestBase {
     // Visit node.
     $this->drupalGet($node_alias);
     $this->assertResponse(200);
-    $this->assertUrl($node_alias);
 
     // Assert that a link to a minisite is present.
     $this->assertLink($description);
@@ -113,9 +125,11 @@ class UploadBrowseAliasTest extends MinisiteTestBase {
     $this->assertText('Page 2');
     $this->assertUrl($node_alias . '/' . $test_archive_assets[2]);
 
-    // Updated node's alias and assert that update has been applied.
+    // Disable pathauto, update node's alias and assert that update has been
+    // applied.
     $node_alias_updated = '/a' . $random->name();
     $edit = [
+      'path[0][pathauto]' => FALSE,
       'path[0][alias]' => $node_alias_updated,
     ];
     $this->drupalPostForm("node/$nid/edit", $edit, $this->t('Save'));
@@ -148,6 +162,44 @@ class UploadBrowseAliasTest extends MinisiteTestBase {
 
     $this->assertText('Page 2');
     $this->assertUrl($node_alias_updated . '/' . $test_archive_assets[2]);
+
+    // Enable pathauto and assert that re-generated path alias has been
+    // applied.
+    $edit = [
+      'path[0][pathauto]' => TRUE,
+    ];
+    $this->drupalPostForm("node/$nid/edit", $edit, $this->t('Save'));
+    $node = Node::load($nid);
+    $this->assertEntityAliasExists($node);
+
+    // Visit node.
+    $this->drupalGet($node_alias);
+    $this->assertResponse(200);
+    $this->assertUrl($node_alias);
+
+    // Assert that a link to a minisite is present.
+    $this->assertLink($description);
+    $this->assertLinkByHref($node_alias . '/' . $test_archive_assets[0]);
+
+    // Start browsing the minisite.
+    $this->clickLink($description);
+
+    // Assert first index path as aliased.
+    $this->assertUrl($node_alias . '/' . $test_archive_assets[0]);
+
+    // Brose minisite pages starting from index page.
+    $this->assertText('Index page');
+    $this->assertLink('Go to Page 1');
+    $this->clickLink('Go to Page 1');
+
+    $this->assertText('Page 1');
+    $this->assertUrl($node_alias . '/' . $test_archive_assets[1]);
+
+    $this->assertLink('Go to Page 2');
+    $this->clickLink('Go to Page 2');
+
+    $this->assertText('Page 2');
+    $this->assertUrl($node_alias . '/' . $test_archive_assets[2]);
 
     // Delete node.
     $this->drupalPostForm("node/$nid/delete", [], $this->t('Delete'));

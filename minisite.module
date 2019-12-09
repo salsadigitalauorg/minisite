@@ -9,6 +9,7 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Url;
 use Drupal\file\FileInterface;
 use Drupal\minisite\AssetInterface;
 use Drupal\minisite\Exception\ArchiveException;
@@ -93,6 +94,64 @@ function minisite_validate_archive(FileInterface $file, $content_extensions) {
   }
 
   return $errors;
+}
+
+/**
+ * Implements hook_path_insert().
+ */
+function minisite_path_insert($path) {
+  $params = Url::fromUri("internal:" . $path['source'])->getRouteParameters();
+  $entity_type = key($params);
+  $entity = \Drupal::entityTypeManager()->getStorage($entity_type)->load($params[$entity_type]);
+
+  if ($entity) {
+    /** @var \Drupal\Core\Entity\EntityFieldManagerInterface $entity_field_manager */
+    $entity_field_manager = Drupal::service('entity_field.manager');
+    /** @var \Drupal\Core\Field\FieldDefinitionInterface[] $minisite_fields */
+    $minisite_fields = array_filter($entity_field_manager->getFieldDefinitions($entity->getEntityTypeId(), $entity->bundle()), function (FieldDefinitionInterface $field_definition) {
+      return $field_definition->getType() == 'minisite';
+    });
+
+    /** @var \Drupal\Core\Entity\FieldableEntityInterface $entity */
+    foreach ($minisite_fields as $minisite_field) {
+      if ($entity->hasField($minisite_field->getName())) {
+        $minisite = Minisite::createInstance($entity->{$minisite_field->getName()});
+        if ($minisite) {
+          $minisite->setAlias($path['alias']);
+          $minisite->save();
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_path_update().
+ */
+function minisite_path_update($path) {
+  $params = Url::fromUri("internal:" . $path['source'])->getRouteParameters();
+  $entity_type = key($params);
+  $entity = \Drupal::entityTypeManager()->getStorage($entity_type)->load($params[$entity_type]);
+
+  if ($entity) {
+    /** @var \Drupal\Core\Entity\EntityFieldManagerInterface $entity_field_manager */
+    $entity_field_manager = Drupal::service('entity_field.manager');
+    /** @var \Drupal\Core\Field\FieldDefinitionInterface[] $minisite_fields */
+    $minisite_fields = array_filter($entity_field_manager->getFieldDefinitions($entity->getEntityTypeId(), $entity->bundle()), function (FieldDefinitionInterface $field_definition) {
+      return $field_definition->getType() == 'minisite';
+    });
+
+    /** @var \Drupal\Core\Entity\FieldableEntityInterface $entity */
+    foreach ($minisite_fields as $minisite_field) {
+      if ($entity->hasField($minisite_field->getName())) {
+        $minisite = Minisite::createInstance($entity->{$minisite_field->getName()});
+        if ($minisite) {
+          $minisite->setAlias($path['alias']);
+          $minisite->save();
+        }
+      }
+    }
+  }
 }
 
 /**

@@ -67,7 +67,7 @@ class UploadBrowseTest extends MinisiteTestBase {
     $this->drupalPostForm("node/add/$type_name", $edit, $this->t('Save'));
     $node = $this->drupalGetNodeByTitle($edit['title[0][value]']);
 
-    // Assert that files exist.
+    // Assert that file exist.
     $archive_file = File::load($node->{'field_' . $field_name}->target_id);
     $this->assertArchiveFileExist($archive_file);
     $this->assertAssetFilesExist($test_archive_assets);
