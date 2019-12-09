@@ -119,7 +119,7 @@ function minisite_schema() {
         'default' => '',
       ],
       'source' => [
-        'description' => 'The asset file source URI.',
+        'description' => 'The URI of the source asset file.',
         'type' => 'varchar',
         'length' => 2048,
         'not null' => TRUE,
@@ -144,18 +144,11 @@ function minisite_schema() {
         'entity_id',
         'entity_language',
         'field_name',
-        'source',
       ],
     ],
     'indexes' => [
-      'entity_type' => ['entity_type'],
-      'entity_bundle' => ['entity_bundle'],
-      'entity_id' => ['entity_id'],
-      'entity_rid' => ['entity_rid'],
-      'entity_language' => ['entity_language'],
-      'field_name' => ['field_name'],
-      'source' => ['source'],
-      'alias' => ['alias'],
+      'source' => [['source', 170]],
+      'alias' => [['alias', 170]],
     ],
   ];
 
