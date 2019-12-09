@@ -18,4 +18,5 @@ php ./build/web/core/scripts/run-tests.sh \
   --xml /tmp/test_results/simpletest \
   --color \
   --verbose \
+  --suppress-deprecations \
   --module "${MODULE}"
