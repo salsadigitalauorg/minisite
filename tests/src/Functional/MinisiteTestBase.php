@@ -468,7 +468,29 @@ abstract class MinisiteTestBase extends BrowserTestBase {
   /**
    * Helper to browse fixture pages.
    */
-  public function browseFixtureMinisite($alias, $description, $assets_paths) {
+  public function browseFixtureMinisite($node, $description) {
+    // Visit node and start browsing minisite.
+    $this->drupalGet('node/' . $node->id());
+    $this->assertResponse(200);
+    $this->assertLink($description);
+    $this->clickLink($description);
+
+    // Brose minisite pages starting from index page.
+    $this->assertText('Index page');
+    $this->assertLink('Go to Page 1');
+    $this->clickLink('Go to Page 1');
+
+    $this->assertText('Page 1');
+    $this->assertLink('Go to Page 2');
+    $this->clickLink('Go to Page 2');
+
+    $this->assertText('Page 2');
+  }
+
+  /**
+   * Helper to browse aliased fixture pages.
+   */
+  public function browseFixtureMinisiteAliased($alias, $description, $assets_paths) {
     $this->drupalGet($alias);
     $this->assertResponse(200);
 

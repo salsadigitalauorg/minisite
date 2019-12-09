@@ -63,7 +63,7 @@ class UploadBrowseAliasPathautoTest extends MinisiteTestBase {
 
     // Browse fixture minisite using Pathauto-generated alias.
     $node_alias = $node->path->get(0)->getValue()['alias'];
-    $this->browseFixtureMinisite($node_alias, $minisite_description, $test_archive_assets);
+    $this->browseFixtureMinisiteAliased($node_alias, $minisite_description, $test_archive_assets);
 
     // Disable pathauto, update node's alias and assert that update has been
     // applied.
@@ -75,7 +75,7 @@ class UploadBrowseAliasPathautoTest extends MinisiteTestBase {
     $this->drupalPostForm("node/$nid/edit", $edit, $this->t('Save'));
 
     // Browse fixture minisite using updated manual alias.
-    $this->browseFixtureMinisite($node_alias_updated, $minisite_description, $test_archive_assets);
+    $this->browseFixtureMinisiteAliased($node_alias_updated, $minisite_description, $test_archive_assets);
 
     // Enable pathauto and assert that re-generated path alias has been
     // applied.
@@ -87,7 +87,7 @@ class UploadBrowseAliasPathautoTest extends MinisiteTestBase {
     $this->assertEntityAliasExists($node);
 
     // Browse fixture minisite using updated Pathauto-generated alias.
-    $this->browseFixtureMinisite($node_alias, $minisite_description, $test_archive_assets);
+    $this->browseFixtureMinisiteAliased($node_alias, $minisite_description, $test_archive_assets);
 
     // Delete node.
     $this->drupalPostForm("node/$nid/delete", [], $this->t('Delete'));

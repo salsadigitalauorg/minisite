@@ -47,23 +47,7 @@ class UploadBrowseTest extends MinisiteTestBase {
     $this->assertMinisiteUploaded($node, $field_name, $test_archive_assets);
 
     $test_archive = $this->getUploadedArchiveFile($node, $field_name);
-
-    // Visit node and start browsing minisite.
-    $this->drupalGet('node/' . $node->id());
-    $this->assertResponse(200);
-    $this->assertLink($test_archive->getFilename());
-    $this->clickLink($test_archive->getFilename());
-
-    // Brose minisite pages starting from index page.
-    $this->assertText('Index page');
-    $this->assertLink('Go to Page 1');
-    $this->clickLink('Go to Page 1');
-
-    $this->assertText('Page 1');
-    $this->assertLink('Go to Page 2');
-    $this->clickLink('Go to Page 2');
-
-    $this->assertText('Page 2');
+    $this->browseFixtureMinisite($node, $test_archive->getFilename());
 
     // Delete node.
     $this->drupalPostForm("node/$nid/delete", [], $this->t('Delete'));
