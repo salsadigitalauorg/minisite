@@ -54,6 +54,27 @@ abstract class MinisiteTestBase extends BrowserTestBase {
   protected $contentType = 'article';
 
   /**
+   * Array of admin user permissions.
+   *
+   * Can be overridden from descendant classes.
+   *
+   * @var array
+   */
+  protected $adminUserPermissions = [
+    'access content',
+    'access administration pages',
+    'administer site configuration',
+    'administer users',
+    'administer permissions',
+    'administer content types',
+    'administer node fields',
+    'administer node display',
+    'administer nodes',
+    'bypass node access',
+    'administer url aliases',
+  ];
+
+  /**
    * {@inheritdoc}
    */
   protected function setUp() {
@@ -61,20 +82,9 @@ abstract class MinisiteTestBase extends BrowserTestBase {
 
     $this->fixtureSetUp();
 
-    $this->adminUser = $this->drupalCreateUser([
-      'access content',
-      'access administration pages',
-      'administer site configuration',
-      'administer users',
-      'administer permissions',
-      'administer content types',
-      'administer node fields',
-      'administer node display',
-      'administer nodes',
-      'bypass node access',
-      'administer url aliases',
-    ]);
+    $this->adminUser = $this->drupalCreateUser($this->adminUserPermissions);
     $this->drupalLogin($this->adminUser);
+
     $this->drupalCreateContentType(['type' => $this->contentType, 'name' => 'Article']);
   }
 
