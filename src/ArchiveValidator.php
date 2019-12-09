@@ -4,6 +4,7 @@ namespace Drupal\minisite;
 
 use Drupal\minisite\Exception\InvalidContentArchiveException;
 use Drupal\minisite\Exception\InvalidExtensionValidatorException;
+use Drupal\minisite\Exception\InvalidPathLengthValidatorException;
 
 /**
  * Class ArchiveValidator.
@@ -39,19 +40,22 @@ class ArchiveValidator {
     }
 
     // Check that entry point file exists.
-    $top_folder = $root_files[0];
-    $top_level = $tree[$top_folder];
+    $top_dir = $root_files[0];
+    $top_level = $tree[$top_dir];
     if (!array_key_exists(AssetInterface::INDEX_FILE, $top_level)) {
       throw new InvalidContentArchiveException([sprintf('Missing required %s file.', AssetInterface::INDEX_FILE)]);
     }
 
-    // Check that all files have only allowed extensions.
     $errors = [];
     foreach ($files as $file) {
       try {
+        // Check that all files have only allowed extensions.
         FileValidator::validateFileExtension($file, $extensions);
+        // Check that the total length of the file path in the archive is less
+        // than what can fit into the database table.
+        FileValidator::validateFilePathLength($file);
       }
-      catch (InvalidExtensionValidatorException $exception) {
+      catch (InvalidExtensionValidatorException | InvalidPathLengthValidatorException $exception) {
         $errors[] = $exception->getMessage();
       }
     }

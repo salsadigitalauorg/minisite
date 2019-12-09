@@ -4,6 +4,7 @@ namespace Drupal\minisite;
 
 use Drupal\Component\Utility\NestedArray;
 use Drupal\minisite\Exception\InvalidExtensionValidatorException;
+use Drupal\minisite\Exception\InvalidPathLengthValidatorException;
 
 /**
  * Class FileValidator.
@@ -36,6 +37,35 @@ class FileValidator {
     $regex = '/\.(' . preg_replace('/ +/', '|', preg_quote(implode(' ', $extensions))) . ')$/i';
     if (!preg_match($regex, $filename)) {
       throw new InvalidExtensionValidatorException($filename);
+    }
+  }
+
+  /**
+   * Validate that full file path is under allowed characters length.
+   *
+   * @param string $path
+   *   The file path to validate.
+   *
+   * @throws \Drupal\minisite\Exception\InvalidPathLengthValidatorException
+   *   If file path length is above the allowed limit.
+   */
+  public static function validateFilePathLength($path) {
+    $allowed_length =
+      // Total alias length.
+      2048 -
+      // Public file stream wrapper.
+      strlen('public://') -
+      // Default static files location.
+      // @todo: Add support for getting this value from the field settings.
+      strlen(MinisiteInterface::ASSET_DIR) -
+      // URL delimiter.
+      1 -
+      // UUID length.
+      36 -
+      // URL delimiter.
+      1;
+    if (strlen($path) > $allowed_length) {
+      throw new InvalidPathLengthValidatorException($path, $allowed_length);
     }
   }
 
