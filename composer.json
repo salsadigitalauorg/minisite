@@ -1,36 +1,36 @@
 {
-  "name": "drupal/minisite",
-  "description": "Upload and serve arbitrary 'minisites' archives from a Drupal website.",
-  "keywords": [
-    "minisite",
-    "mini site",
-    "drupal"
-  ],
-  "type": "drupal-module",
-  "license": "GPL-2.0-or-later",
-  "homepage": "https://www.drupal.org/project/minisite",
-  "authors": [
-    {
-      "name": "Joseph Zhao",
-      "email": "joseph.zhao@xing.net.au"
+    "name": "drupal/minisite",
+    "description": "Upload and serve arbitrary 'minisites' archives from a Drupal website.",
+    "keywords": [
+        "minisite",
+        "mini site",
+        "drupal"
+    ],
+    "type": "drupal-module",
+    "license": "GPL-2.0-or-later",
+    "homepage": "https://www.drupal.org/project/minisite",
+    "authors": [
+        {
+            "name": "Joseph Zhao",
+            "email": "joseph.zhao@xing.net.au"
+        },
+        {
+            "name": "Jason Guo",
+            "email": "jason.guo@xing.net.au"
+        },
+        {
+            "name": "Alex Skrypnyk",
+            "email": "alex@integratedexperts.com"
+        }
+    ],
+    "support": {
+        "issues": "https://drupal.org/project/issues/minisite",
+        "irc": "irc://irc.freenode.org/drupal-contribute",
+        "source": "https://git.drupalcode.org/project/minisite"
     },
-    {
-      "name": "Jason Guo",
-      "email": "jason.guo@xing.net.au"
-    },
-    {
-      "name": "Alex Skrypnyk",
-      "email": "alex@integratedexperts.com"
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "require-dev": {
+        "drupal/pathauto": "~1.0"
     }
-  ],
-  "support": {
-    "issues": "https://drupal.org/project/issues/minisite",
-    "irc": "irc://irc.freenode.org/drupal-contribute",
-    "source": "https://git.drupalcode.org/project/minisite"
-  },
-  "minimum-stability": "dev",
-  "prefer-stable": true,
-  "require-dev": {
-    "drupal/pathauto": "~1.0"
-  }
 }
