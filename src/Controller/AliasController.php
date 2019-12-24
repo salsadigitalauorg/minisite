@@ -33,11 +33,11 @@ class AliasController implements ContainerAwareInterface {
   public function deliverAsset($asset_id) {
     $asset = Asset::load($asset_id);
 
-    // Only deliver documents through alias controller. There are other checks
-    // in the class itself, but this is one last gate keeping check to
-    // explicitly prevent non-documents from being served through alias
-    // callback.
-    if (!$asset || !$asset->isDocument()) {
+    // Only deliver documents and datafiles through alias controller.
+    // There are other checks in the class itself, but this is one last gate
+    // keeping check to explicitly prevent non-documents from being served
+    // through alias callback.
+    if (!$asset || (!$asset->isDocument() && !$asset->isDatafile())) {
       throw new NotFoundHttpException();
     }
 

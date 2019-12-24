@@ -176,4 +176,9 @@ interface AssetInterface {
    */
   public function isDocument();
 
+  /**
+   * Check if asset is a data file and can be served directly.
+   */
+  public function isDatafile();
+
 }

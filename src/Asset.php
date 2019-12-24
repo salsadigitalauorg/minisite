@@ -217,9 +217,9 @@ class Asset implements AssetInterface {
    * {@inheritdoc}
    */
   public function save() {
-    // We are tracking only documents. Non-document assets are accessed
-    // directly.
-    if (!$this->isDocument()) {
+    // We are tracking only documents and datafiles. Non-document assets are
+    // accessed directly.
+    if (!$this->isDocument() && !$this->isDatafile()) {
       return NULL;
     }
 
@@ -294,20 +294,23 @@ class Asset implements AssetInterface {
 
     // We should never render non-document files - those files are expected to
     // be accessed directly (not through aliased path).
-    if (!$this->isDocument()) {
+    if (!$this->isDocument() && !$this->isDatafile()) {
       throw new AssetException(sprintf('Unable to render a non-document file "%s"', $file_uri));
     }
 
     $content = file_get_contents($file_uri);
 
-    try {
-      $processor = new PageProcessor($content, $this->urlBag);
-      $processor->process();
-      $content = $processor->content();
-    }
-    catch (PageProcessorException $exception) {
-      // Simply pass-through as unprocessed content on processor exception and
-      // fail for anything else.
+    // Only process documents.
+    if ($this->isDocument()) {
+      try {
+        $processor = new PageProcessor($content, $this->urlBag);
+        $processor->process();
+        $content = $processor->content();
+      }
+      catch (PageProcessorException $exception) {
+        // Simply pass-through as unprocessed content on processor exception and
+        // fail for anything else.
+      }
     }
 
     return $content;
@@ -394,6 +397,26 @@ class Asset implements AssetInterface {
   public function isDocument() {
     try {
       FileValidator::validateFileExtension($this->urlBag->getUri(), ['html', 'htm']);
+
+      return TRUE;
+    }
+    catch (InvalidExtensionValidatorException $exception) {
+      // Do nothing as this is expected.
+    }
+
+    return FALSE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function isDatafile() {
+    try {
+      FileValidator::validateFileExtension($this->urlBag->getUri(), [
+        'json',
+        'txt',
+        'xml',
+      ]);
 
       return TRUE;
     }
