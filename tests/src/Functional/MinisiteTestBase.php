@@ -517,6 +517,15 @@ abstract class MinisiteTestBase extends BrowserTestBase {
 
     $this->assertText('Page 2');
     $this->assertUrl($alias . '/' . $assets_paths[2]);
+
+    // Navigate to the page using URL with a query.
+    $this->drupalGet($alias . '/' . $assets_paths[1], [
+      'query' => [
+        'param' => 'val',
+      ],
+      'fragment' => 'someid',
+    ]);
+    $this->assertResponse(200);
   }
 
 }

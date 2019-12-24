@@ -2,6 +2,7 @@
 
 namespace Drupal\minisite\EventSubscriber;
 
+use Drupal\Component\Utility\UrlHelper;
 use Drupal\minisite\Asset;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\GetResponseEvent;
@@ -35,7 +36,8 @@ class AliasSubscriber implements EventSubscriberInterface {
     // be as "lightweight" as possible as it will run before any other routes
     // are considered (it is still faster to run this before all RouterListener
     // processing).
-    $asset = Asset::loadByAlias($request->getRequestUri());
+    $parsed_uri = UrlHelper::parse($request->getRequestUri());
+    $asset = Asset::loadByAlias($parsed_uri['path']);
     if ($asset) {
       $request->attributes->set('_controller', '\Drupal\minisite\Controller\AliasController::deliverAsset');
       $request->attributes->set('asset_id', $asset->id());
