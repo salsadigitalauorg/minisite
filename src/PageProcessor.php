@@ -204,7 +204,7 @@ class PageProcessor implements PageProcessorInterface {
     // Added baseUrl variable.
     $element = $this->document->createElement('script');
     $url = UrlValidator::relativeToRoot('/', $this->urlBag->getAssetDir() . '/' . $this->urlBag->getRootDir());
-    $element->appendChild($this->document->createTextNode('var baseUrl = "'. $url . '"'));
+    $element->appendChild($this->document->createTextNode('var baseUrl = "' . $url . '"'));
     $this->document->getElementsByTagName('head')->item(0)->appendChild($element);
   }
 
