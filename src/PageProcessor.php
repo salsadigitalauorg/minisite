@@ -200,6 +200,12 @@ class PageProcessor implements PageProcessorInterface {
     $url = self::urlExtractPath($url);
     $url = UrlValidator::relativeToRoot($url, $this->urlBag->getAssetDir() . '/' . $this->urlBag->getRootDir());
     $item->setAttribute('src', $url);
+
+    // Added baseUrl variable.
+    $element = $this->document->createElement('script');
+    $url = UrlValidator::relativeToRoot('/', $this->urlBag->getAssetDir() . '/' . $this->urlBag->getRootDir());
+    $element->appendChild($this->document->createTextNode('var baseUrl = "'. $url . '"'));
+    $this->document->getElementsByTagName('head')->item(0)->appendChild($element);
   }
 
   /**
