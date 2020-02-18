@@ -2,6 +2,7 @@
 
 namespace Drupal\minisite;
 
+use Drupal\Component\Utility\Unicode;
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Database\Database;
 use Drupal\minisite\Exception\AssetException;
@@ -65,6 +66,22 @@ class Asset implements AssetInterface {
   protected $entityLanguage;
 
   /**
+   * Asset MIME type.
+   *
+   * @var string
+   *   The MIME type.
+   */
+  protected $mimeType;
+
+  /**
+   * Asset file size.
+   *
+   * @var int
+   *   File size in bytes.
+   */
+  protected $size;
+
+  /**
    * The field name.
    *
    * @var string
@@ -111,7 +128,8 @@ class Asset implements AssetInterface {
     $this->entityRid = $entity_rid;
     $this->entityLanguage = $entity_language;
     $this->fieldName = $field_name;
-
+    $this->initMimeType($file_uri);
+    $this->initSize($file_uri);
     // Create a bag of all URLs relevant to this asset.
     $this->urlBag = new UrlBag($file_uri);
   }
@@ -217,12 +235,6 @@ class Asset implements AssetInterface {
    * {@inheritdoc}
    */
   public function save() {
-    // We are tracking only documents and datafiles. Non-document assets are
-    // accessed directly.
-    if (!$this->isDocument() && !$this->isDatafile()) {
-      return NULL;
-    }
-
     $fields = [
       'entity_type' => $this->entityType,
       'entity_bundle' => $this->entityBundle,
@@ -232,6 +244,8 @@ class Asset implements AssetInterface {
       'field_name' => $this->fieldName,
       'source' => $this->getUri(),
       'alias' => !empty($this->getAlias()) ? $this->getAlias() : '',
+      'filemime' => $this->getMimeType(),
+      'filesize' => $this->getSize(),
     ];
 
     if (!empty($this->id)) {
@@ -290,12 +304,6 @@ class Asset implements AssetInterface {
     // Last check that asset file exist before render.
     if (!is_readable($file_uri)) {
       throw new AssetException(sprintf('Unable to render file "%s" as it does not exist', $file_uri));
-    }
-
-    // We should never render non-document files - those files are expected to
-    // be accessed directly (not through aliased path).
-    if (!$this->isDocument() && !$this->isDatafile()) {
-      throw new AssetException(sprintf('Unable to render a non-document file "%s"', $file_uri));
     }
 
     $content = file_get_contents($file_uri);
@@ -380,6 +388,20 @@ class Asset implements AssetInterface {
   /**
    * {@inheritdoc}
    */
+  public function getMimeType() {
+    return $this->mimeType;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getSize() {
+    return $this->size;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function isIndex() {
     if (!UrlValidator::urlIsIndex($this->urlBag->getUri(), self::INDEX_FILE)) {
       return FALSE;
@@ -389,6 +411,29 @@ class Asset implements AssetInterface {
     $in_root = strpos($path, DIRECTORY_SEPARATOR) == FALSE;
 
     return $in_root;
+  }
+
+  /**
+   * Array of headers for current asset.
+   *
+   * @return array
+   *   Array of headers keyed by header name.
+   */
+  public function getHeaders() {
+    $headers = [];
+
+    if ($this->isDocument()) {
+      $headers['Content-Language'] = $this->getLanguage();
+      $headers['Content-Type'] = $this->getMimeType() . '; charset=utf-8';
+    }
+    else {
+      $type = Unicode::mimeHeaderEncode($this->getMimeType());
+      $headers['Content-Type'] = $type;
+      $headers['Content-Length'] = $this->getSize();
+      $headers['Cache-Control'] = 'private';
+    }
+
+    return $headers;
   }
 
   /**
@@ -408,23 +453,17 @@ class Asset implements AssetInterface {
   }
 
   /**
-   * {@inheritdoc}
+   * Initialise mime type based on file type.
    */
-  public function isDatafile() {
-    try {
-      FileValidator::validateFileExtension($this->urlBag->getUri(), [
-        'json',
-        'txt',
-        'xml',
-      ]);
+  protected function initMimeType($uri) {
+    $this->mimeType = \Drupal::service('file.mime_type.guesser')->guess($uri);
+  }
 
-      return TRUE;
-    }
-    catch (InvalidExtensionValidatorException $exception) {
-      // Do nothing as this is expected.
-    }
-
-    return FALSE;
+  /**
+   * Initialise file size.
+   */
+  protected function initSize($uri) {
+    $this->size = @filesize($uri);
   }
 
 }

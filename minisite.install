@@ -5,6 +5,7 @@
  * Contains install and update functions for Minisite.
  */
 
+use Drupal\Core\Database\Database;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\minisite\Minisite;
 
@@ -143,6 +144,21 @@ function minisite_schema() {
         'not null' => FALSE,
         'default' => '',
       ],
+      'filemime' => [
+        'description' => 'The file MIME of the asset.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => NULL,
+      ],
+      'filesize' => [
+        'description' => 'The file size of the asset.',
+        'type' => 'big',
+        'length' => 20,
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'default' => NULL,
+      ],
     ],
     'primary key' => [
       'id',
@@ -164,4 +180,30 @@ function minisite_schema() {
   ];
 
   return $schema;
+}
+
+/**
+ * Adds 'filemime' and 'filesize' columns to an existing database table.
+ */
+function minisite_update_8001() {
+  $spec = [
+    'description' => 'The file MIME of the asset.',
+    'type' => 'varchar',
+    'length' => 255,
+    'not null' => FALSE,
+    'default' => NULL,
+  ];
+  $schema = Database::getConnection()->schema();
+  $schema->addField('minisite_asset', 'filemime', $spec);
+
+  $spec = [
+    'description' => 'The file size of the asset.',
+    'type' => 'big',
+    'length' => 20,
+    'unsigned' => TRUE,
+    'not null' => FALSE,
+    'default' => NULL,
+  ];
+  $schema = Database::getConnection()->schema();
+  $schema->addField('minisite_asset', 'filesize', $spec);
 }

@@ -293,6 +293,7 @@ abstract class MinisiteTestBase extends BrowserTestBase {
       'parent/index.html' => $this->fixtureHtmlPage('Index page', $this->fixtureLink('Go to Page 1', 'page1.html')),
       'parent/page1.html' => $this->fixtureHtmlPage('Page 1', $this->fixtureLink('Go to Page 2', 'page2.html')),
       'parent/page2.html' => $this->fixtureHtmlPage('Page 2'),
+      'parent/image.jpg' => 'fake content of JPG',
     ];
   }
 
@@ -525,6 +526,10 @@ abstract class MinisiteTestBase extends BrowserTestBase {
       ],
       'fragment' => 'someid',
     ]);
+    $this->assertResponse(200);
+
+    // Get non-document file through an alias.
+    $this->drupalGet($alias . '/' . $assets_paths[3]);
     $this->assertResponse(200);
   }
 
