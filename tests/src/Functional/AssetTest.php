@@ -45,7 +45,6 @@ class AssetTest extends MinisiteTestBase {
     // Assert other getters.
     $this->assertEquals(Language::LANGCODE_DEFAULT, $asset->getLanguage());
     $this->assertTrue($asset->isDocument());
-    $this->assertFalse($asset->isDatafile());
     $this->assertFalse($asset->isIndex());
 
     // Assert saving.

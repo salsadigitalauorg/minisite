@@ -2,6 +2,7 @@
 
 namespace Drupal\minisite\Controller;
 
+use Drupal\Component\Utility\Unicode;
 use Drupal\minisite\Asset;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareTrait;
@@ -33,11 +34,7 @@ class AliasController implements ContainerAwareInterface {
   public function deliverAsset($asset_id) {
     $asset = Asset::load($asset_id);
 
-    // Only deliver documents and datafiles through alias controller.
-    // There are other checks in the class itself, but this is one last gate
-    // keeping check to explicitly prevent non-documents from being served
-    // through alias callback.
-    if (!$asset || (!$asset->isDocument() && !$asset->isDatafile())) {
+    if (!$asset) {
       throw new NotFoundHttpException();
     }
 
@@ -63,14 +60,7 @@ class AliasController implements ContainerAwareInterface {
    *   The loaded asset to be used for contextual data.
    */
   protected function addResponseHeaders(Response $response, Asset $asset) {
-    $headers = [];
-
-    $headers['Content-Language'] = $asset->getLanguage();
-    if (!$response->headers->has('Content-Type')) {
-      $headers['Content-Type'] = 'text/html; charset=utf-8';
-    }
-
-    $response->headers->add($headers);
+    $response->headers->add($asset->getHeaders());
   }
 
 }

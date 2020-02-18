@@ -70,8 +70,6 @@ interface AssetInterface {
    * If internal $id is set, the asset will be updated, otherwise it will be
    * created.
    *
-   * Only "document" assets are saved to the database. See ::isDocument().
-   *
    * @return int|null
    *   ID of the created or updated asset. NULL if asset has not been saved to
    *   the database.
@@ -164,6 +162,22 @@ interface AssetInterface {
   public function getLanguage();
 
   /**
+   * Get asset MIME type.
+   *
+   * @return string
+   *   Asset MIME type.
+   */
+  public function getMimeType();
+
+  /**
+   * Get asset size.
+   *
+   * @return int
+   *   Asset file size in bytes.
+   */
+  public function getSize();
+
+  /**
    * Check if the current asset is index entry point.
    *
    * @return bool
@@ -175,10 +189,5 @@ interface AssetInterface {
    * Check if asset is a document and can be served as a page.
    */
   public function isDocument();
-
-  /**
-   * Check if asset is a data file and can be served directly.
-   */
-  public function isDatafile();
 
 }
