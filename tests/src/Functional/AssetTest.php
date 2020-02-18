@@ -26,7 +26,6 @@ class AssetTest extends MinisiteTestBase {
       'node',
       $this->contentType,
       1,
-      2,
       Language::LANGCODE_DEFAULT,
       'field_minisite_test',
       'public://minisite/static/24c22dd1-2cf1-47ae-ac8a-23a7ff8b86c5/rootpath/subpath/page1.html'
@@ -166,7 +165,6 @@ class AssetTest extends MinisiteTestBase {
       'node',
       $this->contentType,
       1,
-      2,
       Language::LANGCODE_DEFAULT,
       'field_minisite_test',
       $path
@@ -211,7 +209,6 @@ class AssetTest extends MinisiteTestBase {
       'node',
       $this->contentType,
       1,
-      2,
       Language::LANGCODE_DEFAULT,
       'field_minisite_test',
       $path

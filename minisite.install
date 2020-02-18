@@ -146,7 +146,8 @@ function minisite_schema() {
       ],
       'filesize' => [
         'description' => 'The file size of the asset.',
-        'type' => 'big',
+        'type' => 'int',
+        'size' => 'big',
         'length' => 20,
         'unsigned' => TRUE,
         'not null' => FALSE,
@@ -191,7 +192,8 @@ function minisite_update_8001() {
 
   $spec = [
     'description' => 'The file size of the asset.',
-    'type' => 'big',
+    'type' => 'int',
+    'size' => 'big',
     'length' => 20,
     'unsigned' => TRUE,
     'not null' => FALSE,

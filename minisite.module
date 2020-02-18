@@ -129,23 +129,6 @@ function minisite_path_update($path) {
 }
 
 /**
- * Implements hook_entity_delete().
- */
-function minisite_entity_delete(EntityInterface $entity) {
-  $minisite_fields = _minisite_get_fields($entity);
-
-  /** @var \Drupal\Core\Entity\FieldableEntityInterface $entity */
-  foreach ($minisite_fields as $minisite_field) {
-    if ($entity->hasField($minisite_field->getName())) {
-      $minisite = Minisite::createInstance($entity->{$minisite_field->getName()});
-      if ($minisite) {
-        $minisite->delete();
-      }
-    }
-  }
-}
-
-/**
  * Get Minisite fields from the entity.
  *
  * @param \Drupal\Core\Entity\EntityInterface $entity
