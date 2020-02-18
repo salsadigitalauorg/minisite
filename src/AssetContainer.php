@@ -36,7 +36,6 @@ class AssetContainer {
   public function add($entity_type,
                       $entity_bundle,
                       $entity_id,
-                      $entity_rid,
                       $entity_language,
                       $field_name,
                       $file_uri) {
@@ -45,7 +44,6 @@ class AssetContainer {
       $entity_type,
       $entity_bundle,
       $entity_id,
-      $entity_rid,
       $entity_language,
       $field_name,
       $file_uri);

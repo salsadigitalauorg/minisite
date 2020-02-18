@@ -52,13 +52,6 @@ class Asset implements AssetInterface {
   protected $entityId;
 
   /**
-   * The parent entity revision.
-   *
-   * @var int
-   */
-  protected $entityRid;
-
-  /**
    * The parent entity language.
    *
    * @var string
@@ -104,8 +97,6 @@ class Asset implements AssetInterface {
    *   The parent entity bundle.
    * @param int $entity_id
    *   The parent entity id.
-   * @param int $entity_rid
-   *   The parent entity revision id.
    * @param string $entity_language
    *   The parent entity language.
    * @param string $field_name
@@ -117,7 +108,6 @@ class Asset implements AssetInterface {
     $entity_type,
     $entity_bundle,
     $entity_id,
-    $entity_rid,
     $entity_language,
     $field_name,
     $file_uri) {
@@ -125,7 +115,6 @@ class Asset implements AssetInterface {
     $this->entityType = $entity_type;
     $this->entityBundle = $entity_bundle;
     $this->entityId = $entity_id;
-    $this->entityRid = $entity_rid;
     $this->entityLanguage = $entity_language;
     $this->fieldName = $field_name;
     $this->initMimeType($file_uri);
@@ -155,7 +144,6 @@ class Asset implements AssetInterface {
       $values['entity_type'],
       $values['entity_bundle'],
       $values['entity_id'],
-      isset($values['entity_rid']) ? $values['entity_rid'] : NULL,
       $values['entity_language'],
       $values['field_name'],
       $values['source']
@@ -239,7 +227,6 @@ class Asset implements AssetInterface {
       'entity_type' => $this->entityType,
       'entity_bundle' => $this->entityBundle,
       'entity_id' => $this->entityId,
-      'entity_rid' => $this->entityRid,
       'entity_language' => $this->entityLanguage,
       'field_name' => $this->fieldName,
       'source' => $this->getUri(),

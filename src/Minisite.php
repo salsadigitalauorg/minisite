@@ -56,13 +56,6 @@ class Minisite implements MinisiteInterface {
   protected $entityId;
 
   /**
-   * The parent entity revision.
-   *
-   * @var int
-   */
-  protected $entityRid;
-
-  /**
    * The parent entity language.
    *
    * @var string
@@ -107,10 +100,6 @@ class Minisite implements MinisiteInterface {
     $this->entityLanguage = $entity->language()->getId();
     $this->fieldName = $field_name;
     $this->archiveFile = $archive_file;
-
-    if ($entity->getEntityType()->isRevisionable()) {
-      $this->entityRid = $entity->getRevisionId();
-    }
 
     // Always process archive when instantiating this class. This does not
     // necessarily mean extracting the archive into new directory every time
@@ -262,7 +251,6 @@ class Minisite implements MinisiteInterface {
         $this->entityType,
         $this->entityBundle,
         $this->entityId,
-        $this->entityRid,
         $this->entityLanguage,
         $this->fieldName,
         // Full uri to a file, e.g.
