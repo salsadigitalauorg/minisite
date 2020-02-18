@@ -207,6 +207,18 @@ class MinisiteItem extends FileItem {
   /**
    * {@inheritdoc}
    */
+  public function delete() {
+    $items_list = $this->getParent();
+
+    $minisite = Minisite::createInstance($items_list);
+    if ($minisite) {
+      $minisite->delete();
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function isDisplayed() {
     // Override parent class setting as Minisite items do not have per-item
     // visibility settings.

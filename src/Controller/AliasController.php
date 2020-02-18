@@ -2,7 +2,6 @@
 
 namespace Drupal\minisite\Controller;
 
-use Drupal\Component\Utility\Unicode;
 use Drupal\minisite\Asset;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareTrait;
