@@ -110,13 +110,6 @@ function minisite_schema() {
         'not null' => TRUE,
         'default' => 0,
       ],
-      'entity_rid' => [
-        'description' => 'The entity revision id this data is attached to, or NULL if the entity type is not versioned',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => FALSE,
-        'default' => 0,
-      ],
       'entity_language' => [
         'description' => 'The {language}.langcode of this entity.',
         'type' => 'varchar_ascii',
@@ -183,7 +176,7 @@ function minisite_schema() {
 }
 
 /**
- * Adds 'filemime' and 'filesize' columns to an existing database table.
+ * Adds 'filemime' and 'filesize' and removes `entity_rid` columns.
  */
 function minisite_update_8001() {
   $spec = [
@@ -206,4 +199,6 @@ function minisite_update_8001() {
   ];
   $schema = Database::getConnection()->schema();
   $schema->addField('minisite_asset', 'filesize', $spec);
+
+  $schema->dropField('minisite_asset', 'entity_id');
 }

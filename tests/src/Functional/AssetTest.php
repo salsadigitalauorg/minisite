@@ -108,7 +108,6 @@ class AssetTest extends MinisiteTestBase {
           'entity_type' => 'someval',
           'entity_bundle' => 'someval',
           'entity_id' => 'someval',
-          'entity_rid' => 'someval',
           'entity_language' => 'someval',
           'field_name' => 'someval',
           'source' => 'someval',
