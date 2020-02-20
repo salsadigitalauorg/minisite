@@ -27,7 +27,7 @@ class UploadBrowseAliasTest extends MinisiteTestBase {
   }
 
   /**
-   * Tests file upload and browsing minisite pages with alias.
+   * Tests ZIP file upload and browsing minisite pages with alias.
    *
    * This is a simple UI test using archive fixture in default format.
    * If this test does not pass - the module definitely does not work as
@@ -40,7 +40,7 @@ class UploadBrowseAliasTest extends MinisiteTestBase {
     $minisite_description = 'D' . $this->randomMachineName();
     $node_alias = '/a' . $this->randomMachineName();
 
-    // Create field and a node with custom path alias.
+    // Create a field and a node with custom path alias.
     $edit = [
       'path[0][alias]' => $node_alias,
     ];
