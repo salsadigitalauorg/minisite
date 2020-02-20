@@ -180,6 +180,8 @@ function minisite_schema() {
  * Adds 'filemime' and 'filesize' and removes `entity_rid` columns.
  */
 function minisite_update_8001() {
+  $schema = Database::getConnection()->schema();
+
   $spec = [
     'description' => 'The file MIME of the asset.',
     'type' => 'varchar',
@@ -187,7 +189,6 @@ function minisite_update_8001() {
     'not null' => FALSE,
     'default' => NULL,
   ];
-  $schema = Database::getConnection()->schema();
   $schema->addField('minisite_asset', 'filemime', $spec);
 
   $spec = [
@@ -199,8 +200,7 @@ function minisite_update_8001() {
     'not null' => FALSE,
     'default' => NULL,
   ];
-  $schema = Database::getConnection()->schema();
   $schema->addField('minisite_asset', 'filesize', $spec);
 
-  $schema->dropField('minisite_asset', 'entity_id');
+  $schema->dropField('minisite_asset', 'entity_rid');
 }
