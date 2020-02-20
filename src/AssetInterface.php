@@ -65,6 +65,14 @@ interface AssetInterface {
   public static function loadByAlias($alias);
 
   /**
+   * Load all assets.
+   *
+   * @return \Drupal\minisite\Asset[]
+   *   Array of all available assets.
+   */
+  public static function loadAll();
+
+  /**
    * Save asset to the database.
    *
    * If internal $id is set, the asset will be updated, otherwise it will be
