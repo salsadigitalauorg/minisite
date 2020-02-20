@@ -222,6 +222,24 @@ class Asset implements AssetInterface {
   /**
    * {@inheritdoc}
    */
+  public static function loadAll() {
+    $values = Database::getConnection()->select('minisite_asset', 'ma')
+      ->fields('ma')
+      ->execute()
+      ->fetchAllAssoc('id', \PDO::FETCH_ASSOC);
+
+    $assets = [];
+
+    foreach ($values as $value) {
+      $assets[] = self::fromValues($value);
+    }
+
+    return $assets;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function save() {
     $fields = [
       'entity_type' => $this->entityType,
