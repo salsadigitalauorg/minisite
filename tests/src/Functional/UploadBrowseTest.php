@@ -27,7 +27,7 @@ class UploadBrowseTest extends MinisiteTestBase {
   }
 
   /**
-   * Tests file upload and browsing minisite pages.
+   * Tests ZIP file upload and browsing minisite pages.
    *
    * This is a simple UI test using archive fixture in default format.
    * If this test does not pass - the module definitely does not work as
@@ -38,7 +38,7 @@ class UploadBrowseTest extends MinisiteTestBase {
     $test_archive_assets = array_keys($this->getTestFilesStubValid());
     $node_title = $this->randomMachineName();
 
-    // Create field and a node.
+    // Create a field and a node.
     $field_name = $this->createFieldAndNode($this->contentType, $node_title);
     $node = $this->drupalGetNodeByTitle($node_title);
     $nid = $node->id();
@@ -51,6 +51,38 @@ class UploadBrowseTest extends MinisiteTestBase {
 
     // Delete node.
     $this->drupalPostForm("node/$nid/delete", [], $this->t('Delete'));
+    $this->assertResponse(200);
+
+    // Assert that Minisite assets were removed.
+    $this->assertMinisiteRemoved($node, $field_name, $test_archive_assets);
+  }
+
+  /**
+   * Tests ZIP file upload and removal, without removing a node.
+   *
+   * This is a simple UI test using archive fixture in default format.
+   * If this test does not pass - the module definitely does not work as
+   * required.
+   */
+  public function testUploadAndRemoval() {
+    // Create test values.
+    $test_archive_assets = array_keys($this->getTestFilesStubValid());
+    $node_title = $this->randomMachineName();
+
+    // Create a field and a node.
+    $field_name = $this->createFieldAndNode($this->contentType, $node_title);
+    $node = $this->drupalGetNodeByTitle($node_title);
+    $nid = $node->id();
+
+    // Assert that minisite archive file was uploaded.
+    $this->assertMinisiteUploaded($node, $field_name, $test_archive_assets);
+
+    $test_archive = $this->getUploadedArchiveFile($node, $field_name);
+    $this->browseFixtureMinisite($node, $test_archive->getFilename());
+
+    // Remove the uploaded file and save the node.
+    $this->drupalPostForm("node/$nid/edit", [], $this->t('Remove'));
+    $this->drupalPostForm(NULL, [], $this->t('Save'));
     $this->assertResponse(200);
 
     // Assert that Minisite assets were removed.

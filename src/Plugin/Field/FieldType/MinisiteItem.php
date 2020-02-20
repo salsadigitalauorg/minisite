@@ -2,6 +2,7 @@
 
 namespace Drupal\minisite\Plugin\Field\FieldType;
 
+use Drupal\Core\Field\FieldItemList;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StreamWrapper\StreamWrapperInterface;
@@ -13,7 +14,7 @@ use Drupal\minisite\Minisite;
 use Drupal\minisite\MinisiteInterface;
 
 /**
- * Plugin implementation of the 'minisite' field type.
+ * Plugin implementation of the Minisite field type.
  *
  * @FieldType(
  *   id = "minisite",
@@ -192,13 +193,10 @@ class MinisiteItem extends FileItem {
    * {@inheritdoc}
    */
   public function postSave($update) {
-    $items_list = $this->getParent();
-    // Set asset path from uploaded archive.
-    $minisite = Minisite::createInstance($items_list);
-    if ($minisite) {
-      $minisite->save();
-
-      $this->asset_path = $minisite->getIndexAssetUri();
+    /** @var \Drupal\Core\Field\FieldItemList $item_list */
+    $item_list = $this->getParent();
+    if (!$item_list->isEmpty()) {
+      $this->createMinisite($item_list);
     }
 
     return TRUE;
@@ -208,11 +206,11 @@ class MinisiteItem extends FileItem {
    * {@inheritdoc}
    */
   public function delete() {
-    $items_list = $this->getParent();
-
-    $minisite = Minisite::createInstance($items_list);
-    if ($minisite) {
-      $minisite->delete();
+    // This will fire once the parent entity is removed.
+    /** @var \Drupal\Core\Field\FieldItemList $item_list */
+    $item_list = $this->getParent();
+    if (!$item_list->isEmpty()) {
+      $this->deleteMinisite($item_list);
     }
   }
 
@@ -223,6 +221,35 @@ class MinisiteItem extends FileItem {
     // Override parent class setting as Minisite items do not have per-item
     // visibility settings.
     return TRUE;
+  }
+
+  /**
+   * Create Minisite instance from field values and save it.
+   *
+   * @param \Drupal\Core\Field\FieldItemList $item_list
+   *   The item list.
+   */
+  protected function createMinisite(FieldItemList $item_list) {
+    $minisite = Minisite::createInstance($item_list);
+    if ($minisite) {
+      $minisite->save();
+
+      // Set asset path from uploaded archive.
+      $this->asset_path = $minisite->getIndexAssetUri();
+    }
+  }
+
+  /**
+   * Delete Minisite instance created from field values.
+   *
+   * @param \Drupal\Core\Field\FieldItemList $item_list
+   *   The item list.
+   */
+  protected function deleteMinisite(FieldItemList $item_list) {
+    $minisite = Minisite::createInstance($item_list);
+    if ($minisite) {
+      $minisite->delete();
+    }
   }
 
 }
