@@ -475,13 +475,12 @@ class Asset implements AssetInterface {
     else {
       $type = Unicode::mimeHeaderEncode($this->getMimeType());
       $headers['Content-Type'] = $type;
+      $headers['Accept-Ranges'] = 'bytes';
 
       $size = $this->getSize();
       if ($size) {
         $headers['Content-Length'] = $size;
       }
-
-      $headers['Cache-Control'] = 'private';
     }
 
     return $headers;
@@ -501,6 +500,14 @@ class Asset implements AssetInterface {
     }
 
     return FALSE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getCacheMaxAge() {
+    // Cache for 1 month by default.
+    return 2628000;
   }
 
   /**

@@ -59,6 +59,16 @@ class AliasController implements ContainerAwareInterface {
    *   The loaded asset to be used for contextual data.
    */
   protected function addResponseHeaders(Response $response, Asset $asset) {
+    // @todo: Review and implement better caching strategy + add tests.
+    $response->setPublic();
+
+    $max_age = $asset->getCacheMaxAge();
+    $response->setMaxAge($max_age);
+
+    $expires = new \DateTime();
+    $expires->setTimestamp(\Drupal::time()->getRequestTime() + $max_age);
+    $response->setExpires($expires);
+
     $response->headers->add($asset->getHeaders());
   }
 
