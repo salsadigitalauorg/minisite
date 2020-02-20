@@ -214,4 +214,12 @@ interface AssetInterface {
    */
   public function isDocument();
 
+  /**
+   * The maximum age for which this object may be cached.
+   *
+   * @return int
+   *   The maximum time in seconds that this object may be cached.
+   */
+  public function getCacheMaxAge();
+
 }
