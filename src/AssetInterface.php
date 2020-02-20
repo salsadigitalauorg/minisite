@@ -178,12 +178,28 @@ interface AssetInterface {
   public function getMimeType();
 
   /**
+   * Set mime type.
+   *
+   * @param string $mime_type
+   *   The file mime type.
+   */
+  public function setMimeType($mime_type);
+
+  /**
    * Get asset size.
    *
    * @return int
    *   Asset file size in bytes.
    */
   public function getSize();
+
+  /**
+   * Set asset size.
+   *
+   * @param int $size
+   *   The size in bytes.
+   */
+  public function setSize($size);
 
   /**
    * Check if the current asset is index entry point.

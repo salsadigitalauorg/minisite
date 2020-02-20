@@ -103,6 +103,10 @@ class Asset implements AssetInterface {
    *   The field name.
    * @param string $file_uri
    *   The URI of the file that this asset represents.
+   * @param string $file_mime
+   *   (optional) File MIME. If not provided - will be discovered automatically.
+   * @param int $file_size
+   *   (optional) File size. If not provided - will be discovered automatically.
    */
   public function __construct(
     $entity_type,
@@ -110,17 +114,20 @@ class Asset implements AssetInterface {
     $entity_id,
     $entity_language,
     $field_name,
-    $file_uri) {
+    $file_uri,
+    $file_mime = NULL,
+    $file_size = NULL) {
 
     $this->entityType = $entity_type;
     $this->entityBundle = $entity_bundle;
     $this->entityId = $entity_id;
     $this->entityLanguage = $entity_language;
     $this->fieldName = $field_name;
-    $this->initMimeType($file_uri);
-    $this->initSize($file_uri);
     // Create a bag of all URLs relevant to this asset.
     $this->urlBag = new UrlBag($file_uri);
+
+    $this->setMimeType($file_mime);
+    $this->setSize($file_size);
   }
 
   /**
@@ -140,13 +147,20 @@ class Asset implements AssetInterface {
       throw new AssetException('Unable to instantiate Asset instance from the provided values as required values are missing');
     }
 
+    $values += [
+      'filemime' => NULL,
+      'filesize' => NULL,
+    ];
+
     $instance = new self(
       $values['entity_type'],
       $values['entity_bundle'],
       $values['entity_id'],
       $values['entity_language'],
       $values['field_name'],
-      $values['source']
+      $values['source'],
+      $values['filemime'],
+      $values['filesize']
     );
 
     if (!empty($values['id'])) {
@@ -400,8 +414,35 @@ class Asset implements AssetInterface {
   /**
    * {@inheritdoc}
    */
+  public function setMimeType($mime_type) {
+    if (!empty($mime_type)) {
+      $this->mimeType = $mime_type;
+    }
+    else {
+      $this->mimeType = $this->guessMimeType($this->getUri());
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getSize() {
     return $this->size;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setSize($size) {
+    if (!empty($size)) {
+      $this->size = $size;
+    }
+    else {
+      $size = $this->calcFileSize($this->getUri());
+      if ($size) {
+        $this->size = $size;
+      }
+    }
   }
 
   /**
@@ -434,7 +475,12 @@ class Asset implements AssetInterface {
     else {
       $type = Unicode::mimeHeaderEncode($this->getMimeType());
       $headers['Content-Type'] = $type;
-      $headers['Content-Length'] = $this->getSize();
+
+      $size = $this->getSize();
+      if ($size) {
+        $headers['Content-Length'] = $size;
+      }
+
       $headers['Cache-Control'] = 'private';
     }
 
@@ -458,17 +504,21 @@ class Asset implements AssetInterface {
   }
 
   /**
-   * Initialise mime type based on file type.
+   * Guess mime type based on provided URI.
    */
-  public function initMimeType($uri) {
-    $this->mimeType = \Drupal::service('file.mime_type.guesser')->guess($uri);
+  public function guessMimeType($uri) {
+    return \Drupal::service('file.mime_type.guesser')->guess($uri);
   }
 
   /**
-   * Initialise file size.
+   * Calculate file size.
    */
-  public function initSize($uri) {
-    $this->size = @filesize($uri);
+  public function calcFileSize($uri) {
+    if (is_readable($uri)) {
+      return @filesize($uri);
+    }
+
+    return NULL;
   }
 
 }
