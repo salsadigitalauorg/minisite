@@ -4,6 +4,7 @@ namespace Drupal\Tests\minisite\Functional;
 
 use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Component\Utility\Html;
+use Drupal\Component\Utility\Random;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\file\Entity\File;
@@ -542,6 +543,28 @@ abstract class MinisiteTestBase extends BrowserTestBase {
     $this->assertResponse(200);
     $this->assertHeader('Content-Type', 'image/jpeg');
     $this->assertHeader('Content-Length', (string) filesize($this->getFixtureFileDir() . DIRECTORY_SEPARATOR . 'example.jpeg'));
+  }
+
+  /**
+   * Create a stub asset path.
+   *
+   * @return string
+   *   Path for a stub asset.
+   */
+  protected function getStubAssetPath() {
+    $randomizer = new Random();
+
+    $prefix = 'public://minisite/static/24c22dd1-2cf1-47ae-ac8a-23a7ff8b86c5/';
+    $suffix = '.html';
+
+    $dir_path = $randomizer->name(10) . '/';
+    // The full path of the file with the scheme should be exactly 2048
+    // characters long.
+    // Note that most of the browsers support URLs length under 2048 characters.
+    $file_path = $randomizer->name(2048 - strlen($dir_path) - strlen($prefix) - strlen($suffix)) . $suffix;
+    $path = $prefix . $dir_path . $file_path;
+
+    return $path;
   }
 
 }

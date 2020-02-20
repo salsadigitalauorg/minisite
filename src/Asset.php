@@ -460,14 +460,14 @@ class Asset implements AssetInterface {
   /**
    * Initialise mime type based on file type.
    */
-  protected function initMimeType($uri) {
+  public function initMimeType($uri) {
     $this->mimeType = \Drupal::service('file.mime_type.guesser')->guess($uri);
   }
 
   /**
    * Initialise file size.
    */
-  protected function initSize($uri) {
+  public function initSize($uri) {
     $this->size = @filesize($uri);
   }
 
