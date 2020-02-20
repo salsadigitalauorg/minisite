@@ -411,7 +411,7 @@ class Asset implements AssetInterface {
 
     if ($this->isDocument()) {
       $headers['Content-Language'] = $this->getLanguage();
-      $headers['Content-Type'] = $this->getMimeType() . '; charset=utf-8';
+      $headers['Content-Type'] = $this->getMimeType() . '; charset=UTF-8';
     }
     else {
       $type = Unicode::mimeHeaderEncode($this->getMimeType());
