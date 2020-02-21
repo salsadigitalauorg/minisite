@@ -10,6 +10,7 @@ use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Url;
+use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\file\FileInterface;
 use Drupal\minisite\AssetInterface;
 use Drupal\minisite\Exception\ArchiveException;
@@ -126,6 +127,66 @@ function minisite_path_insert($path) {
  */
 function minisite_path_update($path) {
   minisite_path_insert($path);
+}
+
+/**
+ * Get information about all entities that have a minisite archive attached.
+ *
+ * @param bool $flatten
+ *   (optional) Flatten a list instead of providing as a tree.
+ *   Defaults to FALSE.
+ * @param string $flatten_delimiter
+ *   (optional) The delimiter to use if $flatten is TRUE. Defaults to '__'.
+ *
+ * @return array
+ *   If $flatten is FALSE, returns a multidimentional array with hierarchy
+ *   entity_type => field_name => id.
+ *   If $flatten is TRUE, returns an array of flatenned values in format
+ *   "entity_type__field_name__entity_id".
+ */
+function minisite_get_info_all($flatten = FALSE, $flatten_delimiter = '__') {
+  $info = [];
+
+  // Collect all entity types with field names.
+  $map = \Drupal::service('entity_field.manager')->getFieldMapByFieldType('minisite');
+  foreach ($map as $entity_type_id => $entity_type_info) {
+    foreach (array_keys($entity_type_info) as $name) {
+      if (FieldStorageConfig::loadByName($entity_type_id, $name)->getSetting('target_type') == 'file') {
+        $minisite_field_ids[] = "$entity_type_id.$name";
+      }
+    }
+  }
+
+  foreach ($minisite_field_ids as $minisite_field_id) {
+    /** @var \Drupal\field\FieldStorageConfigInterface $field_storage */
+    $field_storage = FieldStorageConfig::load($minisite_field_id);
+
+    $entity_type_id = $field_storage->getTargetEntityTypeId();
+    $field_name = $field_storage->getName();
+
+    $target_entity_type_definition = \Drupal::entityTypeManager()->getDefinition($entity_type_id);
+    $id_key = $target_entity_type_definition->getKey('id');
+
+    // Get all entities for this field that have values.
+    $entity_ids = \Drupal::entityQuery($entity_type_id)
+      ->condition($field_name, NULL, 'IS NOT NULL')
+      ->sort($id_key, 'ASC')
+      ->accessCheck(FALSE)
+      ->execute();
+
+    if ($entity_ids) {
+      if ($flatten) {
+        foreach ($entity_ids as $entity_id) {
+          $info[] = $entity_type_id . $flatten_delimiter . $field_name . $flatten_delimiter . $entity_id;
+        }
+      }
+      else {
+        $info[$entity_type_id][$field_name] = array_values($entity_ids);
+      }
+    }
+  }
+
+  return $info;
 }
 
 /**

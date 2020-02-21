@@ -45,7 +45,7 @@ class UploadBrowseAliasPathautoTest extends MinisiteTestBase {
     $minisite_description = 'D' . $this->randomMachineName();
 
     // Create pathauto pattern.
-    $this->createPathautoPattern('node', mb_strtolower($this->randomMachineName()) . '/' . '[node:title]');
+    $this->createPattern('node', mb_strtolower($this->randomMachineName()) . '/' . '[node:title]');
 
     // Create a field and a node with Pathauto enabled.
     $edit = [
