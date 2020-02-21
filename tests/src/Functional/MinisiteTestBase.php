@@ -4,6 +4,7 @@ namespace Drupal\Tests\minisite\Functional;
 
 use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Component\Utility\Html;
+use Drupal\Component\Utility\Random;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\file\Entity\File;
@@ -290,9 +291,10 @@ abstract class MinisiteTestBase extends BrowserTestBase {
    */
   public function getTestFilesStubValid() {
     return [
-      'parent/index.html' => $this->fixtureHtmlPage('Index page', $this->fixtureLink('Go to Page 1', 'page1.html')),
-      'parent/page1.html' => $this->fixtureHtmlPage('Page 1', $this->fixtureLink('Go to Page 2', 'page2.html')),
-      'parent/page2.html' => $this->fixtureHtmlPage('Page 2'),
+      'parent' . DIRECTORY_SEPARATOR . 'index.html' => $this->fixtureHtmlPage('Index page', $this->fixtureLink('Go to Page 1', 'page1.html')),
+      'parent' . DIRECTORY_SEPARATOR . 'page1.html' => $this->fixtureHtmlPage('Page 1', $this->fixtureLink('Go to Page 2', 'page2.html')),
+      'parent' . DIRECTORY_SEPARATOR . 'page2.html' => $this->fixtureHtmlPage('Page 2'),
+      'parent' . DIRECTORY_SEPARATOR . 'image.jpg' => file_get_contents($this->getFixtureFileDir() . DIRECTORY_SEPARATOR . 'example.jpeg'),
     ];
   }
 
@@ -483,6 +485,8 @@ abstract class MinisiteTestBase extends BrowserTestBase {
     $this->assertText('Page 1');
     $this->assertLink('Go to Page 2');
     $this->clickLink('Go to Page 2');
+    $this->assertResponse(200);
+    $this->assertHeader('Content-Type', 'text/html; charset=UTF-8');
 
     $this->assertText('Page 2');
   }
@@ -503,17 +507,23 @@ abstract class MinisiteTestBase extends BrowserTestBase {
 
     // Assert first index path as aliased.
     $this->assertUrl($alias . '/' . $assets_paths[0]);
+    $this->assertResponse(200);
+    $this->assertHeader('Content-Type', 'text/html; charset=UTF-8');
 
     // Brose minisite pages starting from index page.
     $this->assertText('Index page');
     $this->assertLink('Go to Page 1');
     $this->clickLink('Go to Page 1');
+    $this->assertResponse(200);
+    $this->assertHeader('Content-Type', 'text/html; charset=UTF-8');
 
     $this->assertText('Page 1');
     $this->assertUrl($alias . '/' . $assets_paths[1]);
 
     $this->assertLink('Go to Page 2');
     $this->clickLink('Go to Page 2');
+    $this->assertResponse(200);
+    $this->assertHeader('Content-Type', 'text/html; charset=UTF-8');
 
     $this->assertText('Page 2');
     $this->assertUrl($alias . '/' . $assets_paths[2]);
@@ -526,6 +536,35 @@ abstract class MinisiteTestBase extends BrowserTestBase {
       'fragment' => 'someid',
     ]);
     $this->assertResponse(200);
+    $this->assertHeader('Content-Type', 'text/html; charset=UTF-8');
+
+    // Get non-document file through an alias.
+    $this->drupalGet($alias . '/' . $assets_paths[3]);
+    $this->assertResponse(200);
+    $this->assertHeader('Content-Type', 'image/jpeg');
+    $this->assertHeader('Content-Length', (string) filesize($this->getFixtureFileDir() . DIRECTORY_SEPARATOR . 'example.jpeg'));
+  }
+
+  /**
+   * Create a stub asset path.
+   *
+   * @return string
+   *   Path for a stub asset.
+   */
+  protected function getStubAssetPath() {
+    $randomizer = new Random();
+
+    $prefix = 'public://minisite/static/24c22dd1-2cf1-47ae-ac8a-23a7ff8b86c5/';
+    $suffix = '.html';
+
+    $dir_path = $randomizer->name(10) . '/';
+    // The full path of the file with the scheme should be exactly 2048
+    // characters long.
+    // Note that most of the browsers support URLs length under 2048 characters.
+    $file_path = $randomizer->name(2048 - strlen($dir_path) - strlen($prefix) - strlen($suffix)) . $suffix;
+    $path = $prefix . $dir_path . $file_path;
+
+    return $path;
   }
 
 }

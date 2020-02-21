@@ -10,6 +10,7 @@ use Drupal\minisite\Exception\ArchiveException;
 use Drupal\minisite\Exception\AssetException;
 use Drupal\minisite\Exception\InvalidContentArchiveException;
 use Drupal\minisite\Exception\InvalidFormatArchiveException;
+use Drupal\minisite\Exception\MissingArchiveException;
 
 /**
  * Class Minisite.
@@ -56,13 +57,6 @@ class Minisite implements MinisiteInterface {
   protected $entityId;
 
   /**
-   * The parent entity revision.
-   *
-   * @var int
-   */
-  protected $entityRid;
-
-  /**
    * The parent entity language.
    *
    * @var string
@@ -91,6 +85,13 @@ class Minisite implements MinisiteInterface {
   protected $assetContainer;
 
   /**
+   * Allowed extensions of files in archive as a space-separated string.
+   *
+   * @var string
+   */
+  protected $allowedExtensions;
+
+  /**
    * Minisite constructor.
    *
    * @param \Drupal\Core\Entity\EntityInterface $entity
@@ -99,24 +100,18 @@ class Minisite implements MinisiteInterface {
    *   The minisite field name.
    * @param \Drupal\file\FileInterface $archive_file
    *   The archive managed file.
+   * @param string $allowed_extensions
+   *   Allowed extensions of files in archive as a space-separated string.
    */
-  public function __construct(EntityInterface $entity, $field_name, FileInterface $archive_file) {
+  public function __construct(EntityInterface $entity, $field_name, FileInterface $archive_file, $allowed_extensions = MinisiteInterface::ALLOWED_EXTENSIONS) {
     $this->entityType = $entity->getEntityTypeId();
     $this->entityBundle = $entity->bundle();
     $this->entityId = $entity->id();
     $this->entityLanguage = $entity->language()->getId();
     $this->fieldName = $field_name;
-    $this->archiveFile = $archive_file;
-
-    if ($entity->getEntityType()->isRevisionable()) {
-      $this->entityRid = $entity->getRevisionId();
-    }
-
-    // Always process archive when instantiating this class. This does not
-    // necessarily mean extracting the archive into new directory every time
-    // this constructor is called, but will guarantee that the archive have
-    // been extracted and all files are ready.
-    $this->processArchive();
+    $this->allowedExtensions = $allowed_extensions;
+    $this->setArchiveFile($archive_file);
+    $this->description = '';
   }
 
   /**
@@ -132,8 +127,6 @@ class Minisite implements MinisiteInterface {
     $field_definition = $items->getFieldDefinition();
 
     try {
-      static::validateArchive($archive_file, $field_definition->getSetting('minisite_extensions'));
-
       $entity = $items->getEntity();
       $description = '';
       $parent_alias = '';
@@ -150,7 +143,7 @@ class Minisite implements MinisiteInterface {
         }
       }
 
-      $instance = new self($entity, $field_definition->getName(), $archive_file);
+      $instance = new self($entity, $field_definition->getName(), $archive_file, $field_definition->getSetting('minisite_extensions'));
       if (!empty($description)) {
         $instance->setDescription($description);
       }
@@ -177,7 +170,15 @@ class Minisite implements MinisiteInterface {
    * {@inheritdoc}
    */
   public function setArchiveFile(FileInterface $file) {
+    static::validateArchive($file, $this->allowedExtensions);
+
     $this->archiveFile = $file;
+
+    // Always process archive when file changes. This does not
+    // necessarily mean extracting the archive into new directory every time
+    // this method is called but will guarantee that the archive have
+    // been extracted and all files are ready.
+    $this->processArchive();
   }
 
   /**
@@ -254,7 +255,7 @@ class Minisite implements MinisiteInterface {
       $files = LegacyWrapper::scanDirectory($asset_directory, '/.*/');
     }
 
-    $this->assetContainer = isset($this->assetContainer) ? $this->assetContainer : new AssetContainer();
+    $this->assetContainer = new AssetContainer();
 
     foreach (array_keys($files) as $file_uri) {
       // Refactor to pass an entity instead of it's fields.
@@ -262,7 +263,6 @@ class Minisite implements MinisiteInterface {
         $this->entityType,
         $this->entityBundle,
         $this->entityId,
-        $this->entityRid,
         $this->entityLanguage,
         $this->fieldName,
         // Full uri to a file, e.g.
@@ -298,6 +298,11 @@ class Minisite implements MinisiteInterface {
    * {@inheritdoc}
    */
   public static function validateArchive(FileInterface $file, $content_extensions) {
+    // Does physical file exist?
+    if (!is_readable($file->getFileUri())) {
+      throw new MissingArchiveException($file->getFileUri());
+    }
+
     // Does it have a correct extension?
     FileValidator::validateFileExtension($file->getFilename(), static::supportedArchiveExtensions());
 

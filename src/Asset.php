@@ -2,6 +2,7 @@
 
 namespace Drupal\minisite;
 
+use Drupal\Component\Utility\Unicode;
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Database\Database;
 use Drupal\minisite\Exception\AssetException;
@@ -51,18 +52,27 @@ class Asset implements AssetInterface {
   protected $entityId;
 
   /**
-   * The parent entity revision.
-   *
-   * @var int
-   */
-  protected $entityRid;
-
-  /**
    * The parent entity language.
    *
    * @var string
    */
   protected $entityLanguage;
+
+  /**
+   * Asset MIME type.
+   *
+   * @var string
+   *   The MIME type.
+   */
+  protected $mimeType;
+
+  /**
+   * Asset file size.
+   *
+   * @var int
+   *   File size in bytes.
+   */
+  protected $size;
 
   /**
    * The field name.
@@ -87,33 +97,37 @@ class Asset implements AssetInterface {
    *   The parent entity bundle.
    * @param int $entity_id
    *   The parent entity id.
-   * @param int $entity_rid
-   *   The parent entity revision id.
    * @param string $entity_language
    *   The parent entity language.
    * @param string $field_name
    *   The field name.
    * @param string $file_uri
    *   The URI of the file that this asset represents.
+   * @param string $file_mime
+   *   (optional) File MIME. If not provided - will be discovered automatically.
+   * @param int $file_size
+   *   (optional) File size. If not provided - will be discovered automatically.
    */
   public function __construct(
     $entity_type,
     $entity_bundle,
     $entity_id,
-    $entity_rid,
     $entity_language,
     $field_name,
-    $file_uri) {
+    $file_uri,
+    $file_mime = NULL,
+    $file_size = NULL) {
 
     $this->entityType = $entity_type;
     $this->entityBundle = $entity_bundle;
     $this->entityId = $entity_id;
-    $this->entityRid = $entity_rid;
     $this->entityLanguage = $entity_language;
     $this->fieldName = $field_name;
-
     // Create a bag of all URLs relevant to this asset.
     $this->urlBag = new UrlBag($file_uri);
+
+    $this->setMimeType($file_mime);
+    $this->setSize($file_size);
   }
 
   /**
@@ -133,14 +147,20 @@ class Asset implements AssetInterface {
       throw new AssetException('Unable to instantiate Asset instance from the provided values as required values are missing');
     }
 
+    $values += [
+      'filemime' => NULL,
+      'filesize' => NULL,
+    ];
+
     $instance = new self(
       $values['entity_type'],
       $values['entity_bundle'],
       $values['entity_id'],
-      isset($values['entity_rid']) ? $values['entity_rid'] : NULL,
       $values['entity_language'],
       $values['field_name'],
-      $values['source']
+      $values['source'],
+      $values['filemime'],
+      $values['filesize']
     );
 
     if (!empty($values['id'])) {
@@ -216,22 +236,35 @@ class Asset implements AssetInterface {
   /**
    * {@inheritdoc}
    */
-  public function save() {
-    // We are tracking only documents and datafiles. Non-document assets are
-    // accessed directly.
-    if (!$this->isDocument() && !$this->isDatafile()) {
-      return NULL;
+  public static function loadAll() {
+    $values = Database::getConnection()->select('minisite_asset', 'ma')
+      ->fields('ma')
+      ->execute()
+      ->fetchAllAssoc('id', \PDO::FETCH_ASSOC);
+
+    $assets = [];
+
+    foreach ($values as $value) {
+      $assets[] = self::fromValues($value);
     }
 
+    return $assets;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function save() {
     $fields = [
       'entity_type' => $this->entityType,
       'entity_bundle' => $this->entityBundle,
       'entity_id' => $this->entityId,
-      'entity_rid' => $this->entityRid,
       'entity_language' => $this->entityLanguage,
       'field_name' => $this->fieldName,
       'source' => $this->getUri(),
       'alias' => !empty($this->getAlias()) ? $this->getAlias() : '',
+      'filemime' => $this->getMimeType(),
+      'filesize' => $this->getSize(),
     ];
 
     if (!empty($this->id)) {
@@ -290,12 +323,6 @@ class Asset implements AssetInterface {
     // Last check that asset file exist before render.
     if (!is_readable($file_uri)) {
       throw new AssetException(sprintf('Unable to render file "%s" as it does not exist', $file_uri));
-    }
-
-    // We should never render non-document files - those files are expected to
-    // be accessed directly (not through aliased path).
-    if (!$this->isDocument() && !$this->isDatafile()) {
-      throw new AssetException(sprintf('Unable to render a non-document file "%s"', $file_uri));
     }
 
     $content = file_get_contents($file_uri);
@@ -380,6 +407,47 @@ class Asset implements AssetInterface {
   /**
    * {@inheritdoc}
    */
+  public function getMimeType() {
+    return $this->mimeType;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setMimeType($mime_type) {
+    if (!empty($mime_type)) {
+      $this->mimeType = $mime_type;
+    }
+    else {
+      $this->mimeType = $this->guessMimeType($this->getUri());
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getSize() {
+    return $this->size;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setSize($size) {
+    if (!empty($size)) {
+      $this->size = $size;
+    }
+    else {
+      $size = $this->calcFileSize($this->getUri());
+      if ($size) {
+        $this->size = $size;
+      }
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function isIndex() {
     if (!UrlValidator::urlIsIndex($this->urlBag->getUri(), self::INDEX_FILE)) {
       return FALSE;
@@ -389,6 +457,33 @@ class Asset implements AssetInterface {
     $in_root = strpos($path, DIRECTORY_SEPARATOR) == FALSE;
 
     return $in_root;
+  }
+
+  /**
+   * Array of headers for current asset.
+   *
+   * @return array
+   *   Array of headers keyed by header name.
+   */
+  public function getHeaders() {
+    $headers = [];
+
+    if ($this->isDocument()) {
+      $headers['Content-Language'] = $this->getLanguage();
+      $headers['Content-Type'] = $this->getMimeType() . '; charset=UTF-8';
+    }
+    else {
+      $type = Unicode::mimeHeaderEncode($this->getMimeType());
+      $headers['Content-Type'] = $type;
+      $headers['Accept-Ranges'] = 'bytes';
+
+      $size = $this->getSize();
+      if ($size) {
+        $headers['Content-Length'] = $size;
+      }
+    }
+
+    return $headers;
   }
 
   /**
@@ -410,21 +505,27 @@ class Asset implements AssetInterface {
   /**
    * {@inheritdoc}
    */
-  public function isDatafile() {
-    try {
-      FileValidator::validateFileExtension($this->urlBag->getUri(), [
-        'json',
-        'txt',
-        'xml',
-      ]);
+  public function getCacheMaxAge() {
+    // Cache for 1 month by default.
+    return 2628000;
+  }
 
-      return TRUE;
-    }
-    catch (InvalidExtensionValidatorException $exception) {
-      // Do nothing as this is expected.
+  /**
+   * Guess mime type based on provided URI.
+   */
+  public function guessMimeType($uri) {
+    return \Drupal::service('file.mime_type.guesser')->guess($uri);
+  }
+
+  /**
+   * Calculate file size.
+   */
+  public function calcFileSize($uri) {
+    if (is_readable($uri)) {
+      return @filesize($uri);
     }
 
-    return FALSE;
+    return NULL;
   }
 
 }

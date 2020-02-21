@@ -192,4 +192,14 @@ HEREDOC;
     return "<a href=\"$url\">$text</a>";
   }
 
+  /**
+   * Get the path to the directory with fixture files.
+   *
+   * @return string
+   *   The path to the directory with fixture files.
+   */
+  public function getFixtureFileDir() {
+    return __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'fixtures';
+  }
+
 }

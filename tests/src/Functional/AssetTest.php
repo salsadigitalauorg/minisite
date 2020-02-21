@@ -26,7 +26,6 @@ class AssetTest extends MinisiteTestBase {
       'node',
       $this->contentType,
       1,
-      2,
       Language::LANGCODE_DEFAULT,
       'field_minisite_test',
       'public://minisite/static/24c22dd1-2cf1-47ae-ac8a-23a7ff8b86c5/rootpath/subpath/page1.html'
@@ -45,7 +44,6 @@ class AssetTest extends MinisiteTestBase {
     // Assert other getters.
     $this->assertEquals(Language::LANGCODE_DEFAULT, $asset->getLanguage());
     $this->assertTrue($asset->isDocument());
-    $this->assertFalse($asset->isDatafile());
     $this->assertFalse($asset->isIndex());
 
     // Assert saving.
@@ -109,7 +107,6 @@ class AssetTest extends MinisiteTestBase {
           'entity_type' => 'someval',
           'entity_bundle' => 'someval',
           'entity_id' => 'someval',
-          'entity_rid' => 'someval',
           'entity_language' => 'someval',
           'field_name' => 'someval',
           'source' => 'someval',
@@ -168,7 +165,6 @@ class AssetTest extends MinisiteTestBase {
       'node',
       $this->contentType,
       1,
-      2,
       Language::LANGCODE_DEFAULT,
       'field_minisite_test',
       $path
@@ -213,7 +209,6 @@ class AssetTest extends MinisiteTestBase {
       'node',
       $this->contentType,
       1,
-      2,
       Language::LANGCODE_DEFAULT,
       'field_minisite_test',
       $path
@@ -237,6 +232,48 @@ class AssetTest extends MinisiteTestBase {
     $asset_loaded_by_alias = Asset::loadByAlias($full_alias);
     $this->assertNotNull($asset_loaded_by_alias, 'Re-saved asset with an alias is not null');
     $this->assertNotNull($asset_loaded_by_alias->id(), 'Re-saved asset with an alias has an id');
+  }
+
+  /**
+   * Test Asset::save().
+   *
+   * @covers \Drupal\minisite\Asset::loadAll
+   */
+  public function testLoadAll() {
+    $asset1 = new Asset(
+      'node',
+      $this->contentType,
+      1,
+      Language::LANGCODE_DEFAULT,
+      'field_minisite_test',
+      $this->getStubAssetPath()
+    );
+    $asset1->save();
+    $asset2 = new Asset(
+      'node',
+      $this->contentType,
+      1,
+      Language::LANGCODE_DEFAULT,
+      'field_minisite_test',
+      $this->getStubAssetPath()
+    );
+    $asset2->save();
+    $asset3 = new Asset(
+      'node',
+      $this->contentType,
+      1,
+      Language::LANGCODE_DEFAULT,
+      'field_minisite_test',
+      $this->getStubAssetPath()
+    );
+    $asset3->save();
+
+    $loaded = Asset::loadAll();
+
+    $this->assertEquals(3, count($loaded));
+    $this->assertEquals($asset1->id(), $loaded[0]->id());
+    $this->assertEquals($asset2->id(), $loaded[1]->id());
+    $this->assertEquals($asset3->id(), $loaded[2]->id());
   }
 
 }

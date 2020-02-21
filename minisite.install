@@ -5,8 +5,10 @@
  * Contains install and update functions for Minisite.
  */
 
+use Drupal\Core\Database\Database;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\minisite\Minisite;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Implements hook_uninstall().
@@ -109,13 +111,6 @@ function minisite_schema() {
         'not null' => TRUE,
         'default' => 0,
       ],
-      'entity_rid' => [
-        'description' => 'The entity revision id this data is attached to, or NULL if the entity type is not versioned',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => FALSE,
-        'default' => 0,
-      ],
       'entity_language' => [
         'description' => 'The {language}.langcode of this entity.',
         'type' => 'varchar_ascii',
@@ -143,6 +138,22 @@ function minisite_schema() {
         'not null' => FALSE,
         'default' => '',
       ],
+      'filemime' => [
+        'description' => 'The file MIME of the asset.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => NULL,
+      ],
+      'filesize' => [
+        'description' => 'The file size of the asset.',
+        'type' => 'int',
+        'size' => 'big',
+        'length' => 20,
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'default' => NULL,
+      ],
     ],
     'primary key' => [
       'id',
@@ -164,4 +175,205 @@ function minisite_schema() {
   ];
 
   return $schema;
+}
+
+/**
+ * Adds 'filemime' and 'filesize' and removes `entity_rid` columns.
+ */
+function minisite_update_8001() {
+  $schema = Database::getConnection()->schema();
+
+  $spec = [
+    'description' => 'The file MIME of the asset.',
+    'type' => 'varchar',
+    'length' => 255,
+    'not null' => FALSE,
+    'default' => NULL,
+  ];
+  $schema->addField('minisite_asset', 'filemime', $spec);
+
+  $spec = [
+    'description' => 'The file size of the asset.',
+    'type' => 'int',
+    'size' => 'big',
+    'length' => 20,
+    'unsigned' => TRUE,
+    'not null' => FALSE,
+    'default' => NULL,
+  ];
+  $schema->addField('minisite_asset', 'filesize', $spec);
+
+  $schema->dropField('minisite_asset', 'entity_rid');
+}
+
+/**
+ * Re-saves all Minisite instances to populate the database with asset links.
+ */
+function minisite_update_8002(&$sandbox) {
+  // Number of Minisite instances to process in a single batch.
+  // trying to keep this as low as possible as some minisites may have
+  // a lot of assets that will take time and resources to process.
+  $batch_size = getenv('MINISITE_UPDATE_BATCH_SIZE') ?: 1;
+
+  if (!isset($sandbox['info'])) {
+    module_load_include('module', 'minisite');
+
+    $info = minisite_get_info_all(TRUE);
+
+    if (empty($info)) {
+      $sandbox['#finished'] = 1;
+
+      return t('There are no Minisite fields with content in any available entity types.');
+    }
+
+    $sandbox['info'] = $info;
+    $sandbox['max'] = count($info);
+    $sandbox['progress'] = 0;
+    $sandbox['updated'] = 0;
+  }
+
+  $current_batch_info = array_slice($sandbox['info'], $sandbox['progress'], $batch_size);
+
+  $stage_file_proxy_is_enabled = \Drupal::service('module_handler')->moduleExists('stage_file_proxy');
+
+  $messages = [];
+  foreach ($current_batch_info as $info) {
+    $sandbox['progress']++;
+
+    list($entity_type, $field_name, $entity_id) = explode('__', $info);
+
+    $messages[] = t('Processing Minisite for field @field_name attached to @entity_type with ID @entity_id.', [
+      '@entity_type' => $entity_type,
+      '@field_name' => $field_name,
+      '@entity_id' => $entity_id,
+    ]);
+
+    $host_entity = \Drupal::entityTypeManager()->getStorage($entity_type)->load($entity_id);
+    $field_item_list = $host_entity->get($field_name);
+
+    // Before proceeding with minisite instantiation, we need to check that
+    // the archive file is available in this environment and do our best effort
+    // to fetch files from origin location (works only on the environments with
+    // stage_file_proxy enabled).
+    /** @var \Drupal\file\Entity\File $archive_file */
+    $archive_file = $field_item_list->entity;
+    $archive_file_uri = $archive_file->getFileUri();
+    $archive_file_absolute_url = $archive_file->createFileUrl(FALSE);
+    if (!is_readable($archive_file_uri)) {
+      if (!$stage_file_proxy_is_enabled) {
+        $messages[] = '  ' . t('SKIPPED: Archive file is missing in this environment and stage_file_proxy module is not enabled.');
+        continue;
+      }
+
+      _minisite_install_stage_file_proxy_fetch($archive_file_absolute_url);
+      if (!is_readable($archive_file_uri)) {
+        $messages[] = '  ' . t('SKIPPED: Unable to fetch archive file @uri.', [
+          '@uri' => $archive_file_uri,
+        ]);
+        continue;
+      }
+
+      $messages[] = '  ' . t('Fetched archive file @uri.', [
+        '@uri' => $archive_file_uri,
+      ]);
+    }
+
+    $minisite = Minisite::createInstance($field_item_list);
+
+    if ($minisite) {
+      $minisite->save();
+      $sandbox['updated']++;
+      $messages[] = '  ' . t('SUCCESS: Updated Ministe.');
+    }
+    else {
+      $messages[] = '  ' . t('SKIPPED: Unable to process Ministe.');
+    }
+  }
+
+  $sandbox['#finished'] = $sandbox['progress'] / $sandbox['max'];
+
+  return t('Processed @processed of @total and updated @updated Minisite instances: @messages', [
+    '@total' => $sandbox['max'],
+    '@processed' => $sandbox['progress'],
+    '@updated' => $sandbox['updated'],
+    '@messages' => PHP_EOL . implode(PHP_EOL, $messages),
+  ]);
+}
+
+/**
+ * Fetch file from the specified URI using stage_file_proxy fetcher.
+ *
+ * This is a shortened version of
+ * \Drupal\stage_file_proxy\EventSubscriber\ProxySubscriber::checkFileOrigin.
+ *
+ * Unfortunately, it is not possible to use functionality of stage_file_proxy
+ * transparently within update hooks (send request from the update hook to the
+ * same server) as they can be ran via CLI, in which case it is possible that
+ * the request may not reach the website (for example, if PHP runs in a Docker
+ * container separate to the web-server and the internal name of the web-server
+ * is not the same as site's external URI).
+ *
+ * It is also not possible to simply craft a stub request and pass it to the
+ * stage_file_proxy's ProxySubscriber::checkFileOrigin method, since the method
+ * uses 'exit' to perform a redirect (the logic is not separated from the
+ * request stack handling), which will terminate the process itself.
+ *
+ * The only viable solution is to use stage_file_proxy's fetcher manager with
+ * additionally added logic taken from ProxySubscriber::checkFileOrigin method.
+ *
+ * @param string $url
+ *   Absolute URL to the file to download. Absolute is required in order to
+ *   check that this is not an origin server.
+ *
+ * @return bool
+ *   TRUE if file was downloaded, FALSE otherwise.
+ *
+ * @see \Drupal\stage_file_proxy\EventSubscriber\ProxySubscriber::checkFileOrigin
+ */
+function _minisite_install_stage_file_proxy_fetch($url) {
+  $config = \Drupal::configFactory()->get('stage_file_proxy.settings');
+
+  // Get the origin server.
+  $server = $config->get('origin');
+
+  // Quit if no origin given.
+  if (!$server) {
+    return FALSE;
+  }
+
+  $request = Request::create($url);
+
+  // Quit if we are the origin, ignore http(s).
+  $current_host = $request->getHost();
+  if (preg_replace('#^[a-z]*://#u', '', $server) === $current_host) {
+    return FALSE;
+  }
+
+  $fetch_manager = \Drupal::getContainer()->get('stage_file_proxy.fetch_manager');
+
+  $file_dir = $fetch_manager->filePublicPath();
+  $request_path = $request->getPathInfo();
+
+  $request_path = mb_substr($request_path, 1);
+
+  if (strpos($request_path, '' . $file_dir) !== 0) {
+    return FALSE;
+  }
+
+  // Note if the origin server files location is different. This
+  // must be the exact path for the remote site's public file
+  // system path, and defaults to the local public file system path.
+  $remote_file_dir = trim($config->get('origin_dir'));
+  if (!$remote_file_dir) {
+    $remote_file_dir = $file_dir;
+  }
+
+  $request_path = rawurldecode($request_path);
+  $relative_path = mb_substr($request_path, mb_strlen($file_dir) + 1);
+
+  $options = [
+    'verify' => $config->get('verify'),
+  ];
+
+  return $fetch_manager->fetch($server, $remote_file_dir, $relative_path, $options);
 }

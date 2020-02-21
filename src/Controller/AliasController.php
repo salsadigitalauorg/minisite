@@ -33,11 +33,7 @@ class AliasController implements ContainerAwareInterface {
   public function deliverAsset($asset_id) {
     $asset = Asset::load($asset_id);
 
-    // Only deliver documents and datafiles through alias controller.
-    // There are other checks in the class itself, but this is one last gate
-    // keeping check to explicitly prevent non-documents from being served
-    // through alias callback.
-    if (!$asset || (!$asset->isDocument() && !$asset->isDatafile())) {
+    if (!$asset) {
       throw new NotFoundHttpException();
     }
 
@@ -63,14 +59,17 @@ class AliasController implements ContainerAwareInterface {
    *   The loaded asset to be used for contextual data.
    */
   protected function addResponseHeaders(Response $response, Asset $asset) {
-    $headers = [];
+    // @todo: Review and implement better caching strategy + add tests.
+    $response->setPublic();
 
-    $headers['Content-Language'] = $asset->getLanguage();
-    if (!$response->headers->has('Content-Type')) {
-      $headers['Content-Type'] = 'text/html; charset=utf-8';
-    }
+    $max_age = $asset->getCacheMaxAge();
+    $response->setMaxAge($max_age);
 
-    $response->headers->add($headers);
+    $expires = new \DateTime();
+    $expires->setTimestamp(\Drupal::time()->getRequestTime() + $max_age);
+    $response->setExpires($expires);
+
+    $response->headers->add($asset->getHeaders());
   }
 
 }

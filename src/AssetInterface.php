@@ -65,12 +65,18 @@ interface AssetInterface {
   public static function loadByAlias($alias);
 
   /**
+   * Load all assets.
+   *
+   * @return \Drupal\minisite\Asset[]
+   *   Array of all available assets.
+   */
+  public static function loadAll();
+
+  /**
    * Save asset to the database.
    *
    * If internal $id is set, the asset will be updated, otherwise it will be
    * created.
-   *
-   * Only "document" assets are saved to the database. See ::isDocument().
    *
    * @return int|null
    *   ID of the created or updated asset. NULL if asset has not been saved to
@@ -164,6 +170,38 @@ interface AssetInterface {
   public function getLanguage();
 
   /**
+   * Get asset MIME type.
+   *
+   * @return string
+   *   Asset MIME type.
+   */
+  public function getMimeType();
+
+  /**
+   * Set mime type.
+   *
+   * @param string $mime_type
+   *   The file mime type.
+   */
+  public function setMimeType($mime_type);
+
+  /**
+   * Get asset size.
+   *
+   * @return int
+   *   Asset file size in bytes.
+   */
+  public function getSize();
+
+  /**
+   * Set asset size.
+   *
+   * @param int $size
+   *   The size in bytes.
+   */
+  public function setSize($size);
+
+  /**
    * Check if the current asset is index entry point.
    *
    * @return bool
@@ -177,8 +215,11 @@ interface AssetInterface {
   public function isDocument();
 
   /**
-   * Check if asset is a data file and can be served directly.
+   * The maximum age for which this object may be cached.
+   *
+   * @return int
+   *   The maximum time in seconds that this object may be cached.
    */
-  public function isDatafile();
+  public function getCacheMaxAge();
 
 }

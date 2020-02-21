@@ -32,7 +32,7 @@ class UploadBrowseAliasPathautoTest extends MinisiteTestBase {
   }
 
   /**
-   * Tests file upload and browsing minisite pages with Pathauto alias.
+   * Tests ZIP file upload and browsing minisite pages with Pathauto alias.
    *
    * This is a simple UI test using archive fixture in default format.
    * If this test does not pass - the module definitely does not work as
@@ -47,7 +47,7 @@ class UploadBrowseAliasPathautoTest extends MinisiteTestBase {
     // Create pathauto pattern.
     $this->createPattern('node', mb_strtolower($this->randomMachineName()) . '/' . '[node:title]');
 
-    // Create field and a node with Pathauto enabled.
+    // Create a field and a node with Pathauto enabled.
     $edit = [
       'path[0][pathauto]' => TRUE,
     ];
@@ -65,8 +65,8 @@ class UploadBrowseAliasPathautoTest extends MinisiteTestBase {
     $node_alias = $node->path->get(0)->getValue()['alias'];
     $this->browseFixtureMinisiteAliased($node_alias, $minisite_description, $test_archive_assets);
 
-    // Disable pathauto, update node's alias and assert that update has been
-    // applied.
+    // Disable pathauto alias generation, manually update node's alias and
+    // assert that update has been applied to the paths of the minisite.
     $node_alias_updated = '/a' . $this->randomMachineName();
     $edit = [
       'path[0][pathauto]' => FALSE,
