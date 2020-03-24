@@ -3,6 +3,7 @@ type: module
 description: Upload and serve arbitrary "minisites" archives from a Drupal website.
 package: Field types
 core: 8.x
+core_version_requirement: ^8 || ^9
 dependencies:
   - drupal:file
 recommends:
