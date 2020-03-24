@@ -40,7 +40,7 @@ function minisite_theme_registry_alter(&$theme_registry) {
  */
 function minisite_page_delivery_callback_alter(&$callback) {
   // Get entity and view modes.
-  $minisite_info = minisite_site_load();
+  $minisite_info = minisite_site_load(FALSE);
 
   if (!empty($minisite_info) && $callback == 'drupal_deliver_html_page') {
     $callback = 'minisite_deliver';
@@ -51,6 +51,12 @@ function minisite_page_delivery_callback_alter(&$callback) {
  * Deliver minisite.
  */
 function minisite_deliver($page_callback_result) {
+  // Allow Drupal to handle MENU_NOT_FOUND, MENU_ACCESS_DENIED and
+  // MENU_SITE_OFFLINE.
+  if (is_int($page_callback_result)) {
+    drupal_deliver_html_page($page_callback_result);
+  }
+
   if (isset($page_callback_result) && is_null(drupal_get_http_header('Content-Type'))) {
     drupal_add_http_header('Content-Type', 'text/html; charset=utf-8');
   }

@@ -44,20 +44,33 @@ function minisite_site_lookup() {
 
 /**
  * Load minisite.
+ *
+ * Possible side effect of issuing a redirect if the minisite is not aliased.
+ *
+ * @param boolean $redirect
+ *   If this is TRUE and the minisite is not aliased this function will perform
+ *   the redirect.
+ *
+ * @return mixed
+ *  - FALSE is the minisite is not found or invalid
+ *  - An array of info if the minisite is found and aliased, or $redirect is FALSE
+ *  - NULL if the minisite is found, unaliased and $redirect is TRUE
  */
-function minisite_site_load() {
+function minisite_site_load($redirect = TRUE) {
   $minisite_info = minisite_site_lookup();
 
   if (empty($minisite_info) || empty($minisite_info['mid']) || empty($minisite_info['source'])) {
     return FALSE;
   }
-
   if (!empty($minisite_info['alias_status']) && $minisite_info['alias_status'] == 1) {
     return $minisite_info;
   }
-  else {
+  if ($redirect) {
     $minisite_site_url = _minisite_site_file_public_path_base_url() . $minisite_info['source'] . '/index.html';
     drupal_goto($minisite_site_url);
+  }
+  else {
+    return $minisite_info;
   }
 }
 
