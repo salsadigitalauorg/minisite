@@ -113,8 +113,16 @@ function minisite_site_parse($minisite_info) {
   // Bypass lib error.
   libxml_use_internal_errors(TRUE);
 
+  $arrContextOptions = [
+    "ssl" => [
+      "verify_peer" => FALSE,
+      "verify_peer_name" => FALSE,
+    ],
+  ];
+
   $document = new \DOMDocument();
-  $document->loadHTMLFile($minisite_site_request);
+
+  $document->loadHTML(file_get_contents($minisite_site_request, FALSE, stream_context_create($arrContextOptions)));
 
   // Return 404 if document is empty.
   if (empty($document) || empty($document->textContent)) {
