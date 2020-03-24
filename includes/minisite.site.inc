@@ -203,6 +203,9 @@ function minisite_site_parse($minisite_info) {
     }
   }
 
+  // Allow modules to modify minisite html
+  drupal_alter('minisite_html', $document);
+
   $html = $document->saveHTML();
 
   return $html;
