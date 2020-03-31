@@ -271,9 +271,9 @@ class AssetTest extends MinisiteTestBase {
     $loaded = Asset::loadAll();
 
     $this->assertEquals(3, count($loaded));
-    $this->assertEquals($asset1->id(), $loaded[0]->id());
+    $this->assertEquals($asset3->id(), $loaded[0]->id());
     $this->assertEquals($asset2->id(), $loaded[1]->id());
-    $this->assertEquals($asset3->id(), $loaded[2]->id());
+    $this->assertEquals($asset1->id(), $loaded[2]->id());
   }
 
 }
