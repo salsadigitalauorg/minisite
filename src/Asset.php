@@ -181,6 +181,7 @@ class Asset implements AssetInterface {
     $values = Database::getConnection()->select('minisite_asset', 'ma')
       ->fields('ma')
       ->condition('id', $id)
+      ->orderBy('id', 'DESC')
       ->execute()
       ->fetchAssoc();
 
@@ -202,6 +203,7 @@ class Asset implements AssetInterface {
     $values = Database::getConnection()->select('minisite_asset', 'ma')
       ->fields('ma')
       ->condition('source', $uri)
+      ->orderBy('id', 'DESC')
       ->execute()
       ->fetchAssoc();
 
@@ -223,6 +225,7 @@ class Asset implements AssetInterface {
     $values = Database::getConnection()->select('minisite_asset', 'ma')
       ->fields('ma')
       ->condition('alias', $alias)
+      ->orderBy('id', 'DESC')
       ->execute()
       ->fetchAssoc();
 
@@ -239,6 +242,7 @@ class Asset implements AssetInterface {
   public static function loadAll() {
     $values = Database::getConnection()->select('minisite_asset', 'ma')
       ->fields('ma')
+      ->orderBy('id', 'DESC')
       ->execute()
       ->fetchAllAssoc('id', \PDO::FETCH_ASSOC);
 
