@@ -5,6 +5,7 @@
  * Main functions of the Minisite module.
  */
 
+use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
@@ -230,5 +231,12 @@ function _minisite_get_entity_from_path($path) {
   }
   $entity_type = key($params);
 
-  return \Drupal::entityTypeManager()->getStorage($entity_type)->load($params[$entity_type]);
+  try {
+    $storage = \Drupal::entityTypeManager()->getStorage($entity_type);
+  }
+  catch (PluginNotFoundException $exception) {
+    return NULL;
+  }
+
+  return $storage->load($params[$entity_type]);
 }
