@@ -42,7 +42,7 @@ class ArchiveValidator {
     // Check that entry point file exists.
     $top_dir = $root_files[0];
     $top_level = $tree[$top_dir];
-    if (!array_key_exists(AssetInterface::INDEX_FILE, $top_level)) {
+    if (!isset($top_level[AssetInterface::INDEX_FILE])) {
       throw new InvalidContentArchiveException([sprintf('Missing required %s file.', AssetInterface::INDEX_FILE)]);
     }
 
