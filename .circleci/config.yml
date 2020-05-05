@@ -43,6 +43,10 @@ jobs:
       # Drupal project commit before moving 8.8.0.
       # https://github.com/drupal-composer/drupal-project/commit/53f6910c35db73d0b367d5b6f22be4af94dd1af3
       DRUPAL_PROJECT_SHA: 53f6910c35db73d0b367d5b6f22be4af94dd1af3
+      # Install explicilty specified version of token module due to incorrect
+      # constraints in composer.json.
+      # @see: https://www.drupal.org/project/token/issues/3131368
+      COMPOSER_DEV_DEPENDENCIES: "drupal/token:1.6"
     <<: *job-build
 
   build-php-7.2-legacy:
@@ -54,6 +58,10 @@ jobs:
       # Drupal project commit before moving 8.8.0.
       # https://github.com/drupal-composer/drupal-project/commit/53f6910c35db73d0b367d5b6f22be4af94dd1af3
       DRUPAL_PROJECT_SHA: 53f6910c35db73d0b367d5b6f22be4af94dd1af3
+      # Install explicilty specified version of token module due to incorrect
+      # constraints in composer.json.
+      # @see: https://www.drupal.org/project/token/issues/3131368
+      COMPOSER_DEV_DEPENDENCIES: "drupal/token:1.6"
     <<: *job-build
 
   deploy:

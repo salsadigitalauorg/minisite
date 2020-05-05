@@ -32,6 +32,9 @@ else
   php -d memory_limit=-1 "$(command -v composer)" create-project drupal-composer/drupal-project:8.x-dev build --no-interaction
 fi
 
+echo "==> Install explicitly defined dev dependencies from COMPOSER_DEV_DEPENDENCIES"
+[ -n "$COMPOSER_DEV_DEPENDENCIES" ] && composer --working-dir=build require "$COMPOSER_DEV_DEPENDENCIES"
+
 echo "==> Install additional dev dependencies from module's composer.json"
 cat <<< "$(jq --indent 4 -M -s '.[0] * .[1]' composer.json build/composer.json)" > build/composer.json
 php -d memory_limit=-1 "$(command -v composer)" --working-dir=build update --lock
