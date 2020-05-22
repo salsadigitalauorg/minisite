@@ -10,7 +10,7 @@ use Drupal\Core\StreamWrapper\StreamWrapperManager;
  *
  * Helper class to resolve compatibility between Drupal core versions.
  *
- * @todo: Remove this file once 8.7.x is no longer supported.
+ * @todo: Remove this file once 8.7.x is no longer supported (3/6/2020).
  *
  * @package Drupal\minisite
  */
@@ -90,6 +90,29 @@ class LegacyWrapper {
 
     if (function_exists('entity_get_display')) {
       return entity_get_form_display($entity_type, $bundle, $form_mode);
+    }
+
+    throw new \RuntimeException('Unable to find compatible function');
+  }
+
+  /**
+   * Returns the part of a URI after the schema.
+   *
+   * @param string $uri
+   *   A stream, referenced as "scheme://target" or "data:target".
+   *
+   * @return string|bool
+   *   A string containing the target (path), or FALSE if none.
+   *   For example, the URI "public://sample/test.txt" would return
+   *   "sample/test.txt".
+   */
+  public static function getTarget($uri) {
+    if (is_callable(StreamWrapperManager::class, 'getTarget')) {
+      return StreamWrapperManager::getTarget($uri);
+    }
+
+    if (function_exists('file_uri_target')) {
+      return file_uri_target($uri);
     }
 
     throw new \RuntimeException('Unable to find compatible function');

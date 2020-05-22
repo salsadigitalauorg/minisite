@@ -9,6 +9,7 @@ use Drupal\Core\Database\Database;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\minisite\Minisite;
 use Symfony\Component\HttpFoundation\Request;
+use Drupal\minisite\LegacyWrapper;
 
 /**
  * Implements hook_uninstall().
@@ -42,7 +43,7 @@ function minisite_requirements($phase) {
     ];
     if (!\Drupal::service('file_system')->prepareDirectory($path, FileSystemInterface::CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS)) {
       $requirements['minisite_archive']['description'] = t('The Minisite archive upload directory %path could not be created due to a misconfiguration of files directory. Please ensure that the files directory is correctly configured and that the webserver has permission to create directories.', [
-        '%path' => file_uri_target($path),
+        '%path' => LegacyWrapper::getTarget($path),
       ]);
       $requirements['minisite_archive']['severity'] = REQUIREMENT_ERROR;
       $requirements['minisite_archive']['value'] = t('Unable to create');
@@ -56,7 +57,7 @@ function minisite_requirements($phase) {
     ];
     if (!\Drupal::service('file_system')->prepareDirectory($path, FileSystemInterface::CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS)) {
       $requirements['minisite_asset']['description'] = t('The Minisite asset files directory %path could not be created due to a misconfiguration of files directory. Please ensure that the files directory is correctly configured and that the webserver has permission to create directories.', [
-        '%path' => file_uri_target($path),
+        '%path' => LegacyWrapper::getTarget($path),
       ]);
       $requirements['minisite_asset']['severity'] = REQUIREMENT_ERROR;
       $requirements['minisite_asset']['value'] = t('Unable to create');
